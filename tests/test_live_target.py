@@ -5,6 +5,7 @@ Run: SV_LLM_DOTGITHUB_ROOT=<SV-LLM/.github checkout> python -B tests/test_live_t
 from __future__ import annotations
 import copy, json, sys, unittest
 from pathlib import Path
+EPOCH = "4000"  # the supplied hb_epoch: every lease time is its HB32 instant
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tests"))
@@ -76,7 +77,7 @@ class AdapterAcceptsDerivedInvocation(unittest.TestCase):
         work = h.work(manifested_request={"manifest_id": "at04", "tool_invocations": [inv]})
         self.assertEqual(h.admit(work)["disposition"], ALLOW)
         pw = factory(text=f"STEGVERSE_CONFORMANCE_V1 {inv['prompt']}")
-        out = StegBrowserTool(h.sandbox).invoke("fixture-work-001", inv["invocation_id"], playwright_factory=pw)
+        out = StegBrowserTool(h.sandbox).invoke("fixture-work-001", inv["invocation_id"], hb_epoch=EPOCH, playwright_factory=pw)
         self.assertEqual(out["disposition"], ALLOW, out)
         e = next(r for r in h.sandbox.ledger.chain() if r["receipt_sha256"] == out["repo_receipt_sha256"])["evidence"]
         self.assertEqual(e["observed_origin"], "stegverse.org")

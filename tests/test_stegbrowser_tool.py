@@ -4,9 +4,9 @@ Run: SV_LLM_DOTGITHUB_ROOT=<SV-LLM/.github checkout> python -B tests/test_stegbr
 """
 from __future__ import annotations
 import copy, hashlib, json, sys, unittest
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import MagicMock
+EPOCH = "4000"  # the supplied hb_epoch: every lease time is its HB32 instant
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tests"))
@@ -107,7 +107,7 @@ class Vendoring(Base):
 class Roundtrip(Base):
     def test_AT03_AT08_AT09_success_is_recorded_as_tool_observation(self):
         pw = factory()
-        out = self.tool.invoke(WORK, "inv-1", playwright_factory=pw)
+        out = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=pw)
         self.assertEqual(out["disposition"], ALLOW, out)
         self.assertIn("org_receipt_sha256", out)
         e = self.obs(out)
@@ -129,14 +129,14 @@ class Roundtrip(Base):
         self.assertEqual(e["sandbox_request_digest"], self.s.canon.digest(rebuilt))  # recomputed by Sandbox under V1
 
     def test_AT10_AT16_labels_are_not_attestation_and_no_contribution_is_made(self):
-        e = self.obs(self.tool.invoke(WORK, "inv-1", playwright_factory=factory()))
+        e = self.obs(self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=factory()))
         self.assertEqual(e["result"]["provider_label"], "label-only-provider")
         self.assertFalse(e["result"]["labels_are_attestation"])
         self.assertEqual(self.s.contributions(WORK), [])
         self.assertNotIn("entity", e)
 
     def test_AT11_endpoint_receipts_stay_opaque(self):
-        self.tool.invoke(WORK, "inv-1", playwright_factory=factory())
+        self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=factory())
         for r in self.s.ledger.chain():
             blob = json.dumps(r["evidence"])
             self.assertNotIn("endpoint_receipts\"", blob)
@@ -154,7 +154,8 @@ class Roundtrip(Base):
 class NonAllow(Base):
     def test_AT06_expired_lease_fails_before_launch(self):
         pw = factory()
-        out = self.tool.invoke(WORK, "inv-1", playwright_factory=pw, now=datetime.now(timezone.utc) - timedelta(hours=1))
+        # issued at epoch 40000, opened an hour of HB32 ticks later (360000 x 10 ms): expired, from supplied epochs only
+        out = self.tool.invoke(WORK, "inv-1", playwright_factory=pw, hb_epoch="400000", issued_epoch="40000")
         e = self.obs(out)
         self.assertEqual((e["disposition"], e["evaluation_stage"]), ("FAIL_CLOSED", "LEASE_ADMISSION"))
         self.assertIsNone(e["terminal_receipt"])
@@ -166,7 +167,7 @@ class NonAllow(Base):
                  (dict(text="no marker here"), None, "RESULT_BINDING"),
                  (dict(status=503), None, "BROWSER_NAVIGATION")]
         for kwargs, _, stage in cases:
-            e = self.obs(self.tool.invoke(WORK, "inv-1", playwright_factory=factory(**kwargs)))
+            e = self.obs(self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=factory(**kwargs)))
             self.assertEqual((e["disposition"], e["evaluation_stage"]), ("FAIL_CLOSED", stage), stage)
             self.assertTrue(e["failed_predicate"])
             self.assertEqual(e["retry_entrypoint"], "src.stegbrowser.llm_transition.execute_manifested_llm_browser_transition")
@@ -180,7 +181,7 @@ class RuntimeCheck(Base):
     @unittest.skipIf(__import__("importlib.util").util.find_spec("playwright") is not None,
                      "Playwright installed here; the no-runtime path is exercised where it is absent")
     def test_AT20_missing_browser_runtime_fails_closed_immediately(self):
-        e = self.obs(self.tool.invoke(WORK, "inv-1"))
+        e = self.obs(self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH))
         self.assertEqual((e["disposition"], e["failed_predicate"], e["decided_by"]),
                          ("FAIL_CLOSED", "SANDBOX_ENVIRONMENT_PYTHON_PLAYWRIGHT_CHROMIUM_AVAILABLE", "SANDBOX_RUNTIME_CHECK"))
         self.assertFalse(e["stegbrowser_invoked"])
@@ -206,26 +207,26 @@ class PreInvocation(Base):
         return e
 
     def test_AT05_AT21_origin_outside_lease(self):
-        self.denied(self.tool.invoke(WORK, "inv-off-origin", playwright_factory=self.pw), "SECURE_URL_ORIGIN_ALLOWED_BY_LEASE")
-        self.denied(self.tool.invoke(WORK, "inv-1", playwright_factory=self.pw,
+        self.denied(self.tool.invoke(WORK, "inv-off-origin", hb_epoch=EPOCH, playwright_factory=self.pw), "SECURE_URL_ORIGIN_ALLOWED_BY_LEASE")
+        self.denied(self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=self.pw,
                                      proposed={"secure_url": "https://elsewhere.test/chat"}),
                     "SECURE_URL_ORIGIN_ALLOWED_BY_LEASE")
 
     def test_AT21_lease_and_prompt_binding(self):
-        self.denied(self.tool.invoke(WORK, "inv-1", playwright_factory=self.pw,
+        self.denied(self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=self.pw,
                                      proposed={"lease": {"task_id": "other-work", "allowed_origins": ["space.example.test"]}}),
                     "LEASE_TASK_ID_EQUALS_WORK_ID")
-        self.denied(self.tool.invoke(WORK, "inv-1", playwright_factory=self.pw,
+        self.denied(self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=self.pw,
                                      proposed={"lease": {"task_id": WORK, "allowed_origins": ["*.test"]}}),
                     "LEASE_ORIGINS_EQUAL_ADMITTED_ORIGINS")
-        self.denied(self.tool.invoke(WORK, "inv-1", playwright_factory=self.pw, proposed={"prompt": "substituted"}),
+        self.denied(self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=self.pw, proposed={"prompt": "substituted"}),
                     "LLM_PROMPT_BOUND_TO_MANIFESTED_REQUEST")
-        self.denied(self.tool.invoke(WORK, "inv-bad-fill", playwright_factory=self.pw),
+        self.denied(self.tool.invoke(WORK, "inv-bad-fill", hb_epoch=EPOCH, playwright_factory=self.pw),
                     "LLM_PROMPT_BOUND_TO_MANIFESTED_REQUEST")
 
     def test_AT21_work_and_invocation_must_be_admitted(self):
-        self.denied(self.tool.invoke("not-admitted", "inv-1", playwright_factory=self.pw), "WORK_ID_IS_ADMITTED")
-        self.denied(self.tool.invoke(WORK, "inv-undeclared", playwright_factory=self.pw), "TOOL_INVOCATION_DECLARED")
+        self.denied(self.tool.invoke("not-admitted", "inv-1", hb_epoch=EPOCH, playwright_factory=self.pw), "WORK_ID_IS_ADMITTED")
+        self.denied(self.tool.invoke(WORK, "inv-undeclared", hb_epoch=EPOCH, playwright_factory=self.pw), "TOOL_INVOCATION_DECLARED")
 
     def test_malformed_invocation_denied_with_six_fields(self):
         h = Harness()
@@ -233,13 +234,13 @@ class PreInvocation(Base):
         work = h.work(manifested_request={"manifest_id": "fixture-manifest-001",
                                           "tool_invocations": [invocation(lease_seconds=0)]})
         h.admit(work)
-        out = StegBrowserTool(h.sandbox).invoke(WORK, "inv-1", playwright_factory=self.pw)
+        out = StegBrowserTool(h.sandbox).invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=self.pw)
         e = next(r for r in h.sandbox.ledger.chain() if r["receipt_sha256"] == out["repo_receipt_sha256"])["evidence"]
         self.assertEqual((e["disposition"], e["failed_predicate"]), ("DENY", "TOOL_INVOCATION_WELL_FORMED"))
         assert_six_fields(self, e)
 
     def test_matching_proposal_is_allowed(self):
-        out = self.tool.invoke(WORK, "inv-1", playwright_factory=factory(),
+        out = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=factory(),
                                proposed={"prompt": invocation()["prompt"], "secure_url": "https://space.example.test/chat",
                                          "lease": {"task_id": WORK, "allowed_origins": ["space.example.test"]}})
         self.assertEqual(out["disposition"], ALLOW)
@@ -247,8 +248,8 @@ class PreInvocation(Base):
 
 class Synthesis(Base):
     def test_AT15_observation_only_work_synthesizes_and_completes(self):
-        ok = self.tool.invoke(WORK, "inv-1", playwright_factory=factory())
-        bad = self.tool.invoke(WORK, "inv-1", playwright_factory=factory(fail_launch=True))
+        ok = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=factory())
+        bad = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=factory(fail_launch=True))
         ids = [ok["observation_id"], bad["observation_id"]]
         omitted = self.s.synthesize(WORK, ids[:1], {"summary": "drops the failure"})
         self.assertEqual((omitted["disposition"], omitted["failed_predicate"]), (DENY, "SYNTHESIS_BINDS_EVERY_RECORDED_INPUT"))
@@ -259,7 +260,7 @@ class Synthesis(Base):
         self.assertEqual(rebuilt["contributions"], [])
 
     def test_pre_invocation_deny_is_a_synthesis_input(self):
-        d = self.tool.invoke(WORK, "inv-undeclared", playwright_factory=factory())
+        d = self.tool.invoke(WORK, "inv-undeclared", hb_epoch=EPOCH, playwright_factory=factory())
         self.assertEqual(d["disposition"], DENY)
         self.assertEqual(self.s.synthesize(WORK, [d["observation_id"]], {"summary": "denied"})["disposition"], ALLOW)
 
@@ -277,7 +278,7 @@ class PropagationFailure(Base):
         self.assertEqual(failure["evidence"]["disposition"], "FAIL_CLOSED")
         self.assertEqual(failure["evidence"]["failed_predicate"], "ORGANIZATION_PROPAGATION_SUCCEEDED")
         self.assertEqual(failure["evidence"]["retry_entrypoint"], "runtime.sandbox.Sandbox.repropagate")
-        obs = self.tool.invoke(WORK, "inv-1", playwright_factory=factory())
+        obs = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=factory())
         self.assertEqual(self.s.synthesize(WORK, [obs["observation_id"]], {"s": 1})["disposition"], ALLOW)
         blocked = self.s.complete(WORK)
         self.assertEqual((blocked["disposition"], blocked["failed_predicate"]), (DENY, "ORGANIZATION_PROPAGATION_COMPLETE"))
@@ -289,7 +290,7 @@ class PropagationFailure(Base):
 
     def test_AT18_failed_call_returns_fail_closed_without_org_receipt(self):
         self.fail_org = True
-        out = self.tool.invoke(WORK, "inv-1", playwright_factory=factory())
+        out = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=factory())
         self.assertEqual((out["disposition"], out["failed_predicate"]), ("FAIL_CLOSED", "ORGANIZATION_PROPAGATION_SUCCEEDED"))
         self.assertEqual(out["recorded_disposition"], ALLOW)
         self.assertNotIn("org_receipt_sha256", out)

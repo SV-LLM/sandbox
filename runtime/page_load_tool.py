@@ -33,6 +33,7 @@ sys.path.insert(0, str(VENDOR.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sandbox import deny_fields, OWNING_EXISTING_GOAL  # noqa: E402
 from stegbrowser_tool import _host, _host_allowed, _iso  # noqa: E402
+import lease_time  # noqa: E402
 MANIFEST = json.loads((VENDOR / "vendor-manifest.json").read_text())
 TOOL, PROFILE = "StegBrowser", "page_load.v1"
 LEASE_SCHEMA = "stegbrowser.ecosystem-ephemeral-lease.v1"
@@ -44,6 +45,10 @@ INTERACTION_FIELDS = ("prompt", "browser_actions", "selectors", "response_marker
 RETRY_PREFIX = "runtime.page_load_tool.StegBrowserPageLoadTool."
 ENVIRONMENT_PREDICATE = "SANDBOX_ENVIRONMENT_PYTHON_PLAYWRIGHT_CHROMIUM_AVAILABLE"
 TOOL_REPAIRS = {
+    "LEASE_TIME_IS_THE_SUPPLIED_HB_EPOCH": (
+        "Supply hb_epoch (ASCII digits >= 32): the lease time is the supplied epoch's HB32 instant, never a clock "
+        "(runtime/lease_time.py).",
+        "Call invoke again with the supplied epoch; no lease was issued and no browser launched."),
     "WORK_ID_IS_ADMITTED": (
         "Admit the work item first (a SANDBOX_WORK_ADMITTED receipt for this work_id).",
         "Call Sandbox.admit, then call invoke again for the same work_id."),
@@ -83,7 +88,8 @@ class StegBrowserPageLoadTool:
         self.canon = sandbox.canon
         self.artifacts_dir = Path(artifacts_dir) if artifacts_dir else None
         sandbox.registration.verify_vendor(VENDOR)  # executed bytes match the manifest
-        self.ephemeral = importlib.import_module("stegbrowser_llm.ecosystem_ephemeral")
+        # the vendored lease module's clock fallback reads the supplied epoch's instant instead (runtime/lease_time.py)
+        self.ephemeral = lease_time.bind(importlib.import_module("stegbrowser_llm.ecosystem_ephemeral"))
 
     def _invocation(self, work: Mapping[str, Any], invocation_id: str) -> tuple[dict[str, Any] | None, str | None]:
         rows = [i for i in (work["manifested_request"].get("tool_invocations") or [])
@@ -122,7 +128,7 @@ class StegBrowserPageLoadTool:
                 "persist_history": False}
 
     def invoke(self, work_id: str, invocation_id: str, *, playwright_factory=None,
-               now: datetime | None = None) -> dict[str, Any]:
+               hb_epoch: Any = None) -> dict[str, Any]:
         attempt, oid = self._ids(work_id, invocation_id)
         base = {"observation_id": oid, "work_id": work_id, "invocation_id": invocation_id, "attempt": attempt,
                 "tool": TOOL, "tool_profile": PROFILE, "source_commit": MANIFEST["source_commit"],
@@ -155,8 +161,16 @@ class StegBrowserPageLoadTool:
             from playwright.sync_api import sync_playwright
             playwright_factory = sync_playwright
 
-        session = self.ephemeral.EphemeralBrowserSession.open(
-            self.lease(work_id, inv, oid, now or datetime.now(timezone.utc)), now=now)
+        refused = lease_time.lease_time_refusal(hb_epoch)
+        if refused is not None:
+            return deny(lease_time.LEASE_TIME_PREDICATE, disposition="FAIL_CLOSED", **known)
+        at = lease_time.instant(hb_epoch)
+        with lease_time.supplied(at):
+            return self._run(work_id, inv, oid, at, known, playwright_factory, deny, base, empty)
+
+    def _run(self, work_id, inv, oid, at, known, playwright_factory, deny, base, empty) -> dict[str, Any]:
+        """The ephemeral session, inside lease_time.supplied(at): every lease time is the supplied epoch's."""
+        session = self.ephemeral.EphemeralBrowserSession.open(self.lease(work_id, inv, oid, at), now=at)
         known.update(stegbrowser_invoked=True, lease_id=session.lease["lease_id"],
                      lease_commitment=session.lease["lease_commitment"])
         denied: list[dict[str, Any]] = []

@@ -42,6 +42,7 @@ VENDOR = Path(__file__).resolve().parent / "vendor" / "stegbrowser_llm"
 sys.path.insert(0, str(VENDOR.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sandbox import deny_fields, OWNING_EXISTING_GOAL  # noqa: E402
+import lease_time  # noqa: E402
 MANIFEST = json.loads((VENDOR / "vendor-manifest.json").read_text())
 TOOL, PROFILE = "StegBrowser", "llm.v1"
 LEASE_SCHEMA = "stegbrowser.ecosystem-ephemeral-lease.v1"
@@ -53,6 +54,10 @@ RETRY_PREFIX = "runtime.stegbrowser_tool.StegBrowserTool."
 ENVIRONMENT_PREDICATE = "SANDBOX_ENVIRONMENT_PYTHON_PLAYWRIGHT_CHROMIUM_AVAILABLE"
 # predicate -> (required_evidence_or_repair, next_attempt) for Sandbox-side tool DENY/FAIL_CLOSED.
 TOOL_REPAIRS = {
+    "LEASE_TIME_IS_THE_SUPPLIED_HB_EPOCH": (
+        "Supply hb_epoch (ASCII digits >= 32; and issued_epoch if given): the lease time is the supplied epoch's "
+        "HB32 instant, never a clock (runtime/lease_time.py).",
+        "Call invoke again with the supplied epoch; no lease was issued and no browser launched."),
     "WORK_ID_IS_ADMITTED": (
         "Admit the work item first (a SANDBOX_WORK_ADMITTED receipt for this work_id).",
         "Call Sandbox.admit, then call invoke again for the same work_id."),
@@ -112,6 +117,8 @@ class StegBrowserTool:
         self.canon = sandbox.canon
         sandbox.registration.verify_vendor(VENDOR)  # AT-01: executed bytes match the manifest
         self.transition = importlib.import_module("stegbrowser_llm.llm_transition")
+        # the vendored lease module's clock fallback reads the supplied epoch's instant instead (runtime/lease_time.py)
+        lease_time.bind(importlib.import_module("stegbrowser_llm.ecosystem_ephemeral"))
 
     # -- admitted data ------------------------------------------------------------
     def _invocation(self, work: Mapping[str, Any], invocation_id: str) -> tuple[dict[str, Any] | None, str | None]:
@@ -165,16 +172,18 @@ class StegBrowserTool:
 
     # -- invocation ---------------------------------------------------------------
     def invoke(self, work_id: str, invocation_id: str, *, proposed: Mapping[str, Any] | None = None,
-               playwright_factory=None, now: datetime | None = None) -> dict[str, Any]:
+               playwright_factory=None, hb_epoch: Any = None, issued_epoch: Any = None) -> dict[str, Any]:
+        """Invoke at the supplied hb_epoch: the lease is issued at issued_epoch (default hb_epoch) and the session
+        opens, authorizes and closes at hb_epoch. Without a supplied epoch: six-field FAIL_CLOSED, no lease."""
         proposed = dict(proposed or {})
         attempt, oid = self._ids(work_id, invocation_id)
         base = {"observation_id": oid, "work_id": work_id, "invocation_id": invocation_id, "attempt": attempt,
                 "tool": TOOL, "tool_profile": PROFILE, "source_commit": MANIFEST["source_commit"],
                 "evidence_refs": []}
 
-        def deny(predicate: str, **known) -> dict[str, Any]:
-            obs = {**base, **deny_fields("invoke", predicate, repairs=TOOL_REPAIRS, retry_prefix=RETRY_PREFIX,
-                                         code_prefix="SANDBOX_TOOL"),
+        def deny(predicate: str, disposition: str = "DENY", **known) -> dict[str, Any]:
+            obs = {**base, **deny_fields("invoke", predicate, disposition=disposition, repairs=TOOL_REPAIRS,
+                                         retry_prefix=RETRY_PREFIX, code_prefix="SANDBOX_TOOL"),
                    "decided_by": "SANDBOX_PRE_INVOCATION", "stegbrowser_invoked": False, "request_commitment": None,
                    "sandbox_request_digest": None, "lease_id": None, "allowed_origins": None,
                    "observed_origin": None, "local_disposition": None, "local_receipt_commitment": None,
@@ -187,7 +196,12 @@ class StegBrowserTool:
         inv, problem = self._invocation(work, invocation_id)
         if problem:
             return deny(problem)
-        issued = now or datetime.now(timezone.utc)
+        refused = lease_time.lease_time_refusal(hb_epoch) or (
+            lease_time.lease_time_refusal(issued_epoch, field="issued_epoch") if issued_epoch is not None else None)
+        if refused is not None:
+            return deny(lease_time.LEASE_TIME_PREDICATE, disposition="FAIL_CLOSED")
+        at = lease_time.instant(hb_epoch)
+        issued = lease_time.instant(issued_epoch) if issued_epoch is not None else at
         journey = self.journey(work_id, inv, attempt, oid)
         req = self.request(inv, journey)
         lease = self.lease(work_id, inv, oid, issued)
@@ -215,8 +229,9 @@ class StegBrowserTool:
                    "local_disposition": None, "local_receipt_commitment": None, "terminal_receipt": None,
                    "result_commitment": None, "result": None}
             return self.sandbox.record_tool_observation(obs)
-        outcome = self.transition.execute_manifested_llm_browser_transition(
-            req, lease, playwright_factory=playwright_factory)
+        with lease_time.supplied(at):
+            outcome = self.transition.execute_manifested_llm_browser_transition(
+                req, lease, playwright_factory=playwright_factory)
         receipt, executed = outcome["receipt"], outcome.get("execution_result")
         result = None
         if executed is not None:
