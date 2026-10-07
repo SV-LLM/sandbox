@@ -23,8 +23,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install jsonschema
-        run: python -m pip install "jsonschema==4.26.0"
+      - name: Install dependencies (shared set for Sandbox and vendored StegBrowser llm.v1)
+        run: python -m pip install "jsonschema==4.26.0" "pytest==8.3.5"
       - name: Sandbox runtime
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
@@ -39,3 +39,9 @@ jobs:
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub-registered
         run: python -B tests/test_real_entity_regression.py
+      - name: Vendored StegBrowser llm.v1 upstream tests against the vendored bytes (AT-14)
+        run: python -B -m pytest -q -p no:cacheprovider tests/stegbrowser_upstream
+      - name: Sandbox + StegBrowser synthetic integration (no network)
+        env:
+          SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub-registered
+        run: python -B tests/test_stegbrowser_tool.py

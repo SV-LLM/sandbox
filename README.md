@@ -5,3 +5,11 @@ Provider-neutral collaboration plane for SV-LLM. Sandbox admits bounded work bou
 Every attempted transition yields one receipt in this repository's transition ledger, whether it is allowed or denied, and each receipt propagates to the SV-LLM organization ledger. Sandbox-to-entity dispatch is intra-organization. Participation creates no governance authority.
 
 Contracts: `sv-llm.sandbox-work/v0.1`, `sv-llm.contribution/v0.1`, `sv-llm.entity-capability/v0.1` and `sv-llm.capability-id/v0.1` in SV-LLM/schemas, serialized and digested under `SV_LLM_CANONICAL_JSON_V1`. Entity registration is evaluated by SV-LLM/.github `org-runtime/sandbox_registration.py` against the canonical organization tree.
+
+## StegBrowser llm.v1 tool
+
+`runtime/stegbrowser_tool.py` lets admitted Sandbox work call an LLM web page through StegBrowser's `llm.v1` profile, vendored byte-for-byte from StegVerse-Labs/StegBrowser `b0f652d` in `runtime/vendor/stegbrowser_llm/` (digest manifest included). Each call opens a fresh Chromium context over ordinary HTTPS and destroys it afterward; the Sandbox ledgers are not ephemeral. The path has no LLM-adapter hop and no InTr hop.
+
+The call is declared in the work object at `manifested_request.tool_invocations[]`. Before StegBrowser runs, Sandbox checks that the work is admitted, the invocation is declared, the prompt and target origin match the admitted values, and it issues the lease itself (`task_id` = `work_id`). Every attempt, including a Sandbox-side DENY, is recorded as `SANDBOX_TOOL_OBSERVATION_RECORDED`. A browser result is a tool observation, not an entity contribution; provider and model names are labels, not attestation. Synthesis binds every contribution and every tool observation. A failed organization propagation is recorded as `ORGANIZATION_PROPAGATION_FAILED` and blocks completion until `repropagate()` succeeds.
+
+The live call (`.github/workflows/sandbox-live-llm.yml`) is manual and fails closed until `live/target.json` names a verified public Hugging Face Space. Its evidence is uploaded as a 90-day artifact: live-run evidence retention, not permanent custody.
