@@ -140,7 +140,7 @@ class EndToEnd(unittest.TestCase):
         ids = [o["contribution_id"] for o in outcomes]
         omitted = s.synthesize("fixture-work-001", ids[:-1], {"summary": "drops the unavailable one"})
         self.assertEqual((omitted["disposition"], omitted["failed_predicate"]),
-                         (DENY, "SYNTHESIS_BINDS_EVERY_RECORDED_CONTRIBUTION"))
+                         (DENY, "SYNTHESIS_BINDS_EVERY_RECORDED_INPUT"))
         synth = s.synthesize("fixture-work-001", ids, {"summary": "one contradiction found; one refusal; one failure; one unavailable",
                                                        "disagreement": ["a-json", "b-refused"]})
         self.assertEqual(synth["disposition"], ALLOW)
@@ -248,7 +248,7 @@ class Denials(unittest.TestCase):
         s = h.sandbox
         self.assertDenied(s.synthesize("fixture-work-001", [], {"s": 1}), "WORK_IS_ADMITTED")
         h.setup_assignments()
-        self.assertDenied(s.synthesize("fixture-work-001", [], {"s": 1}), "CONTRIBUTIONS_RECORDED")
+        self.assertDenied(s.synthesize("fixture-work-001", [], {"s": 1}), "SYNTHESIS_INPUTS_RECORDED")
         self.assertDenied(s.complete("fixture-work-001"), "SYNTHESIS_RECORDED")
         s.record(raw(h.envelope(A, "adversarial_review", "c1", "CONTRIBUTED", content={"x": 1})))
         self.assertDenied(s.synthesize("fixture-work-001", ["c1"], {"s": 1.5}), "NON_INTEGER_NUMBER")

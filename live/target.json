@@ -1,0 +1,20 @@
+{
+  "schema": "sv-llm.sandbox-live-llm-target/v1",
+  "status": "NOT_SELECTED",
+  "verified": false,
+  "target_class": "Public Hugging Face Space whose app is intentionally public and whose Space-specific terms/license do not prohibit automated use",
+  "excluded": [
+    {"surface": "duck.ai", "reason": "Duck.ai terms prohibit automated querying"}
+  ],
+  "verification_required_before_enabling": [
+    "One specific Hugging Face Space selected and named here",
+    "Space is public",
+    "Space-specific license and terms checked; automated use not prohibited",
+    "Current page structure and selectors captured into invocation.browser_actions",
+    "Response-marker behavior checked",
+    "verified set to true in a reviewed change"
+  ],
+  "selected_space": null,
+  "verification_record": null,
+  "invocation": null
+}

@@ -1,0 +1,41 @@
+{
+  "schema": "sv-llm.vendored-contract-manifest/v1",
+  "canonical_source": "StegVerse-Labs/StegBrowser",
+  "source_commit": "b0f652d96a172c6ae4649e79cd640a65bd915dab",
+  "published_tag_not_used": "v0.1.0-source (41404e72e21f17b803b8cd3fb062cfc9790f06e0, older)",
+  "integration_date": "2026-10-07",
+  "upstream_paths": {
+    "ecosystem_ephemeral.py": "src/stegbrowser/ecosystem_ephemeral.py",
+    "llm_profile.py": "src/stegbrowser/llm_profile.py",
+    "llm_browser_execution.py": "src/stegbrowser/llm_browser_execution.py",
+    "llm_transition.py": "src/stegbrowser/llm_transition.py"
+  },
+  "files": {
+    "ecosystem_ephemeral.py": "sha256:92914410acc8a1205288d2db48076da660a3e531900809934d3c17c1927f57e8",
+    "llm_profile.py": "sha256:eeefcbe86987ec2a4ae634984f849782741da3bf3ead53718748cb7528e699b0",
+    "llm_browser_execution.py": "sha256:01603914746fc9b981eb9325123e72a021453370f71d6dd990b8741a37bbd46a",
+    "llm_transition.py": "sha256:9db4a75fc55081ccdf0eb155641b06bde0bc00f8d1d2e821fd0f599ce8f5c26a"
+  },
+  "upstream_tests": {
+    "tests/stegbrowser_upstream/test_llm_profile.py": "sha256:5f19a1e1e1785755c433a08f8ffe604f82ee1a0e2668846f91360d5961177237",
+    "tests/stegbrowser_upstream/test_llm_transition_dispositions.py": "sha256:1a57556b8f4d8cda4d361c6823c363abee7394b45d0afccd52937db98ca15003",
+    "tests/stegbrowser_upstream/test_llm_manifested_browser_execution.py": "sha256:339883131bbac3154952e09f46ab77a208b28234d4afaee5b42f5bda09a277b8",
+    "tests/stegbrowser_upstream/test_ecosystem_ephemeral.py": "sha256:6c5f87e05d351c72c215a579b9d2e9b40e4d17cef1df813e171cebd5fecef488"
+  },
+  "sandbox_authored_not_upstream": [
+    "__init__.py",
+    "../../../tests/stegbrowser_upstream/conftest.py"
+  ],
+  "python_dependencies": {
+    "runtime": "standard library only for these four modules",
+    "browser": "playwright==1.52.0 (imported lazily by llm_browser_execution; required only for a real browser call)",
+    "browser_runtime": "Chromium via 'python -m playwright install chromium'"
+  },
+  "upstream_requirements_not_needed_by_these_modules": [
+    "jsonschema==4.23.0",
+    "publicsuffix2==2.20191221",
+    "cryptography==45.0.5"
+  ],
+  "license": "No LICENSE file in StegVerse-Labs/StegBrowser at this commit; same owner; provenance recorded here",
+  "authority_effect": "NONE"
+}

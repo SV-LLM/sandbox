@@ -1,0 +1,49 @@
+name: Sandbox Live llm.v1 Call (manual)
+
+# AT-04. Manual only; never runs on push or pull_request.
+# Disabled in effect until live/target.json names a verified public Hugging Face
+# Space: the runner fails closed with LIVE_TARGET_SELECTED_AND_VERIFIED before
+# installing a browser. Evidence is uploaded as a 90-day artifact
+# (live-run evidence retention, not permanent custody).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-llm:
+    runs-on: ubuntu-latest
+    env:
+      EVIDENCE_DIR: ${{ github.workspace }}/live-evidence
+      SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out SV-LLM/.github (registration, vendored contracts, organization ledger)
+        uses: actions/checkout@v4
+        with:
+          repository: SV-LLM/.github
+          ref: ed0c92462c330035d3cb46b7123c8e1e51a7dc2e
+          path: sv-llm-dotgithub
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Target gate
+        id: gate
+        run: python -c "import json,sys; t=json.load(open('live/target.json')); sys.exit(0 if t.get('verified') is True and t.get('invocation') else 1)" && echo "verified=true" >> "$GITHUB_OUTPUT" || echo "verified=false" >> "$GITHUB_OUTPUT"
+      - name: Install dependencies and Chromium
+        if: steps.gate.outputs.verified == 'true'
+        run: |
+          python -m pip install "jsonschema==4.26.0" "playwright==1.52.0"
+          python -m playwright install --with-deps chromium
+      - name: Live llm.v1 call
+        run: python -B live/run_live_llm.py
+      - name: Retain live-run evidence (90 days)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sandbox-live-llm-evidence-${{ github.run_id }}
+          path: ${{ github.workspace }}/live-evidence
+          retention-days: 90
+          if-no-files-found: error
