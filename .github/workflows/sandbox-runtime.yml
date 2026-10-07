@@ -49,6 +49,10 @@ jobs:
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub-registered
         run: python -B tests/test_live_target.py
+      - name: Live lanes, conformance vs authentic organization-ledger evidence (no network)
+        env:
+          SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub-registered
+        run: python -B tests/test_live_lanes.py
       - name: Provider interaction contract resolution (AT-04 Stage 2 contract layer)
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub-registered
