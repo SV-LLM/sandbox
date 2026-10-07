@@ -1,0 +1,278 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/SV-LLM/schemas/blob/main/provider-interaction-contract.schema.json",
+  "title": "sv-llm.provider-interaction-contract/v0.1",
+  "description": "Provider-owned interaction contract for a provider-specific live call (AT-04 Stage 2). It is held by the provider's own SV-LLM/<Provider> repository; the Sandbox resolves it for the assigned entity and derives a StegBrowser invocation only from an APPROVED and verified contract. A contract with surface_status NO_APPROVED_AUTOMATION_SURFACE names no origin, selectors or credentials and records the provider terms that withhold automated access; the Sandbox refuses it with FAIL_CLOSED. APPROVED requires explicit written automation permission from the provider. credential_mode is NONE in v0.1; a credentialed surface requires a versioned contract change. A contract grants no governance authority and is never a live/target.json.",
+  "type": "object",
+  "required": [
+    "schema",
+    "entity",
+    "repository",
+    "contract_role",
+    "authority_effect",
+    "surface_status"
+  ],
+  "properties": {
+    "schema": {
+      "const": "sv-llm.provider-interaction-contract/v0.1"
+    },
+    "entity": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+(?![\\s\\S])",
+      "description": "organization-tree repositories[].name value; equals the entity-capability declaration's repository."
+    },
+    "contract_role": {
+      "const": "PROVIDER_INTERACTION_CONTRACT"
+    },
+    "authority_effect": {
+      "const": "NONE"
+    },
+    "surface_status": {
+      "enum": [
+        "NO_APPROVED_AUTOMATION_SURFACE",
+        "APPROVED"
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/no_approved_surface"
+    },
+    {
+      "$ref": "#/$defs/approved_surface"
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}(?![\\s\\S])"
+    },
+    "https_origin": {
+      "type": "string",
+      "pattern": "^https://[a-z0-9.-]+(?![\\s\\S])"
+    },
+    "terms_basis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "terms_url",
+        "section",
+        "effective_date",
+        "clause",
+        "observed_at"
+      ],
+      "properties": {
+        "terms_url": {
+          "type": "string",
+          "pattern": "^https://"
+        },
+        "section": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effective_date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}(?![\\s\\S])"
+        },
+        "clause": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Verbatim provider terms text."
+        },
+        "observed_at": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}(?![\\s\\S])"
+        },
+        "observed_via": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Where the clause was read when not read on terms_url itself."
+        }
+      }
+    },
+    "no_approved_surface": {
+      "type": "object",
+      "required": [
+        "terms_basis",
+        "unblock_condition"
+      ],
+      "properties": {
+        "schema": true,
+        "entity": true,
+        "repository": true,
+        "contract_role": true,
+        "authority_effect": true,
+        "surface_status": {
+          "const": "NO_APPROVED_AUTOMATION_SURFACE"
+        },
+        "terms_basis": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/terms_basis"
+          }
+        },
+        "unblock_condition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "approved_surface": {
+      "type": "object",
+      "required": [
+        "automation_permission",
+        "surface",
+        "credential_mode",
+        "selectors",
+        "result_extraction",
+        "evidence_requirements",
+        "attribution",
+        "verified",
+        "verification_evidence"
+      ],
+      "properties": {
+        "schema": true,
+        "entity": true,
+        "repository": true,
+        "contract_role": true,
+        "authority_effect": true,
+        "surface_status": {
+          "const": "APPROVED"
+        },
+        "automation_permission": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "basis",
+            "reference",
+            "document_sha256"
+          ],
+          "properties": {
+            "basis": {
+              "const": "PROVIDER_EXPLICIT_WRITTEN_PERMISSION"
+            },
+            "reference": {
+              "type": "string",
+              "minLength": 1
+            },
+            "document_sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        },
+        "surface": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "profile",
+            "origin",
+            "secure_url"
+          ],
+          "properties": {
+            "kind": {
+              "const": "BROWSER_WEB_SURFACE"
+            },
+            "profile": {
+              "const": "llm.v1"
+            },
+            "origin": {
+              "$ref": "#/$defs/https_origin"
+            },
+            "secure_url": {
+              "type": "string",
+              "pattern": "^https://"
+            }
+          }
+        },
+        "credential_mode": {
+          "const": "NONE"
+        },
+        "selectors": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "prompt_input",
+            "submit",
+            "response_ready",
+            "response"
+          ],
+          "properties": {
+            "prompt_input": {
+              "type": "string",
+              "minLength": 1
+            },
+            "submit": {
+              "type": "string",
+              "minLength": 1
+            },
+            "response_ready": {
+              "type": "string",
+              "minLength": 1
+            },
+            "response": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "result_extraction": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "response_marker_required"
+          ],
+          "properties": {
+            "response_marker_required": {
+              "type": "boolean"
+            }
+          }
+        },
+        "evidence_requirements": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "attribution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "provider_attribution_allowed"
+          ],
+          "properties": {
+            "provider_attribution_allowed": {
+              "type": "boolean"
+            }
+          }
+        },
+        "verified": {
+          "type": "boolean"
+        },
+        "verification_evidence": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

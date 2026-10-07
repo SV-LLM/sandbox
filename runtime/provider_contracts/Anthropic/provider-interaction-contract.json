@@ -1,0 +1,22 @@
+{
+  "schema": "sv-llm.provider-interaction-contract/v0.1",
+  "entity": "Anthropic",
+  "repository": "Anthropic",
+  "contract_role": "PROVIDER_INTERACTION_CONTRACT",
+  "authority_effect": "NONE",
+  "surface_status": "NO_APPROVED_AUTOMATION_SURFACE",
+  "terms_basis": [
+    {
+      "terms_url": "https://www.anthropic.com/legal/consumer-terms",
+      "section": "3. Use of our Services",
+      "effective_date": "2025-10-08",
+      "clause": "Except when you are accessing our Services via an Anthropic API Key or where we otherwise explicitly permit it, to access the Services through automated or non-human means, whether through a bot, script, or otherwise.",
+      "observed_at": "2026-10-07"
+    }
+  ],
+  "unblock_condition": "Explicit written permission from Anthropic for automated browser access to a named web surface, recorded here as automation_permission with the document digest. Access via an Anthropic API Key is a different surface and is not authorized by this contract.",
+  "notes": [
+    "StegBrowser is never pointed at claude.ai or any other Anthropic consumer surface while this status holds.",
+    "The Sandbox refuses this contract with FAIL_CLOSED PROVIDER_AUTOMATION_SURFACE_APPROVED."
+  ]
+}

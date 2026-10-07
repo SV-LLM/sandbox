@@ -283,7 +283,8 @@ class Vendor(unittest.TestCase):
     def test_vendored_contracts_verified(self):
         h = Harness()
         manifest = h.sandbox.registration.verify_vendor(ROOT / "runtime/contracts")
-        self.assertEqual(set(manifest["files"]), {"sandbox-work.schema.json", "contribution.schema.json"})
+        self.assertEqual(set(manifest["files"]), {"sandbox-work.schema.json", "contribution.schema.json",
+                                                  "provider-interaction-contract.schema.json"})
 
 
 if __name__ == "__main__":

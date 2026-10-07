@@ -1,0 +1,23 @@
+{
+  "schema": "sv-llm.provider-interaction-contract/v0.1",
+  "entity": "OpenAI",
+  "repository": "OpenAI",
+  "contract_role": "PROVIDER_INTERACTION_CONTRACT",
+  "authority_effect": "NONE",
+  "surface_status": "NO_APPROVED_AUTOMATION_SURFACE",
+  "terms_basis": [
+    {
+      "terms_url": "https://openai.com/policies/row-terms-of-use/",
+      "section": "Using our Services: What you cannot do",
+      "effective_date": "2024-12-11",
+      "clause": "Automatically or programmatically extract data or Output (defined below).",
+      "observed_at": "2026-10-07",
+      "observed_via": "https://open.windriver.com/info/uni-license-list/licenses/openai-tou-20241211.html (openai.com returned HTTP 403 to the reading environment)"
+    }
+  ],
+  "unblock_condition": "Explicit written permission from OpenAI for automated browser access to a named web surface, recorded here as automation_permission with the document digest. The OpenAI API is a different surface and is not authorized by this contract. Re-read terms_url directly when reachable and update terms_basis if the clause or effective date has changed.",
+  "notes": [
+    "StegBrowser is never pointed at chatgpt.com or any other OpenAI consumer surface while this status holds.",
+    "The Sandbox refuses this contract with FAIL_CLOSED PROVIDER_AUTOMATION_SURFACE_APPROVED."
+  ]
+}

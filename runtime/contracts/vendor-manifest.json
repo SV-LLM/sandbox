@@ -6,6 +6,13 @@
   "authority_effect": "NONE",
   "files": {
     "sandbox-work.schema.json": "sha256:0a5dead57b8e40a451f28467451e2509db81f0ec16f06e5a35d040d7ed5fc128",
-    "contribution.schema.json": "sha256:bbe40ce48046e1dbbf2596df2995458153b081596beb6498c2b7b1d5ee251181"
+    "contribution.schema.json": "sha256:bbe40ce48046e1dbbf2596df2995458153b081596beb6498c2b7b1d5ee251181",
+    "provider-interaction-contract.schema.json": "sha256:ca7fabe55dad7cccf3efb1d0e5178691c4c11884daeda782bd7c4b3da873b1f1"
+  },
+  "file_sources": {
+    "provider-interaction-contract.schema.json": {
+      "commit": "aa55e7eaebdcd3b27c8fac8c87c5dec88210a7c8",
+      "pull_request": "SV-LLM/schemas PR #2"
+    }
   }
 }
