@@ -5,17 +5,70 @@ target is a StegVerse-controlled conformance surface, never a provider: no
 provider attribution, no provider/model labels, and a pass proves only the
 live browser path, not OpenAI/Anthropic integration.
 
-Evidence goes to EVIDENCE_DIR (repo ledger, org ledger, report, digest manifest),
-which the workflow uploads as a 90-day artifact: live-run evidence retention,
-not permanent custody. The parent transition is a workflow-local SV-LLM/.github
-emit.py fixture, labeled as such in the report.
+Two lanes (SV-LLM-LIVE-LEDGER-EVIDENCE-SPLIT-001, LIVE_LANE):
+
+  conformance  WORKFLOW_LOCAL_ORGANIZATION_LEDGER_CONFORMANCE. A fresh
+               workflow-local organization ledger opened with a declared
+               GENESIS and a workflow-local SV-LLM/.github emit.py fixture
+               parent. Never authoritative organization runtime reality.
+  authentic    AUTHENTIC_SV_LLM_ORGANIZATION_LEDGER_RUNTIME_EVIDENCE. Binds the
+               store SV-LLM/.github's org-contract declares as
+               authoritative_ledger_store; never a workflow-local root and
+               never the STEGVERSE_ORG_LEDGER_ROOT environment variable. Never
+               passes GENESIS and never synthesizes its parent: the parent is
+               the PARENT_ORG_RECEIPT_SHA256 claim, proven by exact keyed
+               readback. Refusals are evaluated in a fixed order: store
+               binding, ledger opened, parent present.
+
+Both lanes prove each organization receipt and its retained source receipt by
+exact keyed whole-document readback. Evidence goes to EVIDENCE_DIR, which the
+workflow uploads as a 90-day artifact: live-run evidence retention, not
+permanent custody. Every non-ALLOW result exits 1; report.json is the
+disposition record.
 """
 from __future__ import annotations
-import hashlib, importlib.util, json, os, subprocess, sys
+import hashlib, importlib.util, json, os, re, subprocess, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime"))
+
+CONFORMANCE, AUTHENTIC = "conformance", "authentic"
+EVIDENCE_CLASS = {CONFORMANCE: "WORKFLOW_LOCAL_ORGANIZATION_LEDGER_CONFORMANCE",
+                  AUTHENTIC: "AUTHENTIC_SV_LLM_ORGANIZATION_LEDGER_RUNTIME_EVIDENCE"}
+PARENT_BASIS = {CONFORMANCE: "WORKFLOW_LOCAL_SV_LLM_DOTGITHUB_EMIT_FIXTURE",
+                AUTHENTIC: "AUTHORITATIVE_STORE_EXACT_KEYED_READBACK"}
+RETENTION = "LIVE_RUN_EVIDENCE_RETENTION_NOT_PERMANENT_CUSTODY"
+RETRY_ENTRYPOINT = ("SV-LLM/sandbox:.github/workflows/sandbox-live-llm.yml (workflow_dispatch, lane=authentic)"
+                    " -> live/run_live_llm.py::main")
+DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
+
+# Store kinds this Sandbox build can bind for the authentic lane. None yet: the
+# durable non-POSIX LedgerStore is owner decision O1. A POSIX root is never
+# authoritative here.
+STORE_BINDERS: dict = {}
+POSIX_KINDS = {"posix", "posix_ledger_store", "PosixLedgerStore", "POSIX"}
+
+REFUSALS = {
+    "AUTHENTIC_ORGANIZATION_LEDGER_STORE_NOT_MATERIALIZED": (
+        "Declare an authoritative SV-LLM LedgerStore binding (authoritative_ledger_store) in SV-LLM/.github "
+        "org-contract that satisfies the existing LedgerStore contract.",
+        "Retry the same manifested authentic lane after authoritative_ledger_store is declared and bindable."),
+    "ORG_LEDGER_GENESIS_NOT_DECLARED": (
+        "Run the separately manifested SV-LLM organization ledger opening transition "
+        "(SV-LLM/.github org-runtime/crossing.py::open_organization_ledger) once against the bound authoritative store.",
+        "Retry after the authoritative ledger has been explicitly opened."),
+    "AUTHENTIC_PARENT_TRANSITION_NOT_IN_AUTHORITATIVE_STORE": (
+        "Append the authentic parent transition to the authoritative organization store and name its receipt "
+        "digest as parent_org_receipt_sha256.",
+        "Retry after the named parent is present by exact keyed readback."),
+}
+
+
+class Refused(Exception):
+    def __init__(self, failed_predicate: str, detail: str | None = None):
+        super().__init__(failed_predicate)
+        self.failed_predicate, self.detail = failed_predicate, detail
 
 
 def write(path: Path, value) -> None:
@@ -23,12 +76,14 @@ def write(path: Path, value) -> None:
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
 
 
-def digest_manifest(EVIDENCE: Path) -> None:
+def digest_manifest(EVIDENCE: Path, report: dict) -> None:
     files = {str(p.relative_to(EVIDENCE)): "sha256:" + hashlib.sha256(p.read_bytes()).hexdigest()
              for p in sorted(EVIDENCE.rglob("*")) if p.is_file() and p.name != "digests.json"}
-    write(EVIDENCE / "digests.json", {"schema": "sv-llm.live-run-evidence-digests/v1",
-                                      "retention_class": "LIVE_RUN_EVIDENCE_RETENTION_NOT_PERMANENT_CUSTODY",
-                                      "files": files})
+    write(EVIDENCE / "digests.json", {"schema": "sv-llm.live-run-evidence-digests/v1", "lane": report["lane"],
+                                      "evidence_class": report["evidence_class"],
+                                      "authoritative_organization_runtime_reality":
+                                          report["authoritative_organization_runtime_reality"],
+                                      "retention_class": RETENTION, "files": files})
 
 
 REQUIRED_SELECTORS = ("prompt_input", "submit", "response_ready", "response")
@@ -70,50 +125,151 @@ def derive_invocation(target: dict):
                                 {"op": "read_text", "selector": sel["response"]}]}, None
 
 
-def main() -> int:
+def load_dotgithub(dotgithub: Path):
+    spec = importlib.util.spec_from_file_location("agg", dotgithub / "resident-runtime/aggregate_repo_transition.py")
+    agg = importlib.util.module_from_spec(spec); spec.loader.exec_module(agg)
+    return agg
+
+
+def bind_authoritative_store(dotgithub: Path):
+    """C3: bind the declared authoritative store, or refuse with the reason."""
+    contract = json.loads((dotgithub / ".stegverse/transition-ledger/org-contract.json").read_text())
+    if "authoritative_ledger_store" not in contract:
+        raise Refused("AUTHENTIC_ORGANIZATION_LEDGER_STORE_NOT_MATERIALIZED", "ABSENT")
+    declared = contract["authoritative_ledger_store"]
+    if not (isinstance(declared, dict) and isinstance(declared.get("kind"), str) and declared["kind"]
+            and isinstance(declared.get("locator"), str) and declared["locator"]):
+        raise Refused("AUTHENTIC_ORGANIZATION_LEDGER_STORE_NOT_MATERIALIZED", "MALFORMED")
+    if declared["kind"] in POSIX_KINDS:
+        raise Refused("AUTHENTIC_ORGANIZATION_LEDGER_STORE_NOT_MATERIALIZED", "POSIX_ROOT_REJECTED")
+    if declared["kind"] not in STORE_BINDERS:
+        raise Refused("AUTHENTIC_ORGANIZATION_LEDGER_STORE_NOT_MATERIALIZED", "KIND_NOT_IMPLEMENTED")
+    return STORE_BINDERS[declared["kind"]](declared["locator"])
+
+
+def keyed_readback(agg, store, org_receipt: dict, source_receipt: dict) -> str | None:
+    """Exact keyed whole-document readback; returns the failed predicate or None."""
+    if store.get(agg.receipt_key(org_receipt["receipt_sha256"])) != org_receipt:
+        return "ORG_RECEIPT_EXACT_READBACK"
+    if store.get(agg.source_key(org_receipt["source_transition_sha256"])) != source_receipt:
+        return "SOURCE_RECEIPT_RETAINED"
+    return None
+
+
+def authentic_parent(agg, store, claimed) -> tuple[dict, dict]:
+    """C1 steps 2-3: the bound ledger is opened, then the claimed parent is present by exact keyed readback."""
+    if store.get(agg.HEAD_KEY) is None:
+        raise Refused("ORG_LEDGER_GENESIS_NOT_DECLARED")
+    if not (isinstance(claimed, str) and DIGEST.match(claimed)):
+        raise Refused("AUTHENTIC_PARENT_TRANSITION_NOT_IN_AUTHORITATIVE_STORE", "PARENT_DIGEST_MISSING_OR_MALFORMED")
+    org = store.get(agg.receipt_key(claimed))
+    body = dict(org or {}); body.pop("receipt_sha256", None)
+    if not org or org.get("receipt_sha256") != claimed or agg.sha(body) != claimed:
+        raise Refused("AUTHENTIC_PARENT_TRANSITION_NOT_IN_AUTHORITATIVE_STORE", "ORG_RECEIPT_NOT_PRESENT")
+    source = store.get(agg.source_key(org.get("source_transition_sha256") or ""))
+    try:
+        retained = source is not None and \
+            agg.verify_source(source)["source_transition_sha256"] == org["source_transition_sha256"]
+    except (SystemExit, ValueError, KeyError, TypeError):  # verify_source refuses a malformed receipt
+        retained = False
+    if not retained:
+        raise Refused("AUTHENTIC_PARENT_TRANSITION_NOT_IN_AUTHORITATIVE_STORE", "SOURCE_RECEIPT_NOT_PRESENT")
+    return org, source
+
+
+def preflight(dotgithub: Path, claimed_parent):
+    """Authentic-lane gate, run before any browser is installed. C1 order: binding, opened, parent."""
+    agg = load_dotgithub(dotgithub)
+    store = bind_authoritative_store(dotgithub)
+    org, source = authentic_parent(agg, store, claimed_parent)
+    return agg, store, org, source
+
+
+def new_report(lane: str, target: dict) -> dict:
+    return {"schema": "sv-llm.sandbox-live-llm-report/v1", "stage": "STEGBROWSER_LIVE_PATH_CONFORMANCE",
+            "lane": lane, "evidence_class": EVIDENCE_CLASS.get(lane),
+            "authoritative_organization_runtime_reality": False,
+            "target_id": target.get("target_id"), "secure_url": target.get("secure_url"),
+            "provider_attribution": "NONE", "proves_provider_integration": False,
+            "live_path_exercised": False, "successful_live_response_observed": False,
+            "retention_class": RETENTION, "parent_transition_basis": PARENT_BASIS.get(lane),
+            "authority_effect": "NONE"}
+
+
+def refuse(report: dict, refused: Refused) -> None:
+    report.update(disposition="FAIL_CLOSED", failed_predicate=refused.failed_predicate)
+    if refused.detail:
+        report["detail"] = refused.detail
+    if refused.failed_predicate in REFUSALS:
+        repair, next_attempt = REFUSALS[refused.failed_predicate]
+        report.update(required_evidence_or_repair=repair, retry_entrypoint=RETRY_ENTRYPOINT, next_attempt=next_attempt)
+
+
+def finish(EVIDENCE: Path, report: dict, code: int) -> int:
+    write(EVIDENCE / "report.json", report)
+    digest_manifest(EVIDENCE, report)
+    print(json.dumps(report, indent=2))
+    return code
+
+
+def main(argv=None, *, playwright_factory=None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
     DOTGITHUB = Path(os.environ["SV_LLM_DOTGITHUB_ROOT"]).resolve()
     EVIDENCE = Path(os.environ["EVIDENCE_DIR"]).resolve()
+    lane = os.environ.get("LIVE_LANE") or CONFORMANCE
+    claimed_parent = os.environ.get("PARENT_ORG_RECEIPT_SHA256") or None
     target = json.loads((ROOT / "live/target.json").read_text())
-    report = {"schema": "sv-llm.sandbox-live-llm-report/v1", "stage": "STEGBROWSER_LIVE_PATH_CONFORMANCE",
-              "target_id": target.get("target_id"), "secure_url": target.get("secure_url"),
-              "provider_attribution": "NONE", "proves_provider_integration": False,
-              "live_path_exercised": False, "successful_live_response_observed": False,
-              "retention_class": "LIVE_RUN_EVIDENCE_RETENTION_NOT_PERMANENT_CUSTODY",
-              "parent_transition_basis": "WORKFLOW_LOCAL_SV_LLM_DOTGITHUB_EMIT_FIXTURE",
-              "authority_effect": "NONE"}
+    report = new_report(lane, target)
+    if lane not in EVIDENCE_CLASS:
+        refuse(report, Refused("LIVE_LANE_DECLARED"))
+        return finish(EVIDENCE, report, 1)
+    if lane == AUTHENTIC:
+        try:
+            agg, store, parent_org, parent_repo = preflight(DOTGITHUB, claimed_parent)
+        except Refused as refused:
+            refuse(report, refused)
+            return finish(EVIDENCE, report, 1)
+        if "--preflight" in argv:
+            report.update(disposition="ALLOW", preflight="AUTHENTIC_STORE_BOUND_AND_PARENT_PRESENT")
+            return finish(EVIDENCE, report, 0)
     inv, refused = derive_invocation(target)
     if refused:
-        report.update(disposition="FAIL_CLOSED", failed_predicate=refused)
-        write(EVIDENCE / "report.json", report)
-        digest_manifest(EVIDENCE)
-        print(json.dumps(report, indent=2))
-        return 1
+        refuse(report, Refused(refused))
+        return finish(EVIDENCE, report, 1)
 
     os.environ["STEGVERSE_REPO_LEDGER_ROOT"] = str(EVIDENCE / "sandbox-repo-ledger")
-    os.environ["STEGVERSE_ORG_LEDGER_ROOT"] = str(EVIDENCE / "sv-llm-org-ledger")
     from ledger import Ledger, sha
     from sandbox import Sandbox
     from stegbrowser_tool import StegBrowserTool
-    spec = importlib.util.spec_from_file_location("agg", DOTGITHUB / "resident-runtime/aggregate_repo_transition.py")
-    agg = importlib.util.module_from_spec(spec); spec.loader.exec_module(agg)
-    propagate = lambda r, c: agg.aggregate_transition(r, org_transition_class=c, boundary_evidence={"source": "SV-LLM/sandbox"},
-                                                      authority_effect="NONE")
-    sb = Sandbox(dotgithub_root=DOTGITHUB, ledger=Ledger(EVIDENCE / "sandbox-repo-ledger"), propagate=propagate)
     subject = {"intended_action": "STEGBROWSER_LIVE_PATH_CONFORMANCE", "target_id": target["target_id"]}
-    run = subprocess.run([sys.executable, str(DOTGITHUB / ".stegverse/transition-ledger/emit.py"),
-                          "--transition-id", "LIVE_FIXTURE_PARENT:" + sha(subject)[7:31],
-                          "--transition-class", "ORGANIZATION_INGRESS_MATERIALIZED",
-                          "--predecessor-state-sha256", sha({"live": "predecessor"}),
-                          "--successor-state-sha256", sha(subject), "--evidence-json", json.dumps({"disposition": "ALLOW"})],
-                         capture_output=True, text=True, check=True,
-                         env=dict(os.environ, STEGVERSE_REPO_LEDGER_ROOT=str(EVIDENCE / "dotgithub-fixture-ledger")))
-    parent_repo = json.loads(run.stdout)
-    # First append on this run's fresh organization ledger: genesis is declared, never defaulted.
-    parent_org = agg.aggregate_transition(parent_repo, org_transition_class="ORGANIZATION_INGRESS_MATERIALIZED", authority_effect="NONE",
-                                          genesis=True)
+    appended = []  # (organization receipt, exact source receipt) for keyed readback
+    if lane == CONFORMANCE:
+        agg = load_dotgithub(DOTGITHUB)
+        store = agg.PosixLedgerStore(EVIDENCE / "sv-llm-org-ledger")
+        run = subprocess.run([sys.executable, str(DOTGITHUB / ".stegverse/transition-ledger/emit.py"),
+                              "--transition-id", "LIVE_FIXTURE_PARENT:" + sha(subject)[7:31],
+                              "--transition-class", "ORGANIZATION_INGRESS_MATERIALIZED",
+                              "--predecessor-state-sha256", sha({"live": "predecessor"}),
+                              "--successor-state-sha256", sha(subject), "--evidence-json", json.dumps({"disposition": "ALLOW"})],
+                             capture_output=True, text=True, check=True,
+                             env=dict(os.environ, STEGVERSE_REPO_LEDGER_ROOT=str(EVIDENCE / "dotgithub-fixture-ledger")))
+        parent_repo = json.loads(run.stdout)
+        # First append on this run's fresh workflow-local ledger: genesis is declared, never defaulted.
+        parent_org = agg.aggregate_transition(parent_repo, org_transition_class="ORGANIZATION_INGRESS_MATERIALIZED",
+                                              authority_effect="NONE", genesis=True, store=store)
+        appended.append((parent_org, parent_repo))
+
+    def propagate(receipt, transition_class):
+        # FROM_HEAD only; GENESIS is never passed here.
+        org = agg.aggregate_transition(receipt, org_transition_class=transition_class,
+                                       boundary_evidence={"source": "SV-LLM/sandbox"}, authority_effect="NONE", store=store)
+        appended.append((org, receipt))
+        return org
+
+    sb = Sandbox(dotgithub_root=DOTGITHUB, ledger=Ledger(EVIDENCE / "sandbox-repo-ledger"), propagate=propagate)
     work = {"schema": "sv-llm.sandbox-work/v0.1", "work_id": "live-llm-" + sha(inv)[7:19],
             "manifested_request": {"manifest_id": "at04-stage1-live-path-conformance", "tool_invocations": [inv]},
-            "parent_transition": {"transition_class": "ORGANIZATION_INGRESS_MATERIALIZED",
+            "parent_transition": {"transition_class": parent_repo.get("transition_class"),
                                   "repo_receipt_sha256": parent_repo["receipt_sha256"],
                                   "org_receipt_sha256": parent_org["receipt_sha256"],
                                   "subject_or_artifact_digest": sha(subject)},
@@ -121,23 +277,28 @@ def main() -> int:
             "participation_policy": {"mode": "SINGLE"},
             "expected_output_or_handoff": {"successor_transition_class": "SANDBOX_SYNTHESIS_RECORDED"}}
     admitted = sb.admit(json.dumps(work).encode(), parent_repo_receipt=parent_repo, parent_org_receipt=parent_org, subject=subject)
-    obs = StegBrowserTool(sb).invoke(work["work_id"], inv["invocation_id"])
+    obs = StegBrowserTool(sb).invoke(work["work_id"], inv["invocation_id"], playwright_factory=playwright_factory)
     synth = sb.synthesize(work["work_id"], [obs["observation_id"]], {"summary": "AT-04 Stage 1 StegBrowser live-path conformance; no provider attribution"})
     done = sb.complete(work["work_id"])
+    readback = [keyed_readback(agg, store, org, source) for org, source in appended]
+    failed_readback = next((f for f in readback if f), None)
     report.update(work_id=work["work_id"], admitted=admitted["disposition"], observation_id=obs["observation_id"],
                   disposition=obs["disposition"], failed_predicate=obs.get("failed_predicate"),
                   evaluation_stage=obs.get("evaluation_stage"),
                   live_path_exercised=bool(obs.get("stegbrowser_invoked")),
                   successful_live_response_observed=obs["disposition"] == "ALLOW",
                   synthesis=synth["disposition"], completion=done["disposition"],
-                  org_readback=[r["repo_receipt_sha256"] for r in
-                                (json.loads(p.read_text()) for p in sorted((EVIDENCE / "sv-llm-org-ledger/receipts").glob("*.json")))
-                                if r.get("source_repository") == "SV-LLM/sandbox"],
+                  org_receipts=[org["receipt_sha256"] for org, _ in appended],
+                  org_readback="EXACT_KEYED_READBACK_PASS" if not failed_readback else "EXACT_KEYED_READBACK_FAIL",
                   repo_receipts=[r["receipt_sha256"] for r in sb.ledger.chain()])
-    write(EVIDENCE / "report.json", report)
-    digest_manifest(EVIDENCE)
-    print(json.dumps(report, indent=2))
-    return 0 if report["successful_live_response_observed"] and done["disposition"] == "ALLOW" else 1
+    allowed = obs["disposition"] == "ALLOW" and done["disposition"] == "ALLOW" and not failed_readback \
+        and admitted["disposition"] == "ALLOW"
+    if failed_readback and obs["disposition"] == "ALLOW":
+        report.update(disposition="FAIL_CLOSED", failed_predicate=failed_readback)
+    elif obs["disposition"] == "ALLOW" and not allowed:
+        report.update(disposition="FAIL_CLOSED", failed_predicate="SANDBOX_COMPLETION_ALLOW")
+    report["authoritative_organization_runtime_reality"] = lane == AUTHENTIC and allowed
+    return finish(EVIDENCE, report, 0 if allowed else 1)
 
 
 if __name__ == "__main__":

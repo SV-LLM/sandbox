@@ -7,9 +7,29 @@ name: Sandbox Live llm.v1 Path Conformance (manual)
 # closed with LIVE_TARGET_SELECTED_AND_VERIFIED before installing a browser.
 # Evidence is uploaded as a 90-day artifact (live-run evidence retention, not
 # permanent custody).
+#
+# Lanes (SV-LLM-LIVE-LEDGER-EVIDENCE-SPLIT-001):
+#   conformance  WORKFLOW_LOCAL_ORGANIZATION_LEDGER_CONFORMANCE; never
+#                authoritative organization runtime reality.
+#   authentic    binds the store SV-LLM/.github org-contract declares as
+#                authoritative_ledger_store and proves parent_org_receipt_sha256
+#                by exact keyed readback; refusals are checked before any
+#                browser install. Every non-ALLOW run ends red (exit 1);
+#                report.json in the artifact is the disposition record.
 
 on:
   workflow_dispatch:
+    inputs:
+      lane:
+        description: "Evidence lane"
+        type: choice
+        options: [conformance, authentic]
+        default: conformance
+      parent_org_receipt_sha256:
+        description: "Authentic lane only: organization receipt digest of the parent transition in the authoritative store"
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -20,6 +40,8 @@ jobs:
     env:
       EVIDENCE_DIR: ${{ github.workspace }}/live-evidence
       SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
+      LIVE_LANE: ${{ inputs.lane }}
+      PARENT_ORG_RECEIPT_SHA256: ${{ inputs.parent_org_receipt_sha256 }}
     steps:
       - uses: actions/checkout@v4
       - name: Check out SV-LLM/.github (registration, vendored contracts, organization ledger)
@@ -34,6 +56,9 @@ jobs:
       - name: Target gate
         id: gate
         run: python -c "import json,sys; t=json.load(open('live/target.json')); sys.exit(0 if t.get('verified') is True else 1)" && echo "verified=true" >> "$GITHUB_OUTPUT" || echo "verified=false" >> "$GITHUB_OUTPUT"
+      - name: Authentic lane gate (store binding, ledger opened, parent present)
+        if: inputs.lane == 'authentic'
+        run: python -B live/run_live_llm.py --preflight
       - name: Install dependencies and Chromium
         if: steps.gate.outputs.verified == 'true'
         run: |
@@ -45,7 +70,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: sandbox-live-llm-evidence-${{ github.run_id }}
+          name: sandbox-live-llm-${{ inputs.lane }}-evidence-${{ github.run_id }}
           path: ${{ github.workspace }}/live-evidence
           retention-days: 90
           if-no-files-found: error
