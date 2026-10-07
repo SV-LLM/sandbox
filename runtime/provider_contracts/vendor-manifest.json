@@ -1,0 +1,28 @@
+{
+  "schema": "sv-llm.vendored-contract-manifest/v1",
+  "canonical_source": "SV-LLM provider entity repositories",
+  "sources": {
+    "Anthropic": {
+      "repository": "SV-LLM/Anthropic",
+      "commit": "36e82575d91e4127b4b69f91b0b8ed11e2b71c44",
+      "pull_request": "PR #5",
+      "paths": {
+        "provider-interaction-contract.json": "contracts/provider-interaction-contract.json"
+      }
+    },
+    "OpenAI": {
+      "repository": "SV-LLM/OpenAI",
+      "commit": "aae0b2f03fd27a7ba1de41b3742ecdf2f33d3f74",
+      "pull_request": "PR #19",
+      "paths": {
+        "provider-interaction-contract.json": "contracts/provider-interaction-contract.json"
+      }
+    }
+  },
+  "reason": "Provider repositories are private; CI here cannot check them out. Each contract is held by its provider repository and vendored byte-for-byte; the Sandbox verifies these digests before resolving any contract.",
+  "authority_effect": "NONE",
+  "files": {
+    "Anthropic/provider-interaction-contract.json": "sha256:54c058c585589eae3645ba136f496d0b1a080c28e059445a6e603c62ded843b1",
+    "OpenAI/provider-interaction-contract.json": "sha256:96bb7cbd271d2fff64e6825b476cbda8958b2c24579ac40eefb60d3c18608ee8"
+  }
+}

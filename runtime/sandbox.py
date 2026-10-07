@@ -15,6 +15,7 @@ Transition classes:
   SANDBOX_SYNTHESIS_RECORDED / SANDBOX_SYNTHESIS_DENIED
   SANDBOX_WORK_COMPLETED / SANDBOX_WORK_COMPLETION_DENIED
   SANDBOX_TOOL_OBSERVATION_RECORDED (ALLOW, DENY or FAIL_CLOSED tool attempts; runtime/stegbrowser_tool.py)
+  PROVIDER_INTERACTION_RESOLVED / PROVIDER_INTERACTION_REFUSED (provider contract resolution; runtime/provider_contract.py)
   ORGANIZATION_PROPAGATION_FAILED (repo-level FAIL_CLOSED; no org receipt is fabricated)
   ORGANIZATION_PROPAGATION_RECOVERED (repropagate() succeeded for a failed receipt)
 
