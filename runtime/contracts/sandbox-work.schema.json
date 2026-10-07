@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/SV-LLM/schemas/blob/main/sandbox-work.schema.json",
+  "title": "sv-llm.sandbox-work/v0.1",
+  "description": "Bounded Sandbox work object. Bound to the exact receipted SV-LLM transition that admitted or originated it. Instances are parsed and digested under SV_LLM_CANONICAL_JSON_V1 (docs/SV_LLM_CANONICAL_JSON_V1.md). Participation creates no governance authority.",
+  "type": "object",
+  "required": [
+    "schema",
+    "work_id",
+    "manifested_request",
+    "parent_transition",
+    "canonical_context_refs",
+    "requested_capabilities",
+    "permitted_capabilities",
+    "participation_policy",
+    "expected_output_or_handoff"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "sv-llm.sandbox-work/v0.1"
+    },
+    "work_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "manifested_request": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "The manifested request carried into Sandbox. Its inner shape is defined by the manifest contract, not by this document."
+    },
+    "parent_transition": {
+      "$ref": "#/$defs/parent_transition"
+    },
+    "canonical_context_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/canonical_context_ref"
+      },
+      "description": "References to receipted canonical context, never copies of it."
+    },
+    "requested_capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "capability-id.schema.json"
+      },
+      "description": "What the problem requires."
+    },
+    "permitted_capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "capability-id.schema.json"
+      },
+      "description": "What participating entities may perform."
+    },
+    "participation_policy": {
+      "type": "object",
+      "required": [
+        "mode"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "SINGLE",
+            "MULTIPLE",
+            "CHALLENGER"
+          ]
+        }
+      },
+      "description": "Controls participation without creating governance authority."
+    },
+    "expected_output_or_handoff": {
+      "type": "object",
+      "minProperties": 1,
+      "anyOf": [
+        {
+          "required": [
+            "output_schema"
+          ]
+        },
+        {
+          "required": [
+            "successor_transition_class"
+          ]
+        }
+      ],
+      "properties": {
+        "output_schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "successor_transition_class": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "description": "The intended Sandbox product or successor transition class."
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}(?![\\s\\S])"
+    },
+    "parent_transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transition_class",
+        "repo_receipt_sha256",
+        "org_receipt_sha256",
+        "subject_or_artifact_digest"
+      ],
+      "properties": {
+        "transition_class": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repo_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "org_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "subject_or_artifact_digest": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "canonical_context_ref": {
+      "description": "Either a receipted cross-ecosystem review view (view_id + intr_receipt_id, per ecosystem-review-view.schema.json) or receipted SV-LLM-local context (repository and organization receipt digests). A foreign repository path alone is not canonical evidence.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "view_id",
+            "intr_receipt_id"
+          ],
+          "properties": {
+            "view_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "intr_receipt_id": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "repo_receipt_sha256",
+            "org_receipt_sha256"
+          ],
+          "properties": {
+            "repo_receipt_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "org_receipt_sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

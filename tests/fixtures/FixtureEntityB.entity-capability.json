@@ -1,0 +1,28 @@
+{
+  "schema": "sv-llm.entity-capability/v0.1",
+  "entity": "FixtureEntityB",
+  "repository": "FixtureEntityB",
+  "role": "FIXTURE_INTELLIGENCE_CAPABILITY",
+  "authority_effect": "NONE",
+  "accepts": {
+    "work_schema": "sv-llm.sandbox-work/v0.1"
+  },
+  "capabilities": [
+    "adversarial_review",
+    "synthesis"
+  ],
+  "contribution": {
+    "contribution_schema": "sv-llm.contribution/v0.1"
+  },
+  "interface_constraints": {
+    "live_invocation": false,
+    "fixture": true
+  },
+  "prohibited": [
+    "GOVERNANCE_DISPOSITION",
+    "TRANSITION_AUTHORITY",
+    "CREDENTIAL_AUTHORITY",
+    "PUBLISHER_AUTHORITY",
+    "MASTER_RECORDS_CUSTODY"
+  ]
+}

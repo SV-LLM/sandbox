@@ -1,0 +1,330 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/SV-LLM/schemas/blob/main/contribution.schema.json",
+  "title": "sv-llm.contribution/v0.1",
+  "description": "One independently attributable entity outcome for one Sandbox work object. Every status carries a non-null, recomputable content_digest. Instances are parsed and digested under SV_LLM_CANONICAL_JSON_V1. Runtime verification (docs/SV_LLM_CANONICAL_JSON_V1.md, Runtime invariants) is required in addition to this schema: digest recomputation, status-record field equality, base64 canonical form, and capability membership in the bound entity declaration and in work.permitted_capabilities. A contribution never establishes a governance disposition.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "contribution_id",
+    "work_id",
+    "entity",
+    "capability",
+    "epistemic_state",
+    "content_digest",
+    "evidence_refs",
+    "provenance",
+    "uncertainty",
+    "status",
+    "authority_effect"
+  ],
+  "properties": {
+    "schema": {
+      "const": "sv-llm.contribution/v0.1"
+    },
+    "contribution_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "work_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entity": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Canonical contributor identity."
+    },
+    "capability": {
+      "$ref": "capability-id.schema.json"
+    },
+    "epistemic_state": {
+      "enum": [
+        "OBSERVED",
+        "DERIVED",
+        "PROJECTED"
+      ]
+    },
+    "content_digest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "provenance": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "uncertainty": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "enum": [
+        "CONTRIBUTED",
+        "REFUSED",
+        "UNAVAILABLE",
+        "FAILED"
+      ]
+    },
+    "authority_effect": {
+      "const": "NONE"
+    },
+    "disagreement_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "content_media_type": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+[ \\t]*(;.*)?(?![\\s\\S])"
+    },
+    "content": {
+      "description": "Inline contributed content. JSON media type: the JSON value itself. Any other media type: RFC 4648 section 4 base64 of the exact bytes (padding required, no whitespace, zero padding bits)."
+    },
+    "artifact_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "description": "References resolving through authorized retained custody to the exact bytes (non-JSON) or JSON value (JSON) corresponding to content_digest."
+    },
+    "non_success_status_record": {
+      "$ref": "#/$defs/non_success_status_record"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "CONTRIBUTED"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "content_media_type"
+        ],
+        "oneOf": [
+          {
+            "required": [
+              "content"
+            ],
+            "not": {
+              "required": [
+                "artifact_refs"
+              ]
+            }
+          },
+          {
+            "required": [
+              "artifact_refs"
+            ],
+            "not": {
+              "required": [
+                "content"
+              ]
+            }
+          }
+        ],
+        "not": {
+          "required": [
+            "non_success_status_record"
+          ]
+        }
+      },
+      "else": {
+        "required": [
+          "non_success_status_record"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "content"
+              ]
+            },
+            {
+              "required": [
+                "artifact_refs"
+              ]
+            },
+            {
+              "required": [
+                "content_media_type"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "content_media_type": {
+            "type": "string",
+            "not": {
+              "$ref": "#/$defs/json_media_type"
+            }
+          }
+        },
+        "required": [
+          "content_media_type",
+          "content"
+        ]
+      },
+      "then": {
+        "properties": {
+          "content": {
+            "$ref": "#/$defs/base64"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "REFUSED"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "non_success_status_record": {
+            "properties": {
+              "status": {
+                "const": "REFUSED"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "UNAVAILABLE"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "non_success_status_record": {
+            "properties": {
+              "status": {
+                "const": "UNAVAILABLE"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "FAILED"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "non_success_status_record": {
+            "properties": {
+              "status": {
+                "const": "FAILED"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}(?![\\s\\S])"
+    },
+    "base64": {
+      "type": "string",
+      "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?(?![\\s\\S])",
+      "description": "RFC 4648 section 4, padding required, no whitespace. Zero padding bits are checked at runtime."
+    },
+    "json_media_type": {
+      "description": "application/json or application/*+json, ASCII case-insensitive, parameters ignored for branch selection.",
+      "type": "string",
+      "pattern": "^[Aa][Pp][Pp][Ll][Ii][Cc][Aa][Tt][Ii][Oo][Nn]/(?:[A-Za-z0-9!#$&^_.+-]+\\+)?[Jj][Ss][Oo][Nn][ \\t]*(;.*)?(?![\\s\\S])"
+    },
+    "non_success_status_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason_or_failed_predicate",
+        "evidence_refs",
+        "provenance",
+        "uncertainty"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "REFUSED",
+            "UNAVAILABLE",
+            "FAILED"
+          ]
+        },
+        "reason_or_failed_predicate": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "provenance": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "uncertainty": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "description": "Carried inline for REFUSED, UNAVAILABLE and FAILED. status equals the envelope status; evidence_refs, provenance and uncertainty equal the envelope fields; content_digest is the SV_LLM_CANONICAL_JSON_V1 digest of this record."
+    }
+  }
+}
