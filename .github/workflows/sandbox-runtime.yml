@@ -14,11 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check out SV-LLM/.github at the pinned registration commit
+      - name: Check out SV-LLM/.github at the organization-ledger reference migration (SV-LLM/.github PR #7)
         uses: actions/checkout@v4
         with:
           repository: SV-LLM/.github
-          ref: dcbccd8589b60e114600ae2c6253b1ce81c0f643
+          ref: 3dd2164478bd7098ec2f5705efa3a62fe585a0d2
           path: sv-llm-dotgithub
       - uses: actions/setup-python@v5
         with:
@@ -29,11 +29,11 @@ jobs:
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
         run: python -B tests/test_sandbox_runtime.py
-      - name: Check out SV-LLM/.github with Anthropic and OpenAI registered (SV-LLM/.github PR #5)
+      - name: Check out SV-LLM/.github with Anthropic and OpenAI registered and the ledger migration (SV-LLM/.github PR #7)
         uses: actions/checkout@v4
         with:
           repository: SV-LLM/.github
-          ref: b85672154b8b05f17085031778021a24da114fc4
+          ref: 3dd2164478bd7098ec2f5705efa3a62fe585a0d2
           path: sv-llm-dotgithub-registered
       - name: Real-entity contract-level regression (order 5)
         env:

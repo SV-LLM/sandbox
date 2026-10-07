@@ -56,8 +56,9 @@ class Harness:
                               "--evidence-json", json.dumps({"disposition": "ALLOW"})],
                              capture_output=True, text=True, env=env, check=True)
         self.parent_repo = json.loads(run.stdout)
+        # The parent is the first organization append on this fresh ledger, so it declares genesis.
         self.parent_org = self.aggregate.aggregate_transition(self.parent_repo, org_transition_class="ORGANIZATION_INGRESS_MATERIALIZED",
-                                                              authority_effect="NONE")
+                                                              authority_effect="NONE", genesis=True)
         self.tree = json.loads((FIX / "organization-tree.json").read_text())
 
     def declaration(self, entity):

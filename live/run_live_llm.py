@@ -108,7 +108,9 @@ def main() -> int:
                          capture_output=True, text=True, check=True,
                          env=dict(os.environ, STEGVERSE_REPO_LEDGER_ROOT=str(EVIDENCE / "dotgithub-fixture-ledger")))
     parent_repo = json.loads(run.stdout)
-    parent_org = agg.aggregate_transition(parent_repo, org_transition_class="ORGANIZATION_INGRESS_MATERIALIZED", authority_effect="NONE")
+    # First append on this run's fresh organization ledger: genesis is declared, never defaulted.
+    parent_org = agg.aggregate_transition(parent_repo, org_transition_class="ORGANIZATION_INGRESS_MATERIALIZED", authority_effect="NONE",
+                                          genesis=True)
     work = {"schema": "sv-llm.sandbox-work/v0.1", "work_id": "live-llm-" + sha(inv)[7:19],
             "manifested_request": {"manifest_id": "at04-stage1-live-path-conformance", "tool_invocations": [inv]},
             "parent_transition": {"transition_class": "ORGANIZATION_INGRESS_MATERIALIZED",
