@@ -1,0 +1,72 @@
+{
+  "schema": "sv-llm.entity-capability/v0.1",
+  "entity": "OpenAI",
+  "repository": "OpenAI",
+  "role": "INTELLIGENCE_CAPABILITY",
+  "authority_effect": "NONE",
+  "accepts": {
+    "work_schema": "sv-llm.sandbox-work/v0.1",
+    "canonical_context_by_reference": true
+  },
+  "capabilities": [
+    "reasoning",
+    "synthesis",
+    "code_analysis",
+    "code_generation",
+    "document_analysis",
+    "cross_repository_contract_analysis",
+    "adversarial_review",
+    "candidate_repair",
+    "forward_disposition_inference"
+  ],
+  "contribution": {
+    "contribution_schema": "sv-llm.contribution/v0.1",
+    "epistemic_states": [
+      "OBSERVED",
+      "DERIVED",
+      "PROJECTED"
+    ],
+    "statuses": [
+      "CONTRIBUTED",
+      "REFUSED",
+      "UNAVAILABLE",
+      "FAILED"
+    ],
+    "preserve_disagreement": true,
+    "preserve_refusal": true,
+    "transitive_provenance": true
+  },
+  "interface_constraints": {
+    "capability_basis": "DECLARED",
+    "coordination_contract": "SV-LLM/.github",
+    "crossing": {
+      "boundary": "SV-LLM/.github",
+      "transition_authority": "Interlock/InTr",
+      "manifest_determines_destination": true,
+      "transport_in_this_repository": false,
+      "credential_authority": "TV/TVC",
+      "credential_material_in_this_repository": false
+    },
+    "live_invocation": false,
+    "inference_window": {
+      "dispositions_are_input": true,
+      "invent_dispositions": false,
+      "disposition_complete_when_requested": true,
+      "question": "If this disposition is applied, what states or consequences might or might not become reachable?",
+      "projection_epistemic_state": "PROJECTED",
+      "projection_is_observed_history": false
+    }
+  },
+  "prohibited": [
+    "GOVERNANCE_DISPOSITION",
+    "TASK_REGISTRY_AUTHORITY",
+    "WORKER_CLAIM_AUTHORITY",
+    "TRANSITION_AUTHORITY",
+    "CREDENTIAL_AUTHORITY",
+    "PUBLISHER_AUTHORITY",
+    "MASTER_RECORDS_CUSTODY",
+    "DIRECT_CONSEQUENCE_EXECUTION",
+    "MODEL_CONSENSUS_AS_TRUTH",
+    "TRANSPORT_OUTSIDE_ORGANIZATION_INTR_BOUNDARY"
+  ]
+}

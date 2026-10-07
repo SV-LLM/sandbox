@@ -1,0 +1,45 @@
+{
+  "schema": "sv-llm.organization-tree/v0.2",
+  "organization": "SV-LLM",
+  "source": "FIXTURE: Sandbox Step-2 tests only; never the canonical tree",
+  "repositories": [
+    {
+      "name": ".github",
+      "class": "ORGANIZATION_COORDINATION",
+      "role": "Fixture coordination entry."
+    },
+    {
+      "name": "sandbox",
+      "class": "COLLABORATION_PLANE",
+      "role": "Fixture collaboration entry."
+    },
+    {
+      "name": "FixtureEntityC",
+      "class": "INTELLIGENCE_PROVIDER",
+      "role": "Fixture entity with no capability_declaration_ref.",
+      "authority_effect": "NONE"
+    },
+    {
+      "name": "FixtureEntityA",
+      "class": "ECOSYSTEM_ENTITY",
+      "role": "Fixture entity for Sandbox Step-2 tests; not a provider.",
+      "authority_effect": "NONE",
+      "capability_declaration_ref": {
+        "repository": "FixtureEntityA",
+        "path": "contracts/entity-capability.json",
+        "declaration_sha256": "sha256:c99636dd6be55c4ce90efdcd35afa465dad26cfed445dc93bc6e6189b8dfbb00"
+      }
+    },
+    {
+      "name": "FixtureEntityB",
+      "class": "ECOSYSTEM_ENTITY",
+      "role": "Fixture entity for Sandbox Step-2 tests; not a provider.",
+      "authority_effect": "NONE",
+      "capability_declaration_ref": {
+        "repository": "FixtureEntityB",
+        "path": "contracts/entity-capability.json",
+        "declaration_sha256": "sha256:e2e89d56029a3c754d674b97cbebd179e95ad8da7528f50b958fe5271c3e3d24"
+      }
+    }
+  ]
+}
