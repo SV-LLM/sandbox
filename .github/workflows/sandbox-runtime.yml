@@ -45,3 +45,7 @@ jobs:
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub-registered
         run: python -B tests/test_stegbrowser_tool.py
+      - name: AT-04 Stage 1 target derivation and refusals (no network)
+        env:
+          SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub-registered
+        run: python -B tests/test_live_target.py

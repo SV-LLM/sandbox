@@ -1,20 +1,28 @@
 {
-  "schema": "sv-llm.sandbox-live-llm-target/v1",
-  "status": "NOT_SELECTED",
+  "schema": "sv-llm.stegbrowser-live-target/v1",
+  "target_id": "stegverse.integration.llm-browser-test.v1",
+  "purpose": "STEGBROWSER_LIVE_PATH_CONFORMANCE",
+  "role": "TEST_SURFACE_CONFIGURATION_ONLY; not a provider interaction contract and must not be reused as one",
+  "origin": "https://stegverse.org",
+  "secure_url": "https://stegverse.org/integration/llm-browser-test/v1/",
+  "page_source": {
+    "repository": "StegVerse-Labs/Site",
+    "path": "integration/llm-browser-test/v1/index.html",
+    "served_by": "GitHub Pages; StegVerse-Labs/Site main CNAME = stegverse.org"
+  },
+  "profile": "llm.v1",
+  "credential_mode": "NONE",
+  "selectors": {
+    "prompt_input": "#prompt",
+    "submit": "#submit",
+    "response_ready": "#response[data-complete='true']",
+    "response": "#response"
+  },
+  "prompt": "StegBrowser live-path conformance SVLLM_LIVEPATH_V1",
+  "response_marker": "SVLLM_LIVEPATH_V1",
+  "automation_policy": "PERMITTED_BY_OWNER",
+  "provider_entity": null,
+  "provider_attribution_allowed": false,
   "verified": false,
-  "target_class": "Public Hugging Face Space whose app is intentionally public and whose Space-specific terms/license do not prohibit automated use",
-  "excluded": [
-    {"surface": "duck.ai", "reason": "Duck.ai terms prohibit automated querying"}
-  ],
-  "verification_required_before_enabling": [
-    "One specific Hugging Face Space selected and named here",
-    "Space is public",
-    "Space-specific license and terms checked; automated use not prohibited",
-    "Current page structure and selectors captured into invocation.browser_actions",
-    "Response-marker behavior checked",
-    "verified set to true in a reviewed change"
-  ],
-  "selected_space": null,
-  "verification_record": null,
-  "invocation": null
+  "verification_evidence": []
 }

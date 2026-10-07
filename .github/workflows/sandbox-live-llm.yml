@@ -1,10 +1,12 @@
-name: Sandbox Live llm.v1 Call (manual)
+name: Sandbox Live llm.v1 Path Conformance (manual)
 
-# AT-04. Manual only; never runs on push or pull_request.
-# Disabled in effect until live/target.json names a verified public Hugging Face
-# Space: the runner fails closed with LIVE_TARGET_SELECTED_AND_VERIFIED before
-# installing a browser. Evidence is uploaded as a 90-day artifact
-# (live-run evidence retention, not permanent custody).
+# AT-04 Stage 1: live StegBrowser llm.v1 path conformance against the
+# StegVerse.org fixture page (live/target.json). Manual only; never runs on push
+# or pull_request. No provider attribution: a pass proves the live browser path,
+# not provider integration. Until live/target.json is verified, the runner fails
+# closed with LIVE_TARGET_SELECTED_AND_VERIFIED before installing a browser.
+# Evidence is uploaded as a 90-day artifact (live-run evidence retention, not
+# permanent custody).
 
 on:
   workflow_dispatch:
@@ -31,7 +33,7 @@ jobs:
           python-version: "3.12"
       - name: Target gate
         id: gate
-        run: python -c "import json,sys; t=json.load(open('live/target.json')); sys.exit(0 if t.get('verified') is True and t.get('invocation') else 1)" && echo "verified=true" >> "$GITHUB_OUTPUT" || echo "verified=false" >> "$GITHUB_OUTPUT"
+        run: python -c "import json,sys; t=json.load(open('live/target.json')); sys.exit(0 if t.get('verified') is True else 1)" && echo "verified=true" >> "$GITHUB_OUTPUT" || echo "verified=false" >> "$GITHUB_OUTPUT"
       - name: Install dependencies and Chromium
         if: steps.gate.outputs.verified == 'true'
         run: |
