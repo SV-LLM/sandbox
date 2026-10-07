@@ -5,24 +5,30 @@ target is a StegVerse-controlled conformance surface, never a provider: no
 provider attribution, no provider/model labels, and a pass proves only the
 live browser path, not OpenAI/Anthropic integration.
 
-Two lanes (SV-LLM-LIVE-LEDGER-EVIDENCE-SPLIT-001, LIVE_LANE):
+Two lanes (LIVE_LANE):
 
-  conformance  WORKFLOW_LOCAL_ORGANIZATION_LEDGER_CONFORMANCE. A fresh
-               workflow-local organization ledger opened with a declared
-               GENESIS and a workflow-local SV-LLM/.github emit.py fixture
-               parent. Never authoritative organization runtime reality.
-  authentic    AUTHENTIC_SV_LLM_ORGANIZATION_LEDGER_RUNTIME_EVIDENCE. Binds the
-               store SV-LLM/.github's org-contract declares as
-               authoritative_ledger_store; never a workflow-local root and
-               never the STEGVERSE_ORG_LEDGER_ROOT environment variable. Never
+  conformance  WORKFLOW_LOCAL_ORGANIZATION_LEDGER_CONFORMANCE, run by this
+               repository's own workflow. A fresh workflow-local organization
+               ledger opened with a declared GENESIS and a workflow-local
+               SV-LLM/.github emit.py fixture parent. Never authoritative
+               organization runtime reality.
+  authentic    AUTHENTIC_SV_LLM_ORGANIZATION_LEDGER_RUNTIME_EVIDENCE
+               (SV-LLM-ORGANIZATION-ROLE-EXACT-STEGVERSE-ORG-DUPLICATION-001).
+               Runs only inside the SV-LLM organization's own .github workflow
+               (executed_by is GITHUB_REPOSITORY, set by the runner). It binds
+               the organization ledger exactly as the StegVerse-org reference
+               does, PosixLedgerStore(ledger_root()) from the adopted
+               SV-LLM/.github module: execution-scoped, the same as the
+               reference, with no durability claimed beyond the run. It never
                passes GENESIS and never synthesizes its parent: the parent is
                the PARENT_ORG_RECEIPT_SHA256 claim, proven by exact keyed
-               readback. Refusals are evaluated in a fixed order: store
-               binding, ledger opened, parent present.
+               readback, and the work subject is that parent's own recorded
+               outcome. Refusals, in order: not organization execution, ledger
+               not opened, parent not present, parent subject mismatch.
 
 Both lanes prove each organization receipt and its retained source receipt by
 exact keyed whole-document readback. Evidence goes to EVIDENCE_DIR, which the
-workflow uploads as a 90-day artifact: live-run evidence retention, not
+calling workflow uploads as a 90-day artifact: live-run evidence retention, not
 permanent custody. Every non-ALLOW result exits 1; report.json is the
 disposition record.
 """
@@ -39,29 +45,30 @@ EVIDENCE_CLASS = {CONFORMANCE: "WORKFLOW_LOCAL_ORGANIZATION_LEDGER_CONFORMANCE",
 PARENT_BASIS = {CONFORMANCE: "WORKFLOW_LOCAL_SV_LLM_DOTGITHUB_EMIT_FIXTURE",
                 AUTHENTIC: "AUTHORITATIVE_STORE_EXACT_KEYED_READBACK"}
 RETENTION = "LIVE_RUN_EVIDENCE_RETENTION_NOT_PERMANENT_CUSTODY"
-RETRY_ENTRYPOINT = ("SV-LLM/sandbox:.github/workflows/sandbox-live-llm.yml (workflow_dispatch, lane=authentic)"
-                    " -> live/run_live_llm.py::main")
+ORGANIZATION_EXECUTION = "SV-LLM/.github"
+LEDGER_PERSISTENCE = {CONFORMANCE: "WORKFLOW_LOCAL_CONFORMANCE_ONLY", AUTHENTIC: "EXECUTION_SCOPED_SAME_AS_REFERENCE"}
+INTENDED_ACTION = "STEGBROWSER_LIVE_PATH_CONFORMANCE"
+RETRY_ENTRYPOINT = ("SV-LLM/.github:.github/workflows/organization-authentic-live-lane.yml (workflow_dispatch)"
+                    " -> SV-LLM/sandbox live/run_live_llm.py::main")
 DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 
-# Store kinds this Sandbox build can bind for the authentic lane. None yet: the
-# durable non-POSIX LedgerStore is owner decision O1. A POSIX root is never
-# authoritative here.
-STORE_BINDERS: dict = {}
-POSIX_KINDS = {"posix", "posix_ledger_store", "PosixLedgerStore", "POSIX"}
-
 REFUSALS = {
-    "AUTHENTIC_ORGANIZATION_LEDGER_STORE_NOT_MATERIALIZED": (
-        "Declare an authoritative SV-LLM LedgerStore binding (authoritative_ledger_store) in SV-LLM/.github "
-        "org-contract that satisfies the existing LedgerStore contract.",
-        "Retry the same manifested authentic lane after authoritative_ledger_store is declared and bindable."),
+    "AUTHENTIC_LANE_NOT_ORGANIZATION_EXECUTION": (
+        "Run the authentic lane from the SV-LLM organization's own workflow, which opens the execution-scoped "
+        "ledger and appends the authentic parent in the same run.",
+        "Dispatch the organization workflow; nothing else qualifies."),
     "ORG_LEDGER_GENESIS_NOT_DECLARED": (
         "Run the separately manifested SV-LLM organization ledger opening transition "
-        "(SV-LLM/.github org-runtime/crossing.py::open_organization_ledger) once against the bound authoritative store.",
-        "Retry after the authoritative ledger has been explicitly opened."),
+        "(SV-LLM/.github org-runtime/crossing.py::open_organization_ledger) earlier in the same organization execution.",
+        "Retry the organization workflow, which opens the ledger before running this lane."),
     "AUTHENTIC_PARENT_TRANSITION_NOT_IN_AUTHORITATIVE_STORE": (
-        "Append the authentic parent transition to the authoritative organization store and name its receipt "
-        "digest as parent_org_receipt_sha256.",
-        "Retry after the named parent is present by exact keyed readback."),
+        "Append the authentic parent through crossing.record earlier in the same organization execution and pass "
+        "its organization receipt digest as PARENT_ORG_RECEIPT_SHA256.",
+        "Retry the organization workflow after the named parent is present by exact keyed readback."),
+    "AUTHENTIC_PARENT_SUBJECT_MISMATCH": (
+        "Append a parent whose recorded outcome is {disposition: ALLOW, intended_action: "
+        "STEGBROWSER_LIVE_PATH_CONFORMANCE, target_id: <this lane's live/target.json target_id>}.",
+        "Retry the organization workflow with a parent whose outcome names this lane's intended action and target."),
 }
 
 
@@ -131,20 +138,14 @@ def load_dotgithub(dotgithub: Path):
     return agg
 
 
-def bind_authoritative_store(dotgithub: Path):
-    """C3: bind the declared authoritative store, or refuse with the reason."""
-    contract = json.loads((dotgithub / ".stegverse/transition-ledger/org-contract.json").read_text())
-    if "authoritative_ledger_store" not in contract:
-        raise Refused("AUTHENTIC_ORGANIZATION_LEDGER_STORE_NOT_MATERIALIZED", "ABSENT")
-    declared = contract["authoritative_ledger_store"]
-    if not (isinstance(declared, dict) and isinstance(declared.get("kind"), str) and declared["kind"]
-            and isinstance(declared.get("locator"), str) and declared["locator"]):
-        raise Refused("AUTHENTIC_ORGANIZATION_LEDGER_STORE_NOT_MATERIALIZED", "MALFORMED")
-    if declared["kind"] in POSIX_KINDS:
-        raise Refused("AUTHENTIC_ORGANIZATION_LEDGER_STORE_NOT_MATERIALIZED", "POSIX_ROOT_REJECTED")
-    if declared["kind"] not in STORE_BINDERS:
-        raise Refused("AUTHENTIC_ORGANIZATION_LEDGER_STORE_NOT_MATERIALIZED", "KIND_NOT_IMPLEMENTED")
-    return STORE_BINDERS[declared["kind"]](declared["locator"])
+def organization_execution() -> str | None:
+    """X2: the repository whose workflow is running, as the runner reports it."""
+    return os.environ.get("GITHUB_REPOSITORY") or None
+
+
+def reference_store(agg):
+    """D7: the organization ledger exactly as the StegVerse-org reference binds it."""
+    return agg.PosixLedgerStore(agg.ledger_root())
 
 
 def keyed_readback(agg, store, org_receipt: dict, source_receipt: dict) -> str | None:
@@ -157,7 +158,7 @@ def keyed_readback(agg, store, org_receipt: dict, source_receipt: dict) -> str |
 
 
 def authentic_parent(agg, store, claimed) -> tuple[dict, dict]:
-    """C1 steps 2-3: the bound ledger is opened, then the claimed parent is present by exact keyed readback."""
+    """The reference ledger is opened, then the claimed parent is present by exact keyed readback."""
     if store.get(agg.HEAD_KEY) is None:
         raise Refused("ORG_LEDGER_GENESIS_NOT_DECLARED")
     if not (isinstance(claimed, str) and DIGEST.match(claimed)):
@@ -177,17 +178,31 @@ def authentic_parent(agg, store, claimed) -> tuple[dict, dict]:
     return org, source
 
 
-def preflight(dotgithub: Path, claimed_parent):
-    """Authentic-lane gate, run before any browser is installed. C1 order: binding, opened, parent."""
+def parent_subject(source: dict, target: dict) -> dict:
+    """D11: the work subject is the parent's own recorded outcome, and it must name this lane."""
+    from ledger import sha
+    subject = source.get("evidence")
+    if not (isinstance(subject, dict) and sha(subject) == source.get("successor_state_sha256")
+            and subject.get("disposition") == "ALLOW" and subject.get("intended_action") == INTENDED_ACTION
+            and subject.get("target_id") == target.get("target_id")):
+        raise Refused("AUTHENTIC_PARENT_SUBJECT_MISMATCH")
+    return subject
+
+
+def preflight(dotgithub: Path, claimed_parent, target: dict):
+    """Authentic-lane gate, run before any browser is installed. Order: organization execution, opened, parent, subject."""
+    if organization_execution() != ORGANIZATION_EXECUTION:
+        raise Refused("AUTHENTIC_LANE_NOT_ORGANIZATION_EXECUTION")
     agg = load_dotgithub(dotgithub)
-    store = bind_authoritative_store(dotgithub)
+    store = reference_store(agg)
     org, source = authentic_parent(agg, store, claimed_parent)
-    return agg, store, org, source
+    return agg, store, org, source, parent_subject(source, target)
 
 
 def new_report(lane: str, target: dict) -> dict:
     return {"schema": "sv-llm.sandbox-live-llm-report/v1", "stage": "STEGBROWSER_LIVE_PATH_CONFORMANCE",
             "lane": lane, "evidence_class": EVIDENCE_CLASS.get(lane),
+            "executed_by": organization_execution(), "ledger_persistence": LEDGER_PERSISTENCE.get(lane),
             "authoritative_organization_runtime_reality": False,
             "target_id": target.get("target_id"), "secure_url": target.get("secure_url"),
             "provider_attribution": "NONE", "proves_provider_integration": False,
@@ -225,12 +240,12 @@ def main(argv=None, *, playwright_factory=None) -> int:
         return finish(EVIDENCE, report, 1)
     if lane == AUTHENTIC:
         try:
-            agg, store, parent_org, parent_repo = preflight(DOTGITHUB, claimed_parent)
+            agg, store, parent_org, parent_repo, subject = preflight(DOTGITHUB, claimed_parent, target)
         except Refused as refused:
             refuse(report, refused)
             return finish(EVIDENCE, report, 1)
         if "--preflight" in argv:
-            report.update(disposition="ALLOW", preflight="AUTHENTIC_STORE_BOUND_AND_PARENT_PRESENT")
+            report.update(disposition="ALLOW", preflight="ORGANIZATION_EXECUTION_LEDGER_OPENED_PARENT_AND_SUBJECT_PRESENT")
             return finish(EVIDENCE, report, 0)
     inv, refused = derive_invocation(target)
     if refused:
@@ -241,9 +256,9 @@ def main(argv=None, *, playwright_factory=None) -> int:
     from ledger import Ledger, sha
     from sandbox import Sandbox
     from stegbrowser_tool import StegBrowserTool
-    subject = {"intended_action": "STEGBROWSER_LIVE_PATH_CONFORMANCE", "target_id": target["target_id"]}
     appended = []  # (organization receipt, exact source receipt) for keyed readback
     if lane == CONFORMANCE:
+        subject = {"intended_action": INTENDED_ACTION, "target_id": target["target_id"]}
         agg = load_dotgithub(DOTGITHUB)
         store = agg.PosixLedgerStore(EVIDENCE / "sv-llm-org-ledger")
         run = subprocess.run([sys.executable, str(DOTGITHUB / ".stegverse/transition-ledger/emit.py"),

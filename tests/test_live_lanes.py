@@ -1,14 +1,20 @@
 """AT-04 Stage 1 live lanes: conformance vs authentic organization-ledger evidence (no network).
 
-SV-LLM-LIVE-LEDGER-EVIDENCE-SPLIT-001, P1-P6 with C1-C3: evidence labels per
-lane, exact keyed readback, the three authentic refusals in their fixed order,
-red exit on every non-ALLOW, and no fixture parent or workflow-local ledger in
-the authentic lane. The browser is an injected Playwright mock.
+Conformance: workflow-local ledger, fixture parent, never authoritative.
+
+Authentic (SV-LLM-ORGANIZATION-ROLE-EXACT-STEGVERSE-ORG-DUPLICATION-001): the
+organization ledger is bound exactly as the StegVerse-org reference binds it,
+PosixLedgerStore(ledger_root()), inside SV-LLM organization execution only
+(GITHUB_REPOSITORY). These tests reproduce the organization workflow's single
+run offline: one ledger root, crossing.open_organization_ledger (explicit
+GENESIS), crossing.record (authentic parent), then the lane. They also check
+each refusal in its fixed order and the red exit on every non-ALLOW. The
+browser is an injected Playwright mock.
 
 Run: SV_LLM_DOTGITHUB_ROOT=<SV-LLM/.github checkout> python -B tests/test_live_lanes.py
 """
 from __future__ import annotations
-import contextlib, io, json, os, shutil, subprocess, sys, tempfile, unittest
+import contextlib, importlib.util, io, json, os, sys, tempfile, unittest
 from pathlib import Path
 from unittest import mock
 
@@ -21,7 +27,17 @@ import run_live_llm as live  # noqa: E402
 DOTGITHUB = Path(os.environ["SV_LLM_DOTGITHUB_ROOT"]).resolve()
 TARGET = json.loads((ROOT / "live/target.json").read_text())
 REPLY = TARGET["response_marker"] + ": a reply."
-TEST_KIND = "test-durable-store"  # test-only binder; production STORE_BINDERS is empty
+ORG = "SV-LLM/.github"
+LANE_OUTCOME = {"disposition": "ALLOW", "intended_action": "STEGBROWSER_LIVE_PATH_CONFORMANCE",
+                "target_id": TARGET["target_id"]}
+
+
+def load_crossing():
+    sys.path.insert(0, str(DOTGITHUB / "org-runtime"))
+    spec = importlib.util.spec_from_file_location("sv_llm_crossing", DOTGITHUB / "org-runtime/crossing.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 class LaneCase(unittest.TestCase):
@@ -30,51 +46,50 @@ class LaneCase(unittest.TestCase):
         self.addCleanup(tmp.cleanup)
         self.tmp = Path(tmp.name)
         self.evidence = self.tmp / "evidence"
-        self.dotgithub = DOTGITHUB
-        self.binders = mock.patch.dict(live.STORE_BINDERS, {}, clear=True)
-        self.binders.start()
-        self.addCleanup(self.binders.stop)
+        # One execution-scoped root for the whole simulated organization run.
+        self.org_env = {"STEGVERSE_ORG_LEDGER_ROOT": str(self.tmp / "org-ledger"),
+                        "STEGVERSE_REPO_LEDGER_ROOT": str(self.tmp / "dotgithub-repo-ledger")}
 
-    def run_lane(self, lane, *, parent=None, argv=(), playwright=None):
-        env = {"SV_LLM_DOTGITHUB_ROOT": str(self.dotgithub), "EVIDENCE_DIR": str(self.evidence), "LIVE_LANE": lane}
-        if parent is not None:
-            env["PARENT_ORG_RECEIPT_SHA256"] = parent
+    def run_lane(self, lane, *, parent=None, argv=(), playwright=None, repository=ORG):
+        env = {"SV_LLM_DOTGITHUB_ROOT": str(DOTGITHUB), "EVIDENCE_DIR": str(self.evidence), "LIVE_LANE": lane,
+               "STEGVERSE_ORG_LEDGER_ROOT": self.org_env["STEGVERSE_ORG_LEDGER_ROOT"]}
         with mock.patch.dict(os.environ, env), contextlib.redirect_stdout(io.StringIO()):
+            os.environ.pop("GITHUB_REPOSITORY", None)
+            os.environ.pop("PARENT_ORG_RECEIPT_SHA256", None)
+            if repository is not None:
+                os.environ["GITHUB_REPOSITORY"] = repository
+            if parent is not None:
+                os.environ["PARENT_ORG_RECEIPT_SHA256"] = parent
             code = live.main(list(argv), playwright_factory=playwright or factory(text=REPLY))
         report = json.loads((self.evidence / "report.json").read_text())
         digests = json.loads((self.evidence / "digests.json").read_text())
         return code, report, digests
 
-    def declare(self, declaration):
-        """A private SV-LLM/.github copy whose org-contract declares the given store."""
-        copy = self.tmp / "dotgithub"
-        shutil.copytree(DOTGITHUB, copy, ignore=shutil.ignore_patterns(".git", "__pycache__"))
-        path = copy / ".stegverse/transition-ledger/org-contract.json"
-        contract = json.loads(path.read_text())
-        contract["authoritative_ledger_store"] = declaration
-        path.write_text(json.dumps(contract, indent=2))
-        self.dotgithub = copy
-        return copy
+    def organization(self, *, outcome=LANE_OUTCOME, open_ledger=True, parent=True):
+        """The organization workflow's steps before the lane, in the same ledger root."""
+        with mock.patch.dict(os.environ, self.org_env), contextlib.redirect_stdout(io.StringIO()):
+            crossing = load_crossing()
+            opened = crossing.open_organization_ledger(DOTGITHUB) if open_ledger else None
+            recorded = crossing.record("ORGANIZATION_INGRESS_MATERIALIZED", subject={"intended_action": "AUTHENTIC_PARENT"},
+                                       outcome=outcome, root=DOTGITHUB) if parent else None
+        agg = live.load_dotgithub(DOTGITHUB)
+        return agg, agg.PosixLedgerStore(Path(self.org_env["STEGVERSE_ORG_LEDGER_ROOT"])), opened, recorded
 
-    def bindable_store(self):
-        root = self.tmp / "authoritative-store"
-        self.declare({"kind": TEST_KIND, "locator": "test://authoritative"})
-        agg = live.load_dotgithub(self.dotgithub)
-        live.STORE_BINDERS[TEST_KIND] = lambda locator: agg.PosixLedgerStore(root)
-        return agg, agg.PosixLedgerStore(root)
-
-    def authentic_parent_for_target(self):
-        """An SV-LLM/.github repo receipt for this target's subject (test parent; never used by the runner)."""
-        subject = {"intended_action": "STEGBROWSER_LIVE_PATH_CONFORMANCE", "target_id": TARGET["target_id"]}
-        sys.path.insert(0, str(ROOT / "runtime"))
-        from ledger import sha
-        out = subprocess.run([sys.executable, str(self.dotgithub / ".stegverse/transition-ledger/emit.py"),
-                              "--transition-id", "AUTHENTIC_PARENT_FIXTURE", "--transition-class", "ORGANIZATION_INGRESS_MATERIALIZED",
-                              "--predecessor-state-sha256", sha({"p": 1}), "--successor-state-sha256", sha(subject),
-                              "--evidence-json", json.dumps({"disposition": "ALLOW"})],
-                             capture_output=True, text=True, check=True,
-                             env=dict(os.environ, STEGVERSE_REPO_LEDGER_ROOT=str(self.tmp / "parent-repo-ledger")))
-        return json.loads(out.stdout)
+    def assertRefused(self, predicate, detail=None, **kw):
+        with mock.patch.object(live.subprocess, "run", side_effect=AssertionError("emit.py must not run")):
+            code, report, digests = self.run_lane(live.AUTHENTIC, **kw)
+        self.assertEqual(code, 1)
+        self.assertEqual((report["disposition"], report["failed_predicate"]), ("FAIL_CLOSED", predicate))
+        self.assertEqual(report.get("detail"), detail)
+        self.assertEqual(report["retry_entrypoint"], live.RETRY_ENTRYPOINT)
+        self.assertTrue(report["required_evidence_or_repair"] and report["next_attempt"])
+        self.assertIs(digests["authoritative_organization_runtime_reality"], False)
+        self.assertEqual(report["evidence_class"], "AUTHENTIC_SV_LLM_ORGANIZATION_LEDGER_RUNTIME_EVIDENCE")
+        self.assertEqual(report["ledger_persistence"], "EXECUTION_SCOPED_SAME_AS_REFERENCE")
+        self.assertFalse((self.evidence / "sv-llm-org-ledger").exists())
+        self.assertFalse((self.evidence / "dotgithub-fixture-ledger").exists())
+        self.assertFalse(report["live_path_exercised"])
+        return report
 
 
 class Conformance(LaneCase):
@@ -87,6 +102,7 @@ class Conformance(LaneCase):
             self.assertIs(doc["authoritative_organization_runtime_reality"], False)
             self.assertEqual(doc["retention_class"], "LIVE_RUN_EVIDENCE_RETENTION_NOT_PERMANENT_CUSTODY")
             self.assertEqual(doc["lane"], "conformance")
+        self.assertEqual(report["ledger_persistence"], "WORKFLOW_LOCAL_CONFORMANCE_ONLY")
         self.assertEqual(report["parent_transition_basis"], "WORKFLOW_LOCAL_SV_LLM_DOTGITHUB_EMIT_FIXTURE")
         self.assertEqual(report["authority_effect"], "NONE")
         self.assertEqual(report["org_readback"], "EXACT_KEYED_READBACK_PASS")
@@ -121,89 +137,69 @@ class Conformance(LaneCase):
         self.assertEqual((code, report["disposition"], report["failed_predicate"]), (1, "FAIL_CLOSED", "LIVE_LANE_DECLARED"))
 
 
-class AuthenticBinding(LaneCase):
-    def assertRefused(self, predicate, detail=None, **kw):
-        with mock.patch.object(live.subprocess, "run", side_effect=AssertionError("emit.py must not run")):
-            code, report, digests = self.run_lane(live.AUTHENTIC, **kw)
-        self.assertEqual(code, 1)
-        self.assertEqual((report["disposition"], report["failed_predicate"]), ("FAIL_CLOSED", predicate))
-        self.assertEqual(report.get("detail"), detail)
-        self.assertEqual(report["retry_entrypoint"], live.RETRY_ENTRYPOINT)
-        self.assertTrue(report["required_evidence_or_repair"] and report["next_attempt"])
-        self.assertIs(digests["authoritative_organization_runtime_reality"], False)
-        self.assertEqual(report["evidence_class"], "AUTHENTIC_SV_LLM_ORGANIZATION_LEDGER_RUNTIME_EVIDENCE")
-        self.assertFalse((self.evidence / "sv-llm-org-ledger").exists())
-        self.assertFalse((self.evidence / "dotgithub-fixture-ledger").exists())
-        self.assertFalse(report["live_path_exercised"])
-        return report
+class AuthenticRefusals(LaneCase):
+    def test_outside_organization_execution_is_refused_first(self):
+        for repository in (None, "SV-LLM/sandbox", "StegVerse-org/.github"):
+            report = self.assertRefused("AUTHENTIC_LANE_NOT_ORGANIZATION_EXECUTION", repository=repository)
+            self.assertEqual(report["executed_by"], repository)
+        self.assertFalse(Path(self.org_env["STEGVERSE_ORG_LEDGER_ROOT"]).exists())
 
-    def test_current_contract_declares_no_store(self):
-        contract = json.loads((DOTGITHUB / ".stegverse/transition-ledger/org-contract.json").read_text())
-        self.assertNotIn("authoritative_ledger_store", contract)
-        self.assertRefused("AUTHENTIC_ORGANIZATION_LEDGER_STORE_NOT_MATERIALIZED", "ABSENT")
-
-    def test_environment_root_is_never_the_binding(self):
-        with mock.patch.dict(os.environ, {"STEGVERSE_ORG_LEDGER_ROOT": str(self.tmp / "env-root")}):
-            report = self.assertRefused("AUTHENTIC_ORGANIZATION_LEDGER_STORE_NOT_MATERIALIZED", "ABSENT")
-        self.assertFalse((self.tmp / "env-root").exists(), report)
-
-    def test_malformed_declaration(self):
-        self.declare({"kind": TEST_KIND})
-        self.assertRefused("AUTHENTIC_ORGANIZATION_LEDGER_STORE_NOT_MATERIALIZED", "MALFORMED")
-
-    def test_posix_root_rejected(self):
-        self.declare({"kind": "posix", "locator": str(self.tmp / "posix")})
-        self.assertRefused("AUTHENTIC_ORGANIZATION_LEDGER_STORE_NOT_MATERIALIZED", "POSIX_ROOT_REJECTED")
-
-    def test_kind_not_implemented(self):
-        self.declare({"kind": "some-durable-store", "locator": "store://sv-llm"})
-        self.assertRefused("AUTHENTIC_ORGANIZATION_LEDGER_STORE_NOT_MATERIALIZED", "KIND_NOT_IMPLEMENTED")
-
-
-class AuthenticOrder(LaneCase):
     def test_unopened_ledger_is_reported_before_the_parent(self):
-        self.bindable_store()
-        report = AuthenticBinding.assertRefused(self, "ORG_LEDGER_GENESIS_NOT_DECLARED", parent="sha256:" + "a" * 64)
+        report = self.assertRefused("ORG_LEDGER_GENESIS_NOT_DECLARED", parent="sha256:" + "a" * 64)
         self.assertIn("open_organization_ledger", report["required_evidence_or_repair"])
-
-    def opened(self):
-        agg, store = self.bindable_store()
-        repo = self.authentic_parent_for_target()
-        parent = agg.aggregate_transition(repo, org_transition_class="ORGANIZATION_INGRESS_MATERIALIZED", genesis=True, store=store)
-        return agg, store, parent
+        self.assertEqual(report["executed_by"], ORG)
 
     def test_missing_or_malformed_parent_claim(self):
-        self.opened()
-        AuthenticBinding.assertRefused(self, "AUTHENTIC_PARENT_TRANSITION_NOT_IN_AUTHORITATIVE_STORE", "PARENT_DIGEST_MISSING_OR_MALFORMED")
-        AuthenticBinding.assertRefused(self, "AUTHENTIC_PARENT_TRANSITION_NOT_IN_AUTHORITATIVE_STORE",
-                                       "PARENT_DIGEST_MISSING_OR_MALFORMED", parent="not-a-digest")
+        self.organization(parent=False)
+        self.assertRefused("AUTHENTIC_PARENT_TRANSITION_NOT_IN_AUTHORITATIVE_STORE", "PARENT_DIGEST_MISSING_OR_MALFORMED")
+        self.assertRefused("AUTHENTIC_PARENT_TRANSITION_NOT_IN_AUTHORITATIVE_STORE",
+                           "PARENT_DIGEST_MISSING_OR_MALFORMED", parent="not-a-digest")
 
-    def test_parent_not_in_store(self):
-        self.opened()
-        AuthenticBinding.assertRefused(self, "AUTHENTIC_PARENT_TRANSITION_NOT_IN_AUTHORITATIVE_STORE",
-                                       "ORG_RECEIPT_NOT_PRESENT", parent="sha256:" + "b" * 64)
+    def test_parent_not_in_ledger(self):
+        self.organization(parent=False)
+        self.assertRefused("AUTHENTIC_PARENT_TRANSITION_NOT_IN_AUTHORITATIVE_STORE", "ORG_RECEIPT_NOT_PRESENT",
+                           parent="sha256:" + "b" * 64)
 
     def test_parent_without_retained_source(self):
-        agg, store, parent = self.opened()
-        (store.root / agg.source_key(parent["source_transition_sha256"])).unlink()
-        AuthenticBinding.assertRefused(self, "AUTHENTIC_PARENT_TRANSITION_NOT_IN_AUTHORITATIVE_STORE",
-                                       "SOURCE_RECEIPT_NOT_PRESENT", parent=parent["receipt_sha256"])
+        agg, store, _, recorded = self.organization()
+        org = store.get(agg.receipt_key(recorded["org_receipt_sha256"]))
+        (store.root / agg.source_key(org["source_transition_sha256"])).unlink()
+        self.assertRefused("AUTHENTIC_PARENT_TRANSITION_NOT_IN_AUTHORITATIVE_STORE", "SOURCE_RECEIPT_NOT_PRESENT",
+                           parent=recorded["org_receipt_sha256"])
 
     def test_parent_with_malformed_retained_source(self):
-        agg, store, parent = self.opened()
-        store.put(agg.source_key(parent["source_transition_sha256"]), {"schema": "not-a-receipt"})
-        AuthenticBinding.assertRefused(self, "AUTHENTIC_PARENT_TRANSITION_NOT_IN_AUTHORITATIVE_STORE",
-                                       "SOURCE_RECEIPT_NOT_PRESENT", parent=parent["receipt_sha256"])
+        agg, store, _, recorded = self.organization()
+        org = store.get(agg.receipt_key(recorded["org_receipt_sha256"]))
+        store.put(agg.source_key(org["source_transition_sha256"]), {"schema": "not-a-receipt"})
+        self.assertRefused("AUTHENTIC_PARENT_TRANSITION_NOT_IN_AUTHORITATIVE_STORE", "SOURCE_RECEIPT_NOT_PRESENT",
+                           parent=recorded["org_receipt_sha256"])
 
-    def test_preflight_passes_when_bound_opened_and_parent_present(self):
-        _, _, parent = self.opened()
-        code, report, _ = self.run_lane(live.AUTHENTIC, parent=parent["receipt_sha256"], argv=["--preflight"])
+    def test_parent_subject_must_name_this_lane(self):
+        for change in ({"target_id": "another.target"}, {"intended_action": "SOMETHING_ELSE"}, {"disposition": "DENY"}):
+            with self.subTest(change=change):
+                self.setUp()
+                _, _, _, recorded = self.organization(outcome={**LANE_OUTCOME, **change})
+                self.assertRefused("AUTHENTIC_PARENT_SUBJECT_MISMATCH", parent=recorded["org_receipt_sha256"])
+
+    def test_sandbox_workflow_offers_conformance_only(self):
+        text = (ROOT / ".github/workflows/sandbox-live-llm.yml").read_text()
+        triggers = text.split("\non:\n", 1)[1].split("\npermissions:", 1)[0]
+        self.assertEqual(triggers.strip(), "workflow_dispatch:")  # no lane or parent inputs
+        self.assertIn("      LIVE_LANE: conformance\n", text)
+        self.assertNotIn("PARENT_ORG_RECEIPT_SHA256:", text)
+        self.assertNotIn("--preflight", text)
+
+
+class SingleOrganizationRun(LaneCase):
+    def test_preflight_passes_inside_the_organization_run(self):
+        _, _, _, recorded = self.organization()
+        code, report, _ = self.run_lane(live.AUTHENTIC, parent=recorded["org_receipt_sha256"], argv=["--preflight"])
         self.assertEqual((code, report["disposition"], report["preflight"]),
-                         (0, "ALLOW", "AUTHENTIC_STORE_BOUND_AND_PARENT_PRESENT"))
+                         (0, "ALLOW", "ORGANIZATION_EXECUTION_LEDGER_OPENED_PARENT_AND_SUBJECT_PRESENT"))
         self.assertIs(report["authoritative_organization_runtime_reality"], False)
 
-    def test_full_authentic_run_uses_from_head_and_no_fixture(self):
-        agg, store, parent = self.opened()
+    def test_open_ledger_record_parent_then_lane_in_one_root(self):
+        agg, store, opened, recorded = self.organization()
         calls = []
         real = agg.aggregate_transition
 
@@ -213,17 +209,22 @@ class AuthenticOrder(LaneCase):
         with mock.patch.object(live, "load_dotgithub", return_value=agg), \
                 mock.patch.object(agg, "aggregate_transition", side_effect=spy), \
                 mock.patch.object(live.subprocess, "run", side_effect=AssertionError("emit.py must not run")):
-            code, report, digests = self.run_lane(live.AUTHENTIC, parent=parent["receipt_sha256"])
+            code, report, digests = self.run_lane(live.AUTHENTIC, parent=recorded["org_receipt_sha256"])
         self.assertEqual(code, 0, report)
+        self.assertEqual((report["admitted"], report["disposition"], report["synthesis"], report["completion"]),
+                         ("ALLOW", "ALLOW", "ALLOW", "ALLOW"))
         self.assertTrue(calls and not any(calls), calls)
         self.assertEqual(report["org_readback"], "EXACT_KEYED_READBACK_PASS")
+        self.assertEqual((report["executed_by"], report["ledger_persistence"]), (ORG, "EXECUTION_SCOPED_SAME_AS_REFERENCE"))
         self.assertEqual(report["parent_transition_basis"], "AUTHORITATIVE_STORE_EXACT_KEYED_READBACK")
         self.assertIs(digests["authoritative_organization_runtime_reality"], True)
         self.assertFalse((self.evidence / "sv-llm-org-ledger").exists())
-        head = store.get(agg.HEAD_KEY)["receipt_sha256"]
-        self.assertEqual(head, report["org_receipts"][-1])
+        genesis = store.get(agg.receipt_key(opened["org_receipt_sha256"]))
+        self.assertIs(genesis["chain_genesis"], True)
         first = store.get(agg.receipt_key(report["org_receipts"][0]))
-        self.assertEqual(first["predecessor_org_state_sha256"], parent["receipt_sha256"])
+        self.assertEqual(first["predecessor_org_state_sha256"], recorded["org_receipt_sha256"])
+        self.assertEqual(store.get(agg.HEAD_KEY)["receipt_sha256"], report["org_receipts"][-1])
+        self.assertEqual(len(store.list_prefix(agg.RECEIPT_PREFIX)), 2 + len(report["org_receipts"]))
 
 
 if __name__ == "__main__":
