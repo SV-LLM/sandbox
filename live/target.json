@@ -23,6 +23,37 @@
   "automation_policy": "PERMITTED_BY_OWNER",
   "provider_entity": null,
   "provider_attribution_allowed": false,
-  "verified": false,
-  "verification_evidence": []
+  "verified": true,
+  "verification_evidence": [
+    {
+      "check": "current page reachable",
+      "result": "PASS",
+      "observed": "HTTP 200 at secure_url after StegVerse-Labs/Site #1501 merge cc7444b0fc73c95716635f3a7663aefa72aab56d; GitHub Pages deploy run 37573305486"
+    },
+    {
+      "check": "page bytes match reviewed source",
+      "result": "PASS",
+      "observed": "sha256:5ddeeede5a32f6b93dd2e5bec7150752728e1a999279750d3cdd4137a8453f67 served and on Site main"
+    },
+    {
+      "check": "automation permitted",
+      "result": "PASS",
+      "observed": "meta stegverse-automation-policy=PERMITTED_BY_OWNER; meta stegverse-target-id=stegverse.integration.llm-browser-test.v1"
+    },
+    {
+      "check": "selectors validated",
+      "result": "PASS",
+      "observed": "#prompt, #submit, #response each present once; response_ready absent before submit, present after"
+    },
+    {
+      "check": "response marker behavior validated",
+      "result": "PASS",
+      "observed": "#response = 'STEGVERSE_CONFORMANCE_V1 ' + prompt exactly; marker SVLLM_LIVEPATH_V1 observed; one request made (the page itself)"
+    },
+    {
+      "check": "method",
+      "result": "PASS",
+      "observed": "real Chromium 1194 via Playwright 1.52, no request interception, 2026-10-07T04:50:53Z; this is target verification, not the AT-04 run"
+    }
+  ]
 }

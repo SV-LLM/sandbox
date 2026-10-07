@@ -25,9 +25,16 @@ def verified(**changes):
 
 
 class Derivation(unittest.TestCase):
-    def test_committed_target_is_well_formed_but_unverified(self):
-        self.assertEqual(TARGET["verified"], False)
-        self.assertEqual(derive_invocation(TARGET), (None, "LIVE_TARGET_SELECTED_AND_VERIFIED"))
+    def test_unverified_target_fails_closed(self):
+        self.assertEqual(derive_invocation(verified(verified=False)), (None, "LIVE_TARGET_SELECTED_AND_VERIFIED"))
+
+    def test_committed_target_is_verified_with_passing_evidence(self):
+        self.assertIs(TARGET["verified"], True)
+        checks = {e["check"]: e["result"] for e in TARGET["verification_evidence"]}
+        for required in ("current page reachable", "selectors validated", "automation permitted",
+                         "response marker behavior validated"):
+            self.assertEqual(checks.get(required), "PASS", required)
+        self.assertEqual(derive_invocation(TARGET)[1], None)
 
     def test_target_is_stegverse_controlled_and_unattributed(self):
         self.assertEqual(TARGET["origin"], "https://stegverse.org")
