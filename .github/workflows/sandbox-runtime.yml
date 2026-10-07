@@ -29,3 +29,13 @@ jobs:
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
         run: python -B tests/test_sandbox_runtime.py
+      - name: Check out SV-LLM/.github with Anthropic and OpenAI registered (SV-LLM/.github PR #5)
+        uses: actions/checkout@v4
+        with:
+          repository: SV-LLM/.github
+          ref: b85672154b8b05f17085031778021a24da114fc4
+          path: sv-llm-dotgithub-registered
+      - name: Real-entity contract-level regression (order 5)
+        env:
+          SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub-registered
+        run: python -B tests/test_real_entity_regression.py
