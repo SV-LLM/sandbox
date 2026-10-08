@@ -31,7 +31,7 @@ def execute_manifested_llm_browser_transition(
 
     The outbound manifest remains the controlling invocation. This function
     neither issues nor simulates InTr authorization, organization ledger
-    append, Master Records custody, or provider-authentication proof.
+    append, Master Records organization record, or provider-authentication proof.
     """
     attempt: dict[str, Any] = {"stage": "MANIFEST_VALIDATION"}
     journey = request.get("journey")

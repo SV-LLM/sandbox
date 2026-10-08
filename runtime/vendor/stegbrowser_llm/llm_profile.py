@@ -2,8 +2,8 @@
 
 StegBrowser is the capability; LLM is an interaction profile. Test 5 varies the
 manifest only. The packet carries endpoint transition receipts across the two
-one-way InTr legs so the caller can submit the completed journey to existing
-organization/Master Records custody.
+one-way InTr legs so the caller can submit the completed journey to the
+existing organization record.
 """
 from __future__ import annotations
 

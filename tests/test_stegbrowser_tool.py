@@ -68,7 +68,7 @@ class Base(unittest.TestCase):
 
 class Vendoring(Base):
     def test_AT01_vendored_bytes_match_manifest_and_upstream_commit(self):
-        self.assertEqual(MANIFEST["source_commit"], "b0f652d96a172c6ae4649e79cd640a65bd915dab")
+        self.assertEqual(MANIFEST["source_commit"], "7353176612f4590d0d8220153869cd6e95e241d8")
         self.s.registration.verify_vendor(VENDOR)
         for rel, digest in MANIFEST["upstream_tests"].items():
             self.assertEqual("sha256:" + hashlib.sha256((ROOT / rel).read_bytes()).hexdigest(), digest, rel)

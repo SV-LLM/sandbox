@@ -1,9 +1,9 @@
 {
   "schema": "sv-llm.vendored-contract-manifest/v1",
   "canonical_source": "StegVerse-Labs/StegBrowser",
-  "source_commit": "b0f652d96a172c6ae4649e79cd640a65bd915dab",
+  "source_commit": "7353176612f4590d0d8220153869cd6e95e241d8",
   "published_tag_not_used": "v0.1.0-source (41404e72e21f17b803b8cd3fb062cfc9790f06e0, older)",
-  "integration_date": "2026-10-07",
+  "integration_date": "2026-10-08",
   "upstream_paths": {
     "ecosystem_ephemeral.py": "src/stegbrowser/ecosystem_ephemeral.py",
     "llm_profile.py": "src/stegbrowser/llm_profile.py",
@@ -12,9 +12,9 @@
   },
   "files": {
     "ecosystem_ephemeral.py": "sha256:92914410acc8a1205288d2db48076da660a3e531900809934d3c17c1927f57e8",
-    "llm_profile.py": "sha256:eeefcbe86987ec2a4ae634984f849782741da3bf3ead53718748cb7528e699b0",
+    "llm_profile.py": "sha256:d00d4bd573332bb64dd694d82c09784db055fc9f30afc6dfca3ec99dde4cc80e",
     "llm_browser_execution.py": "sha256:01603914746fc9b981eb9325123e72a021453370f71d6dd990b8741a37bbd46a",
-    "llm_transition.py": "sha256:9db4a75fc55081ccdf0eb155641b06bde0bc00f8d1d2e821fd0f599ce8f5c26a"
+    "llm_transition.py": "sha256:6e9e168f63f779d54d1c26734b20f3501f81bf991a86acea43acc91bf5128f2f"
   },
   "upstream_tests": {
     "tests/stegbrowser_upstream/test_llm_profile.py": "sha256:5f19a1e1e1785755c433a08f8ffe604f82ee1a0e2668846f91360d5961177237",
