@@ -17,6 +17,9 @@ from sandbox import Sandbox, ALLOW, DENY  # noqa: E402
 
 FIX = ROOT / "tests/fixtures"
 A, B, C = "FixtureEntityA", "FixtureEntityB", "FixtureEntityC"
+# Master Records boundary migration (MASTER-RECORDS-BULK-SEMANTIC-REMEDIATION-002).
+MASTER_RECORDS_PROHIBITION = "MASTER_RECORDS_ORGANIZATION_RECORD"
+LEGACY_MASTER_RECORDS_PROHIBITION = "MASTER_RECORDS_CUSTODY"
 
 
 def load_aggregate():
@@ -278,6 +281,28 @@ class LedgerIntegrity(unittest.TestCase):
         for field in contract["required_fields"]:
             self.assertIn(field, receipt)
         self.assertEqual(receipt["repository"], "SV-LLM/sandbox")
+
+
+class MasterRecordsProhibitionName(unittest.TestCase):
+    """Master Records boundary migration: fixtures emit the new prohibition name, and a declaration
+    that still lists the legacy name keeps registering when the tree binds its digest."""
+
+    def test_new_and_legacy_names_register(self):
+        h = Harness()
+        assert h.admit()["disposition"] == ALLOW
+        fixture = json.loads(h.declaration(A))
+        self.assertIn(MASTER_RECORDS_PROHIBITION, fixture["prohibited"])
+        self.assertNotIn(LEGACY_MASTER_RECORDS_PROHIBITION, fixture["prohibited"])
+        result = h.sandbox.assign("fixture-work-001", A, "synthesis", declaration=h.declaration(A), tree=h.tree)
+        self.assertEqual(result["disposition"], ALLOW, result)
+        legacy = copy.deepcopy(fixture)
+        legacy["prohibited"] = [LEGACY_MASTER_RECORDS_PROHIBITION if p == MASTER_RECORDS_PROHIBITION else p
+                                for p in legacy["prohibited"]]
+        tree = copy.deepcopy(h.tree)
+        row = next(r for r in tree["repositories"] if r["name"] == A)
+        row["capability_declaration_ref"]["declaration_sha256"] = h.canon.digest(legacy)
+        result = h.sandbox.assign("fixture-work-001", A, "adversarial_review", declaration=raw(legacy), tree=tree)
+        self.assertEqual(result["disposition"], ALLOW, result)
 
 
 class Vendor(unittest.TestCase):
