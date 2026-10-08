@@ -4,8 +4,8 @@
   "sources": {
     "Anthropic": {
       "repository": "SV-LLM/Anthropic",
-      "commit": "5adb1ba354874dba3904558f3a5b8aeee5ae84a0",
-      "pull_request": "PR #3",
+      "commit": "295bb619e73ddd69fd68c3f742193ef6de00fa11",
+      "pull_request": "PR #9",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_anthropic/core.py"
@@ -13,8 +13,8 @@
     },
     "OpenAI": {
       "repository": "SV-LLM/OpenAI",
-      "commit": "dae0ceaf71d8bc09511179bf17efc6b149f5c3b9",
-      "pull_request": "PR #14",
+      "commit": "26e35cde1f699e8d82be44a6276e39d21a592237",
+      "pull_request": "PR #20",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_openai/core.py"
@@ -24,9 +24,9 @@
   "reason": "Entity repositories are private; CI here cannot check them out. Declarations are bound by the canonical organization tree's declaration_sha256, so the source of these bytes is not trusted (R3). core.py is vendored so the contract-level regression exercises each entity's own contribution code.",
   "authority_effect": "NONE",
   "files": {
-    "Anthropic/entity-capability.json": "sha256:276ed8d9940e9ae0ae8262ee5f252f26fba58a9c3179738d7f6172d0444733c3",
+    "Anthropic/entity-capability.json": "sha256:44b6e67a33d2f09da6813ed18c99a062078d2f4d1c6d847ee440dd6ab645ccb4",
     "Anthropic/core.py": "sha256:1f2ea8bd6a3c0939d7625708ffe92315611a7444e3214bc05db6b32c9bbe967d",
-    "OpenAI/entity-capability.json": "sha256:5a936d63815f208074f0d900572b82994fecf1109f333b8d0fe8a0ea0f6ded54",
+    "OpenAI/entity-capability.json": "sha256:d9dfc571761402de8957e71f6c31e30f681ca5adf691bdf76123800b4ab7aa1f",
     "OpenAI/core.py": "sha256:95c4363c20275052aa3d73cf6de54a1176459cc0e4304c5aea5c8da891ef3d9d"
   }
 }
