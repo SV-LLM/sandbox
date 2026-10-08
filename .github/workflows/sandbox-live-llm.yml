@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: SV-LLM/.github
-          ref: 3dd2164478bd7098ec2f5705efa3a62fe585a0d2
+          ref: 856d9197f4c3e6ff7f0b6a9c3c2dfa55876f0807
           path: sv-llm-dotgithub
       - uses: actions/setup-python@v5
         with:
