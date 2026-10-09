@@ -43,7 +43,7 @@ ALLOW, DENY, FAIL_CLOSED = "ALLOW", "DENY", "FAIL_CLOSED"
 NON_SUCCESS = ("REFUSED", "UNAVAILABLE", "FAILED")
 
 
-# Conformance fields carried by every non-ALLOW Sandbox receipt (StegVerse-org/.github
+# Conformance fields carried by every non-ALLOW Sandbox outcome (DENY and FAIL_CLOSED) (StegVerse-org/.github
 # docs/ORGANIZATION_ROLE_RUNTIME_REALITY_DEPLOYMENT.md): failure_code, failed_predicate,
 # required_evidence_or_repair, retry_entrypoint, owning_existing_goal, next_attempt.
 OWNING_EXISTING_GOAL = "SVORG-LLM-ORG-FOUNDATION-001"
@@ -147,6 +147,17 @@ def deny_fields(method: str, predicate: str) -> dict[str, Any]:
             "owning_existing_goal": OWNING_EXISTING_GOAL, "next_attempt": next_attempt}
 
 
+PROPAGATION_FAIL_CLOSED = {
+    "failure_code": "SANDBOX_FAIL_CLOSED_ORGANIZATION_PROPAGATION_SUCCEEDED",
+    "failed_predicate": "ORGANIZATION_PROPAGATION_SUCCEEDED",
+    "required_evidence_or_repair": "Restore the SV-LLM organization ledger so it accepts the repo receipt "
+                                   "(error_type names the propagation failure); the repo receipt itself stands.",
+    "retry_entrypoint": RETRY_PREFIX + "repropagate",
+    "owning_existing_goal": OWNING_EXISTING_GOAL,
+    "next_attempt": "Call repropagate with the failed repo receipt digest; do not repeat the original action.",
+}
+
+
 def _load(name: str, path: Path):
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
@@ -191,17 +202,16 @@ class Sandbox:
 
     def _propagation_failed(self, receipt: dict[str, Any], exc: Exception, result: dict[str, Any]) -> dict[str, Any]:
         """Record a repo-level FAIL_CLOSED for a failed organization propagation. No org receipt is fabricated."""
-        failure = {"disposition": FAIL_CLOSED, "failed_predicate": "ORGANIZATION_PROPAGATION_SUCCEEDED",
+        failure = {"disposition": FAIL_CLOSED, **PROPAGATION_FAIL_CLOSED,
                    "failed_receipt_sha256": receipt["receipt_sha256"],
                    "failed_transition_class": receipt["transition_class"],
                    "work_id": receipt["evidence"].get("work_id"), "error_type": type(exc).__name__,
-                   "retry_entrypoint": "runtime.sandbox.Sandbox.repropagate", "authority_effect": "NONE"}
+                   "authority_effect": "NONE"}
         logged = self.ledger.append("ORGANIZATION_PROPAGATION_FAILED", predecessor=receipt["receipt_sha256"],
                                     successor=sha(failure), evidence=failure)
-        return {**result, "disposition": FAIL_CLOSED, "failed_predicate": "ORGANIZATION_PROPAGATION_SUCCEEDED",
+        return {**result, "disposition": FAIL_CLOSED, **PROPAGATION_FAIL_CLOSED,
                 "recorded_disposition": result.get("disposition"),
-                "propagation_failure_receipt_sha256": logged["receipt_sha256"],
-                "retry_entrypoint": "runtime.sandbox.Sandbox.repropagate"}
+                "propagation_failure_receipt_sha256": logged["receipt_sha256"]}
 
     def pending_propagation(self, work_id: str | None = None) -> list[str]:
         """Repo receipts whose organization propagation failed and has not been recovered."""
@@ -220,8 +230,7 @@ class Sandbox:
         try:
             org = self.propagate(receipt, receipt["transition_class"])
         except Exception as exc:
-            return {"disposition": FAIL_CLOSED, "failed_predicate": "ORGANIZATION_PROPAGATION_SUCCEEDED",
-                    "error_type": type(exc).__name__, "retry_entrypoint": "runtime.sandbox.Sandbox.repropagate",
+            return {"disposition": FAIL_CLOSED, **PROPAGATION_FAIL_CLOSED, "error_type": type(exc).__name__,
                     "authority_effect": "NONE"}
         recovered = {"disposition": ALLOW, "recovered_receipt_sha256": receipt_sha256,
                      "work_id": receipt["evidence"].get("work_id"), "org_receipt_sha256": org["receipt_sha256"],

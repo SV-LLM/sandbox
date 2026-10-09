@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DOTGITHUB = Path(os.environ["SV_LLM_DOTGITHUB_ROOT"]).resolve()
 sys.path.insert(0, str(ROOT / "runtime"))
 from ledger import Ledger, sha  # noqa: E402
-from sandbox import Sandbox, ALLOW, DENY, DENY_ENTRYPOINTS, DENY_REPAIRS, OWNING_EXISTING_GOAL  # noqa: E402
+from sandbox import Sandbox, ALLOW, DENY, FAIL_CLOSED, DENY_ENTRYPOINTS, DENY_REPAIRS, OWNING_EXISTING_GOAL  # noqa: E402
 
 FIX = ROOT / "tests/fixtures"
 A, B, C = "FixtureEntityA", "FixtureEntityB", "FixtureEntityC"
@@ -271,7 +271,8 @@ class SixFieldDeny(unittest.TestCase):
         for field in SIX_FIELDS:
             self.assertIsInstance(outcome.get(field), str, (field, outcome))
             self.assertTrue(outcome[field], (field, outcome))
-        self.assertEqual(outcome["failure_code"], "SANDBOX_DENY_" + outcome["failed_predicate"])
+        prefix = "SANDBOX_DENY_" if outcome["disposition"] == DENY else "SANDBOX_FAIL_CLOSED_"
+        self.assertEqual(outcome["failure_code"], prefix + outcome["failed_predicate"])
         self.assertEqual(outcome["owning_existing_goal"], OWNING_EXISTING_GOAL)
         self.assertTrue(outcome["retry_entrypoint"].startswith("runtime.sandbox.Sandbox."), outcome)
         self.assertTrue(hasattr(Sandbox, outcome["retry_entrypoint"].rsplit(".", 1)[1]), outcome)
@@ -320,6 +321,30 @@ class SixFieldDeny(unittest.TestCase):
         refused = s.repropagate(sha("not-a-receipt"))
         self.assertSixFields(refused, "RECEIPT_PROPAGATION_PENDING")
         self.assertEqual(refused["retry_entrypoint"], "runtime.sandbox.Sandbox.repropagate")
+
+    def test_fail_closed_propagation_paths_carry_six_fields(self):
+        h = Harness()
+        s = h.sandbox
+        propagate = s.propagate
+        s.propagate = lambda receipt, cls: (_ for _ in ()).throw(RuntimeError("org ledger down"))
+        failed = s.complete("fixture-work-001")  # a DENY whose propagation then fails
+        self.assertEqual(failed["disposition"], FAIL_CLOSED)
+        self.assertSixFields(failed, "ORGANIZATION_PROPAGATION_SUCCEEDED")
+        logged = next(r for r in s.ledger.chain() if r["transition_class"] == "ORGANIZATION_PROPAGATION_FAILED")
+        self.assertSixFields(logged["evidence"], "ORGANIZATION_PROPAGATION_SUCCEEDED")
+        for outcome in (failed, logged["evidence"]):
+            self.assertEqual(outcome["retry_entrypoint"], "runtime.sandbox.Sandbox.repropagate")
+        pending = s.pending_propagation()
+        self.assertEqual(len(pending), 1)
+        retried = s.repropagate(pending[0])  # organization ledger still down
+        self.assertEqual(retried["disposition"], FAIL_CLOSED)
+        self.assertSixFields(retried, "ORGANIZATION_PROPAGATION_SUCCEEDED")
+        s.propagate = propagate
+        self.assertEqual(s.repropagate(pending[0])["disposition"], ALLOW)
+        non_allow = [r["evidence"] for r in s.ledger.chain() if r["evidence"].get("disposition") != ALLOW]
+        self.assertTrue(non_allow)
+        for evidence in non_allow:
+            self.assertSixFields(evidence)
 
     def test_six_fields_are_deterministic(self):
         receipts = []
