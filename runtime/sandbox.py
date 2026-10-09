@@ -43,6 +43,110 @@ ALLOW, DENY, FAIL_CLOSED = "ALLOW", "DENY", "FAIL_CLOSED"
 NON_SUCCESS = ("REFUSED", "UNAVAILABLE", "FAILED")
 
 
+# Conformance fields carried by every non-ALLOW Sandbox receipt (StegVerse-org/.github
+# docs/ORGANIZATION_ROLE_RUNTIME_REALITY_DEPLOYMENT.md): failure_code, failed_predicate,
+# required_evidence_or_repair, retry_entrypoint, owning_existing_goal, next_attempt.
+OWNING_EXISTING_GOAL = "SVORG-LLM-ORG-FOUNDATION-001"
+RETRY_PREFIX = "runtime.sandbox.Sandbox."
+DENY_ENTRYPOINTS = {
+    "SANDBOX_WORK_DENIED": "admit",
+    "CAPABILITY_ASSIGNMENT_DENIED": "assign",
+    "CONTRIBUTION_REQUEST_DENIED": "request",
+    "ENTITY_CONTRIBUTION_DENIED": "record",
+    "SANDBOX_SYNTHESIS_DENIED": "synthesize",
+    "SANDBOX_WORK_COMPLETION_DENIED": "complete",
+}
+# predicate -> (required_evidence_or_repair, next_attempt). Predicates raised by sandbox_registration or
+# SV_LLM_CANONICAL_JSON_V1 that are not listed get a generic pair naming the predicate and the refusing method.
+DENY_REPAIRS = {
+    "WORK_IS_CANONICAL_JSON": (
+        "Re-encode the work item as SV_LLM_CANONICAL_JSON_V1 (the detail names the canonical-form violation).",
+        "Call admit again with the canonical work bytes and the same parent receipts and subject."),
+    "WORK_IS_SCHEMA_VALID": (
+        "Make the work item valid against sv-llm.sandbox-work/v0.1 (the detail names the first schema error).",
+        "Call admit again with the corrected work item."),
+    "WORK_ID_NOT_ALREADY_ADMITTED": (
+        "Use a work_id that has no SANDBOX_WORK_ADMITTED receipt in this ledger, or continue the admitted work item.",
+        "Call admit with a new work_id, or proceed with assign/request on the admitted work_id."),
+    "PARENT_REPO_RECEIPT_MATCHES": (
+        "Supply the untampered stegverse.repo-transition-receipt/v1 whose receipt_sha256 equals "
+        "parent_transition.repo_receipt_sha256.",
+        "Call admit again with that parent repo receipt."),
+    "PARENT_IS_SV_LLM_TRANSITION": (
+        "Supply a parent repo receipt recorded by an SV-LLM/ repository.",
+        "Call admit again with an SV-LLM parent repo receipt and matching parent_transition."),
+    "PARENT_TRANSITION_CLASS_MATCHES": (
+        "Set parent_transition.transition_class to the parent repo receipt's transition_class.",
+        "Call admit again with the corrected work item."),
+    "PARENT_ORG_RECEIPT_MATCHES": (
+        "Supply the untampered SV-LLM stegverse.organization-transition-receipt/v1 whose receipt_sha256 equals "
+        "parent_transition.org_receipt_sha256.",
+        "Call admit again with that parent organization receipt."),
+    "ORG_RECEIPT_PROPAGATES_REPO_RECEIPT": (
+        "Supply the organization receipt that propagated parent_transition.repo_receipt_sha256.",
+        "Call admit again with the organization receipt for the named parent repo receipt."),
+    "SUBJECT_IS_PARENT_SUCCESSOR_STATE": (
+        "Supply the subject whose digest equals parent_transition.subject_or_artifact_digest and the parent repo "
+        "receipt's successor_state_sha256.",
+        "Call admit again with the parent's successor-state subject."),
+    "WORK_IS_ADMITTED": (
+        "Admit the work item first (a SANDBOX_WORK_ADMITTED receipt for this work_id).",
+        "Call admit, then retry this call for the same work_id."),
+    "CAPABILITY_REQUESTED_AND_PERMITTED_BY_WORK": (
+        "Assign only a capability listed in both requested_capabilities and permitted_capabilities of the work item.",
+        "Call assign again with a requested and permitted capability."),
+    "CAPABILITY_NOT_DECLARED_BY_ENTITY": (
+        "Assign a capability the entity's registered capability declaration declares.",
+        "Call assign again with a declared capability, or with an entity that declares it."),
+    "CAPABILITY_ASSIGNED_FOR_ADMITTED_WORK": (
+        "Record a CAPABILITY_ASSIGNMENT for this entity and capability on admitted work.",
+        "Call assign for the entity and capability, then call request again."),
+    "ENVELOPE_IS_CANONICAL_JSON": (
+        "Re-encode the contribution envelope as SV_LLM_CANONICAL_JSON_V1 (the detail names the violation).",
+        "Call record again with the canonical envelope bytes."),
+    "ENVELOPE_IS_SCHEMA_VALID": (
+        "Make the envelope valid against sv-llm.contribution/v0.1 (the detail names the first schema error).",
+        "Call record again with the corrected envelope."),
+    "CONTRIBUTION_WAS_REQUESTED": (
+        "Admit the work, assign the capability to the entity and record CONTRIBUTION_REQUESTED for it.",
+        "Call request for the envelope's work_id, entity and capability, then call record again."),
+    "CONTRIBUTION_ID_UNIQUE": (
+        "Use a contribution_id not already recorded for this work item.",
+        "Call record again with an envelope carrying a new contribution_id."),
+    "ARTIFACT_CONTENT_RETAINED": (
+        "Pass the retained artifact bytes the envelope's artifact_refs commit to.",
+        "Call record again with retained=<artifact bytes>."),
+    "SYNTHESIS_INPUTS_RECORDED": (
+        "Record at least one contribution, refusal or tool observation for the work item.",
+        "Call record or record_tool_observation, then call synthesize again."),
+    "SYNTHESIS_BINDS_EVERY_RECORDED_INPUT": (
+        "Pass input_ids naming every recorded contribution_id and observation_id for the work item exactly once.",
+        "Call synthesize again with the complete, duplicate-free input_ids."),
+    "SYNTHESIS_RECORDED": (
+        "Record a SANDBOX_SYNTHESIS_RECORDED receipt for admitted work.",
+        "Call synthesize, then call complete again."),
+    "WORK_NOT_ALREADY_COMPLETED": (
+        "None: the work item already has a SANDBOX_WORK_COMPLETED receipt.",
+        "Do not retry; reconstruct the completed work with reconstruct."),
+    "ORGANIZATION_PROPAGATION_COMPLETE": (
+        "Recover organization propagation for every receipt listed in pending.",
+        "Call repropagate for each pending receipt, then call complete again."),
+    "RECEIPT_PROPAGATION_PENDING": (
+        "Name a repo receipt listed by pending_propagation().",
+        "Call pending_propagation and repropagate one of the listed receipts."),
+}
+
+
+def deny_fields(method: str, predicate: str) -> dict[str, Any]:
+    """The six conformance fields of a DENY refused by Sandbox.<method> on <predicate>."""
+    repair, next_attempt = DENY_REPAIRS.get(predicate, (
+        f"Satisfy predicate {predicate} for this attempt.",
+        f"Call {method} again once {predicate} holds."))
+    return {"disposition": DENY, "failure_code": "SANDBOX_DENY_" + predicate, "failed_predicate": predicate,
+            "required_evidence_or_repair": repair, "retry_entrypoint": RETRY_PREFIX + method,
+            "owning_existing_goal": OWNING_EXISTING_GOAL, "next_attempt": next_attempt}
+
+
 def _load(name: str, path: Path):
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
@@ -111,7 +215,7 @@ class Sandbox:
     def repropagate(self, receipt_sha256: str) -> dict[str, Any]:
         """Retry organization propagation of an existing repo receipt without repeating its action."""
         if receipt_sha256 not in self.pending_propagation():
-            return {"disposition": DENY, "failed_predicate": "RECEIPT_PROPAGATION_PENDING", "authority_effect": "NONE"}
+            return {**deny_fields("repropagate", "RECEIPT_PROPAGATION_PENDING"), "authority_effect": "NONE"}
         receipt = next(r for r in self.ledger.chain() if r["receipt_sha256"] == receipt_sha256)
         try:
             org = self.propagate(receipt, receipt["transition_class"])
@@ -126,7 +230,7 @@ class Sandbox:
                                                                     "receipt_sha256": receipt_sha256}, recovered)
 
     def _deny(self, transition_class: str, subject: Any, predicate: str, **extra) -> dict[str, Any]:
-        return self._record(transition_class, subject, {"disposition": DENY, "failed_predicate": predicate,
+        return self._record(transition_class, subject, {**deny_fields(DENY_ENTRYPOINTS[transition_class], predicate),
                                                         "authority_effect": "NONE", **extra})
 
     def _parse(self, data: bytes | str):
