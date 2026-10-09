@@ -19,19 +19,51 @@ Predicates, in order:
   PROVIDER_AUTOMATION_SURFACE_APPROVED           FAIL_CLOSED
   PROVIDER_INTERACTION_CONTRACT_VERIFIED         FAIL_CLOSED
 
+Every refusal carries the six conformance fields (failure_code, failed_predicate,
+required_evidence_or_repair, retry_entrypoint, owning_existing_goal,
+next_attempt) from runtime/sandbox.py deny_fields() and PROVIDER_REPAIRS.
+
 Resolution contacts no provider and starts no browser. Invoking StegBrowser
 from a resolved surface is a later step, taken only once a provider's contract
 is APPROVED with its explicit written automation permission.
 """
 from __future__ import annotations
-import json
+import json, sys
 from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from sandbox import deny_fields  # noqa: E402
 
 VENDOR = Path(__file__).resolve().parent / "provider_contracts"
 CONTRACT = "provider-interaction-contract.json"
 SCHEMA_TITLE = "sv-llm.provider-interaction-contract/v0.1"
 ALLOW, DENY, FAIL_CLOSED = "ALLOW", "DENY", "FAIL_CLOSED"
+RETRY_PREFIX = "runtime.provider_contract.ProviderInteraction."
+# predicate -> (required_evidence_or_repair, next_attempt) for PROVIDER_INTERACTION_REFUSED.
+PROVIDER_REPAIRS = {
+    "CAPABILITY_ASSIGNED_FOR_ADMITTED_WORK": (
+        "Admit the work item and record a CAPABILITY_ASSIGNMENT for this entity and capability.",
+        "Call Sandbox.admit and Sandbox.assign for the entity and capability, then call resolve again."),
+    "PROVIDER_INTERACTION_CONTRACT_PRESENT": (
+        "Vendor the assigned entity's repository provider-interaction-contract.json into runtime/provider_contracts/ "
+        "and list it with its digest in vendor-manifest.json.",
+        "Call resolve again once the contract is vendored and listed in the manifest."),
+    "PROVIDER_INTERACTION_CONTRACT_SCHEMA_VALID": (
+        "Repair the provider's contract so it is SV_LLM_CANONICAL_JSON_V1 and valid against "
+        "sv-llm.provider-interaction-contract/v0.1 (the detail names the first violation), then re-vendor it.",
+        "Call resolve again with the re-vendored, schema-valid contract."),
+    "PROVIDER_INTERACTION_CONTRACT_BOUND_TO_ASSIGNED_ENTITY": (
+        "Vendor the contract whose entity and repository equal the assigned entity's registered declaration.",
+        "Call resolve again once the bound contract is vendored, or resolve for the entity the contract names."),
+    "PROVIDER_AUTOMATION_SURFACE_APPROVED": (
+        "The provider's contract must declare surface_status APPROVED with explicit written automation permission "
+        "(unblock_condition names what is required); no Sandbox-side repair substitutes for it.",
+        "Call resolve again only after the provider's repository publishes an APPROVED contract and it is re-vendored."),
+    "PROVIDER_INTERACTION_CONTRACT_VERIFIED": (
+        "Verify the APPROVED surface against the live provider page and publish the contract with verified true.",
+        "Call resolve again once the verified contract is re-vendored."),
+}
 
 
 class ProviderInteraction:
@@ -48,7 +80,9 @@ class ProviderInteraction:
 
     def _refuse(self, attempt: dict[str, Any], disposition: str, predicate: str, **extra) -> dict[str, Any]:
         return self.sandbox._record("PROVIDER_INTERACTION_REFUSED", attempt,
-                                    {"disposition": disposition, "failed_predicate": predicate,
+                                    {**deny_fields("resolve", predicate, disposition=disposition,
+                                                   repairs=PROVIDER_REPAIRS, retry_prefix=RETRY_PREFIX,
+                                                   code_prefix="PROVIDER_INTERACTION"),
                                      "work_id": attempt["work_id"], "entity": attempt["entity"],
                                      "capability": attempt["capability"], "authority_effect": "NONE", **extra})
 

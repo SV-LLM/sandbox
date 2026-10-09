@@ -8,14 +8,15 @@ No provider is contacted and no browser starts.
 Run: SV_LLM_DOTGITHUB_ROOT=<registered SV-LLM/.github checkout> python -B tests/test_provider_contract.py
 """
 from __future__ import annotations
-import copy, hashlib, json, sys, tempfile, unittest
+import copy, hashlib, json, re, sys, tempfile, unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tests"))
 sys.path.insert(0, str(ROOT / "runtime"))
 from test_sandbox_runtime import Harness, ALLOW, DENY, A, B  # noqa: E402
-from provider_contract import ProviderInteraction, VENDOR  # noqa: E402
+from provider_contract import ProviderInteraction, VENDOR, PROVIDER_REPAIRS  # noqa: E402
+from sandbox import OWNING_EXISTING_GOAL  # noqa: E402
 
 FAIL_CLOSED = "FAIL_CLOSED"
 REAL = ROOT / "tests/real_entities"
@@ -51,6 +52,25 @@ def vendor(contracts: dict[str, dict | bytes]) -> tempfile.TemporaryDirectory:
     return tmp
 
 
+SIX_FIELDS = ("failure_code", "failed_predicate", "required_evidence_or_repair", "retry_entrypoint",
+              "owning_existing_goal", "next_attempt")
+
+
+def assert_six_fields(tc: unittest.TestCase, sandbox, out: dict) -> None:
+    """Every PROVIDER_INTERACTION_REFUSED carries the six conformance fields, returned and in the ledger."""
+    tc.assertEqual(out["transition_class"], "PROVIDER_INTERACTION_REFUSED")
+    evidence = next(r for r in sandbox.ledger.chain() if r["receipt_sha256"] == out["repo_receipt_sha256"])["evidence"]
+    predicate = out["failed_predicate"]
+    tc.assertIn(predicate, PROVIDER_REPAIRS)  # a specific repair, not the generic fallback
+    for record in (out, evidence):
+        for field in SIX_FIELDS:
+            tc.assertTrue(isinstance(record.get(field), str) and record[field], (predicate, field))
+        tc.assertEqual(record["failure_code"], f"PROVIDER_INTERACTION_{out['disposition']}_{predicate}")
+        tc.assertEqual(record["retry_entrypoint"], "runtime.provider_contract.ProviderInteraction.resolve")
+        tc.assertEqual(record["owning_existing_goal"], OWNING_EXISTING_GOAL)
+        tc.assertEqual((record["required_evidence_or_repair"], record["next_attempt"]), PROVIDER_REPAIRS[predicate])
+
+
 def approved(entity: str, **changes) -> dict:
     c = copy.deepcopy(APPROVED)
     c.update(entity=entity, repository=entity, **changes)
@@ -78,6 +98,7 @@ class RealProviderContracts(unittest.TestCase):
             self.assertEqual((out["disposition"], out["failed_predicate"]),
                              (FAIL_CLOSED, "PROVIDER_AUTOMATION_SURFACE_APPROVED"))
             self.assertEqual(out["surface_status"], "NO_APPROVED_AUTOMATION_SURFACE")
+            assert_six_fields(self, self.s, out)
             self.assertEqual(out["repository"], entity)
             raw = (VENDOR / entity / "provider-interaction-contract.json").read_bytes()
             self.assertEqual(out["contract_sha256"], self.s.canon.digest(self.s.canon.parse(raw)))
@@ -109,12 +130,15 @@ class ResolutionPredicates(unittest.TestCase):
         self.addCleanup(tmp.cleanup)
         out = ProviderInteraction(self.s, Path(tmp.name)).resolve(WORK, A, "code_generation")
         self.assertEqual((out["disposition"], out["failed_predicate"]), (DENY, "CAPABILITY_ASSIGNED_FOR_ADMITTED_WORK"))
+        assert_six_fields(self, self.s, out)
         out = ProviderInteraction(self.s, Path(tmp.name)).resolve("no-such-work", A, "synthesis")
         self.assertEqual((out["disposition"], out["failed_predicate"]), (DENY, "CAPABILITY_ASSIGNED_FOR_ADMITTED_WORK"))
+        assert_six_fields(self, self.s, out)
 
     def test_missing_contract_fails_closed(self):
         out = self.resolve({B: approved(B)}, entity=A)
         self.assertEqual((out["disposition"], out["failed_predicate"]), (FAIL_CLOSED, "PROVIDER_INTERACTION_CONTRACT_PRESENT"))
+        assert_six_fields(self, self.s, out)
 
     def test_invalid_contract_fails_closed(self):
         for bad in (approved(A, credential_mode="SESSION_COOKIE"), approved(A, surface_status="NO_APPROVED_AUTOMATION_SURFACE"),
@@ -122,15 +146,18 @@ class ResolutionPredicates(unittest.TestCase):
             out = self.resolve({A: bad})
             self.assertEqual((out["disposition"], out["failed_predicate"]),
                              (FAIL_CLOSED, "PROVIDER_INTERACTION_CONTRACT_SCHEMA_VALID"), bad)
+            assert_six_fields(self, self.s, out)
 
     def test_contract_for_another_entity_denied(self):
         out = self.resolve({A: approved(B)})
         self.assertEqual((out["disposition"], out["failed_predicate"]),
                          (DENY, "PROVIDER_INTERACTION_CONTRACT_BOUND_TO_ASSIGNED_ENTITY"))
+        assert_six_fields(self, self.s, out)
 
     def test_unverified_approved_contract_fails_closed(self):
         out = self.resolve({A: approved(A, verified=False)})
         self.assertEqual((out["disposition"], out["failed_predicate"]), (FAIL_CLOSED, "PROVIDER_INTERACTION_CONTRACT_VERIFIED"))
+        assert_six_fields(self, self.s, out)
 
     def test_approved_verified_contract_resolves_surface_without_invoking_anything(self):
         out = self.resolve({A: approved(A)})
@@ -141,6 +168,18 @@ class ResolutionPredicates(unittest.TestCase):
         self.assertEqual(surface["selectors"], APPROVED["selectors"])
         self.assertEqual(surface["automation_permission"]["basis"], "PROVIDER_EXPLICIT_WRITTEN_PERMISSION")
         self.assertFalse(any(r["transition_class"] == "SANDBOX_TOOL_OBSERVATION_RECORDED" for r in self.s.ledger.chain()))
+        for field in SIX_FIELDS[:1] + SIX_FIELDS[2:]:
+            self.assertNotIn(field, out)  # ALLOW carries no repair fields
+
+    def test_every_documented_refusal_predicate_has_a_specific_repair(self):
+        import provider_contract
+        documented = set(re.findall(r"^  ([A-Z_]+)\s+(?:DENY|FAIL_CLOSED)$", provider_contract.__doc__, re.M))
+        self.assertEqual(documented, set(PROVIDER_REPAIRS))
+
+    def test_refusal_fields_are_deterministic(self):
+        first = self.resolve({A: approved(A, verified=False)})
+        second = self.resolve({A: approved(A, verified=False)})
+        self.assertEqual({f: first[f] for f in SIX_FIELDS}, {f: second[f] for f in SIX_FIELDS})
 
     def test_tampered_vendored_bytes_refuse_construction(self):
         tmp = vendor({A: approved(A)})

@@ -11,7 +11,8 @@ from unittest.mock import MagicMock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tests"))
 from test_sandbox_runtime import Harness, ALLOW, DENY  # noqa: E402
-from stegbrowser_tool import StegBrowserTool, VENDOR, MANIFEST  # noqa: E402
+from stegbrowser_tool import StegBrowserTool, VENDOR, MANIFEST, TOOL_REPAIRS, STEGBROWSER_NEXT_ATTEMPT  # noqa: E402
+from sandbox import OWNING_EXISTING_GOAL  # noqa: E402
 
 WORK = "fixture-work-001"
 MARKER = "SVLLM_MARK_7Q"
@@ -41,6 +42,26 @@ def factory(*, text=f"{MARKER}: a reply.", fail_launch=False, status=200):
     if fail_launch:
         p.chromium.launch.side_effect = RuntimeError("synthetic launch failure")
     return playwright
+
+
+SIX_FIELDS = ("failure_code", "failed_predicate", "required_evidence_or_repair", "retry_entrypoint",
+              "owning_existing_goal", "next_attempt")
+
+
+def assert_six_fields(tc: unittest.TestCase, e: dict) -> None:
+    """Every non-ALLOW tool observation carries the six conformance fields."""
+    tc.assertNotEqual(e["disposition"], ALLOW)
+    for field in SIX_FIELDS:
+        tc.assertTrue(isinstance(e.get(field), str) and e[field], (e["failed_predicate"], field))
+    tc.assertEqual(e["owning_existing_goal"], OWNING_EXISTING_GOAL)
+    if e["decided_by"] == "STEGBROWSER":
+        tc.assertEqual(e["next_attempt"], STEGBROWSER_NEXT_ATTEMPT)
+    else:
+        predicate = e["failed_predicate"]
+        tc.assertIn(predicate, TOOL_REPAIRS)  # a specific repair, not the generic fallback
+        tc.assertEqual(e["failure_code"], f"SANDBOX_TOOL_{e['disposition']}_{predicate}")
+        tc.assertEqual(e["retry_entrypoint"], "runtime.stegbrowser_tool.StegBrowserTool.invoke")
+        tc.assertEqual((e["required_evidence_or_repair"], e["next_attempt"]), TOOL_REPAIRS[predicate])
 
 
 class Base(unittest.TestCase):
@@ -138,6 +159,7 @@ class NonAllow(Base):
         e = self.obs(out)
         self.assertEqual((e["disposition"], e["evaluation_stage"]), ("FAIL_CLOSED", "LEASE_ADMISSION"))
         self.assertIsNone(e["terminal_receipt"])
+        assert_six_fields(self, e)
         pw.return_value.__enter__.return_value.chromium.launch.assert_not_called()
 
     def test_AT07_browser_failures_fail_closed_with_retry(self):
@@ -150,6 +172,7 @@ class NonAllow(Base):
             self.assertTrue(e["failed_predicate"])
             self.assertEqual(e["retry_entrypoint"], "src.stegbrowser.llm_transition.execute_manifested_llm_browser_transition")
             self.assertTrue(e["terminal_receipt"]["session_state_destroyed"])
+            assert_six_fields(self, e)
         stages = [r["evidence"]["attempt"] for r in self.s.observations(WORK)]
         self.assertEqual(stages, [1, 2, 3])
 
@@ -162,6 +185,7 @@ class RuntimeCheck(Base):
         self.assertEqual((e["disposition"], e["failed_predicate"], e["decided_by"]),
                          ("FAIL_CLOSED", "SANDBOX_ENVIRONMENT_PYTHON_PLAYWRIGHT_CHROMIUM_AVAILABLE", "SANDBOX_RUNTIME_CHECK"))
         self.assertFalse(e["stegbrowser_invoked"])
+        assert_six_fields(self, e)
 
 
 class PreInvocation(Base):
@@ -179,6 +203,7 @@ class PreInvocation(Base):
                          ("DENY", predicate, "SANDBOX_PRE_INVOCATION"))
         self.assertFalse(e["stegbrowser_invoked"])
         self.pw.return_value.__enter__.assert_not_called()
+        assert_six_fields(self, e)
         return e
 
     def test_AT05_AT21_origin_outside_lease(self):
@@ -202,6 +227,17 @@ class PreInvocation(Base):
     def test_AT21_work_and_invocation_must_be_admitted(self):
         self.denied(self.tool.invoke("not-admitted", "inv-1", playwright_factory=self.pw), "WORK_ID_IS_ADMITTED")
         self.denied(self.tool.invoke(WORK, "inv-undeclared", playwright_factory=self.pw), "TOOL_INVOCATION_DECLARED")
+
+    def test_malformed_invocation_denied_with_six_fields(self):
+        h = Harness()
+        self.addCleanup(h.tmp.cleanup)
+        work = h.work(manifested_request={"manifest_id": "fixture-manifest-001",
+                                          "tool_invocations": [invocation(lease_seconds=0)]})
+        h.admit(work)
+        out = StegBrowserTool(h.sandbox).invoke(WORK, "inv-1", playwright_factory=self.pw)
+        e = next(r for r in h.sandbox.ledger.chain() if r["receipt_sha256"] == out["repo_receipt_sha256"])["evidence"]
+        self.assertEqual((e["disposition"], e["failed_predicate"]), ("DENY", "TOOL_INVOCATION_WELL_FORMED"))
+        assert_six_fields(self, e)
 
     def test_matching_proposal_is_allowed(self):
         out = self.tool.invoke(WORK, "inv-1", playwright_factory=factory(),

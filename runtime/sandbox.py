@@ -29,7 +29,11 @@ predicates come from SV-LLM/.github: org-runtime/sandbox_registration.py and its
 digest-verified vendored copy of SV-LLM/schemas. Sandbox-to-entity dispatch is
 intra-organization. The StegBrowser tool adapter may perform ordinary HTTPS
 browser interaction; that is not an inter-organization transition and uses
-neither InTr nor LLM-adapter. Nothing here confers governance authority.
+neither InTr nor LLM-adapter. That no-LLM-adapter-hop rule covers internal
+admitted Sandbox operations only: they need not traverse the adapter again.
+External provider/LLM ingress follows the declared path healthy node ->
+LLM-adapter -> SDK -> StegVerse-org/.github -> Interlock/InTr => Org Ledger.
+Nothing here confers governance authority.
 """
 from __future__ import annotations
 import importlib.util, json, sys
@@ -137,14 +141,21 @@ DENY_REPAIRS = {
 }
 
 
-def deny_fields(method: str, predicate: str) -> dict[str, Any]:
-    """The six conformance fields of a DENY refused by Sandbox.<method> on <predicate>."""
-    repair, next_attempt = DENY_REPAIRS.get(predicate, (
+def deny_fields(method: str, predicate: str, *, disposition: str = DENY,
+                repairs: dict[str, tuple[str, str]] = DENY_REPAIRS, retry_prefix: str = RETRY_PREFIX,
+                code_prefix: str = "SANDBOX") -> dict[str, Any]:
+    """The six conformance fields of a non-ALLOW outcome refused by <retry_prefix><method> on <predicate>.
+
+    Defaults describe a Sandbox DENY; Sandbox-side modules (runtime/provider_contract.py,
+    runtime/stegbrowser_tool.py) pass their own disposition, repairs, retry prefix and code prefix.
+    """
+    repair, next_attempt = repairs.get(predicate, (
         f"Satisfy predicate {predicate} for this attempt.",
         f"Call {method} again once {predicate} holds."))
-    return {"disposition": DENY, "failure_code": "SANDBOX_DENY_" + predicate, "failed_predicate": predicate,
-            "required_evidence_or_repair": repair, "retry_entrypoint": RETRY_PREFIX + method,
-            "owning_existing_goal": OWNING_EXISTING_GOAL, "next_attempt": next_attempt}
+    return {"disposition": disposition, "failure_code": f"{code_prefix}_{disposition}_{predicate}",
+            "failed_predicate": predicate, "required_evidence_or_repair": repair,
+            "retry_entrypoint": retry_prefix + method, "owning_existing_goal": OWNING_EXISTING_GOAL,
+            "next_attempt": next_attempt}
 
 
 PROPAGATION_FAIL_CLOSED = {
