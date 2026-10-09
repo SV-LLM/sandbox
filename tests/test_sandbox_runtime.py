@@ -6,17 +6,20 @@ workflow pins it), and jsonschema.
 Run: SV_LLM_DOTGITHUB_ROOT=<path> python -B tests/test_sandbox_runtime.py
 """
 from __future__ import annotations
-import base64, copy, importlib.util, json, os, subprocess, sys, tempfile, unittest
+import ast, base64, copy, importlib.util, json, os, subprocess, sys, tempfile, unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DOTGITHUB = Path(os.environ["SV_LLM_DOTGITHUB_ROOT"]).resolve()
 sys.path.insert(0, str(ROOT / "runtime"))
 from ledger import Ledger, sha  # noqa: E402
-from sandbox import Sandbox, ALLOW, DENY  # noqa: E402
+from sandbox import Sandbox, ALLOW, DENY, FAIL_CLOSED, DENY_ENTRYPOINTS, DENY_REPAIRS, OWNING_EXISTING_GOAL  # noqa: E402
 
 FIX = ROOT / "tests/fixtures"
 A, B, C = "FixtureEntityA", "FixtureEntityB", "FixtureEntityC"
+# Every non-ALLOW carries these (StegVerse-org/.github docs/ORGANIZATION_ROLE_RUNTIME_REALITY_DEPLOYMENT.md).
+SIX_FIELDS = ("failure_code", "failed_predicate", "required_evidence_or_repair", "retry_entrypoint",
+              "owning_existing_goal", "next_attempt")
 # Master Records boundary migration (MASTER-RECORDS-BULK-SEMANTIC-REMEDIATION-002).
 MASTER_RECORDS_PROHIBITION = "MASTER_RECORDS_ORGANIZATION_RECORD"
 LEGACY_MASTER_RECORDS_PROHIBITION = "MASTER_RECORDS_CUSTODY"
@@ -259,6 +262,98 @@ class Denials(unittest.TestCase):
         self.assertEqual(s.synthesize("fixture-work-001", ["c1"], {"s": 1})["disposition"], ALLOW)
         self.assertEqual(s.complete("fixture-work-001")["disposition"], ALLOW)
         self.assertDenied(s.complete("fixture-work-001"), "WORK_NOT_ALREADY_COMPLETED")
+
+
+class SixFieldDeny(unittest.TestCase):
+    """Every DENY path carries all six conformance fields, in the result and in its ledger receipt."""
+
+    def assertSixFields(self, outcome, predicate=None):
+        for field in SIX_FIELDS:
+            self.assertIsInstance(outcome.get(field), str, (field, outcome))
+            self.assertTrue(outcome[field], (field, outcome))
+        prefix = "SANDBOX_DENY_" if outcome["disposition"] == DENY else "SANDBOX_FAIL_CLOSED_"
+        self.assertEqual(outcome["failure_code"], prefix + outcome["failed_predicate"])
+        self.assertEqual(outcome["owning_existing_goal"], OWNING_EXISTING_GOAL)
+        self.assertTrue(outcome["retry_entrypoint"].startswith("runtime.sandbox.Sandbox."), outcome)
+        self.assertTrue(hasattr(Sandbox, outcome["retry_entrypoint"].rsplit(".", 1)[1]), outcome)
+        if predicate is not None:
+            self.assertEqual(outcome["failed_predicate"], predicate)
+
+    def test_every_deny_call_site_is_covered(self):
+        tree = ast.parse((ROOT / "runtime/sandbox.py").read_text())
+        calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and getattr(n.func, "attr", None) == "_deny"]
+        self.assertEqual(len(calls), 27)
+        for call in calls:
+            self.assertIn(call.args[0].value, DENY_ENTRYPOINTS)
+            if isinstance(call.args[2], ast.Constant):  # registration/canon predicates use the generic pair
+                self.assertIn(call.args[2].value, DENY_REPAIRS)
+
+    def test_every_denial_scenario_records_six_fields(self):
+        denials = 0
+        for name in [n for n in dir(Denials) if n.startswith("test_")]:
+            case = Denials(name)
+            case.setUp()
+            getattr(case, name)()
+            for receipt in case.h.sandbox.ledger.chain():
+                evidence = receipt["evidence"]
+                if evidence.get("disposition") == DENY:
+                    denials += 1
+                    self.assertSixFields(evidence)
+                    method = DENY_ENTRYPOINTS[receipt["transition_class"]]
+                    self.assertEqual(evidence["retry_entrypoint"], "runtime.sandbox.Sandbox." + method)
+        self.assertGreaterEqual(denials, 27)
+
+    def test_completion_pending_propagation_and_repropagate_deny(self):
+        h = Harness()
+        h.setup_assignments()
+        s = h.sandbox
+        s.record(raw(h.envelope(A, "adversarial_review", "c1", "CONTRIBUTED", content={"x": 1})))
+        s.synthesize("fixture-work-001", ["c1"], {"s": 1})
+        propagate = s.propagate
+        s.propagate = lambda receipt, cls: (_ for _ in ()).throw(RuntimeError("org ledger down"))
+        s.record_tool_observation({"work_id": "fixture-work-001", "observation_id": "o1", "tool": "t",
+                                   "tool_profile": "p", "disposition": ALLOW})
+        s.propagate = propagate
+        denied = s.complete("fixture-work-001")
+        self.assertSixFields(denied, "ORGANIZATION_PROPAGATION_COMPLETE")
+        self.assertEqual(denied["retry_entrypoint"], "runtime.sandbox.Sandbox.complete")
+        self.assertIn("repropagate", denied["next_attempt"])
+        refused = s.repropagate(sha("not-a-receipt"))
+        self.assertSixFields(refused, "RECEIPT_PROPAGATION_PENDING")
+        self.assertEqual(refused["retry_entrypoint"], "runtime.sandbox.Sandbox.repropagate")
+
+    def test_fail_closed_propagation_paths_carry_six_fields(self):
+        h = Harness()
+        s = h.sandbox
+        propagate = s.propagate
+        s.propagate = lambda receipt, cls: (_ for _ in ()).throw(RuntimeError("org ledger down"))
+        failed = s.complete("fixture-work-001")  # a DENY whose propagation then fails
+        self.assertEqual(failed["disposition"], FAIL_CLOSED)
+        self.assertSixFields(failed, "ORGANIZATION_PROPAGATION_SUCCEEDED")
+        logged = next(r for r in s.ledger.chain() if r["transition_class"] == "ORGANIZATION_PROPAGATION_FAILED")
+        self.assertSixFields(logged["evidence"], "ORGANIZATION_PROPAGATION_SUCCEEDED")
+        for outcome in (failed, logged["evidence"]):
+            self.assertEqual(outcome["retry_entrypoint"], "runtime.sandbox.Sandbox.repropagate")
+        pending = s.pending_propagation()
+        self.assertEqual(len(pending), 1)
+        retried = s.repropagate(pending[0])  # organization ledger still down
+        self.assertEqual(retried["disposition"], FAIL_CLOSED)
+        self.assertSixFields(retried, "ORGANIZATION_PROPAGATION_SUCCEEDED")
+        s.propagate = propagate
+        self.assertEqual(s.repropagate(pending[0])["disposition"], ALLOW)
+        non_allow = [r["evidence"] for r in s.ledger.chain() if r["evidence"].get("disposition") != ALLOW]
+        self.assertTrue(non_allow)
+        for evidence in non_allow:
+            self.assertSixFields(evidence)
+
+    def test_six_fields_are_deterministic(self):
+        receipts = []
+        for _ in range(2):
+            h = Harness()
+            h.sandbox.assign("fixture-work-001", A, "synthesis", declaration=h.declaration(A), tree=h.tree)
+            receipts.append(h.sandbox.ledger.chain()[0])
+        self.assertEqual(receipts[0]["evidence"], receipts[1]["evidence"])
+        self.assertEqual(receipts[0]["successor_state_sha256"], receipts[1]["successor_state_sha256"])
 
 
 class LedgerIntegrity(unittest.TestCase):
