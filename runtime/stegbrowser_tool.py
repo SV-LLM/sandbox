@@ -3,7 +3,17 @@
 Path: admitted Sandbox work -> pre-invocation binding checks -> StegBrowser
 llm.v1 (fresh Chromium context, ordinary HTTPS, context destroyed) -> local
 ALLOW/DENY/FAIL_CLOSED -> SANDBOX_TOOL_OBSERVATION_RECORDED. No LLM-adapter hop
-and no InTr hop: ordinary HTTPS is not an inter-organization transition.
+and no InTr hop: ordinary HTTPS is not an inter-organization transition. That
+rule covers internal admitted Sandbox operations only; external provider/LLM
+ingress follows the declared path healthy node -> LLM-adapter -> SDK ->
+StegVerse-org/.github -> Interlock/InTr => Org Ledger.
+
+Every non-ALLOW observation carries the six conformance fields (failure_code,
+failed_predicate, required_evidence_or_repair, retry_entrypoint,
+owning_existing_goal, next_attempt): Sandbox-side DENY and FAIL_CLOSED from
+runtime/sandbox.py deny_fields() and TOOL_REPAIRS; a StegBrowser-decided
+DENY/FAIL_CLOSED keeps StegBrowser's own failure_code, failed_predicate, repair
+and retry_entrypoint and adds the owning goal and next attempt.
 
 Every attempt is recorded, including a Sandbox-side DENY before StegBrowser
 runs. The browser session is ephemeral; the Sandbox ledgers are not.
@@ -30,6 +40,8 @@ from urllib.parse import urlsplit
 
 VENDOR = Path(__file__).resolve().parent / "vendor" / "stegbrowser_llm"
 sys.path.insert(0, str(VENDOR.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from sandbox import deny_fields, OWNING_EXISTING_GOAL  # noqa: E402
 MANIFEST = json.loads((VENDOR / "vendor-manifest.json").read_text())
 TOOL, PROFILE = "StegBrowser", "llm.v1"
 LEASE_SCHEMA = "stegbrowser.ecosystem-ephemeral-lease.v1"
@@ -37,6 +49,38 @@ REQUEST_SCHEMA = "stegbrowser.llm-profile-request.v1"
 JOURNEY_SCHEMA = "stegverse.packet-carried-endpoint-receipt-journey/v1"
 MAX_LEASE_SECONDS = 900
 NAVIGATED_STAGES = {"BROWSER_ACTION", "RESULT_OBSERVATION", "RESULT_BINDING", "RETURN_COMPLETE"}
+RETRY_PREFIX = "runtime.stegbrowser_tool.StegBrowserTool."
+ENVIRONMENT_PREDICATE = "SANDBOX_ENVIRONMENT_PYTHON_PLAYWRIGHT_CHROMIUM_AVAILABLE"
+# predicate -> (required_evidence_or_repair, next_attempt) for Sandbox-side tool DENY/FAIL_CLOSED.
+TOOL_REPAIRS = {
+    "WORK_ID_IS_ADMITTED": (
+        "Admit the work item first (a SANDBOX_WORK_ADMITTED receipt for this work_id).",
+        "Call Sandbox.admit, then call invoke again for the same work_id."),
+    "TOOL_INVOCATION_DECLARED": (
+        "Declare exactly one manifested_request.tool_invocations[] entry with this invocation_id in admitted work.",
+        "Call invoke with a declared invocation_id, or admit work that declares it."),
+    "TOOL_INVOCATION_WELL_FORMED": (
+        "Make the declared invocation a well-formed StegBrowser llm.v1 invocation (tool, profile, prompt, "
+        "response_marker, https secure_url, allowed_origins, browser_actions, lease_seconds 1..900).",
+        "Admit work carrying the corrected invocation, then call invoke again."),
+    "LEASE_TASK_ID_EQUALS_WORK_ID": (
+        "Propose no lease, or one whose task_id equals the work_id; Sandbox issues the lease itself.",
+        "Call invoke again without proposed.lease or with task_id equal to the work_id."),
+    "LEASE_ORIGINS_EQUAL_ADMITTED_ORIGINS": (
+        "Propose no lease, or one whose allowed_origins equal the admitted invocation's allowed_origins.",
+        "Call invoke again without proposed.lease or with the admitted allowed_origins."),
+    "LLM_PROMPT_BOUND_TO_MANIFESTED_REQUEST": (
+        "Propose only the admitted prompt, and make every fill action's value equal the admitted prompt.",
+        "Call invoke again with the admitted prompt, or admit work whose fill actions carry it."),
+    "SECURE_URL_ORIGIN_ALLOWED_BY_LEASE": (
+        "Use the admitted https secure_url whose host is inside the admitted allowed_origins.",
+        "Call invoke again without a substituted secure_url, or admit work whose secure_url host is allowed."),
+    ENVIRONMENT_PREDICATE: (
+        "Install Python Playwright and its Chromium in this environment (or pass a playwright_factory).",
+        "Call invoke again where Playwright and Chromium are available; do not wait on another machine."),
+}
+STEGBROWSER_NEXT_ATTEMPT = ("Repair the named StegBrowser stage, then call " + RETRY_PREFIX
+                            + "invoke again for the same work_id and invocation_id (a new attempt is recorded).")
 
 
 def _host(url: str) -> str | None:
@@ -129,8 +173,9 @@ class StegBrowserTool:
                 "evidence_refs": []}
 
         def deny(predicate: str, **known) -> dict[str, Any]:
-            obs = {**base, "disposition": "DENY", "decided_by": "SANDBOX_PRE_INVOCATION",
-                   "failed_predicate": predicate, "stegbrowser_invoked": False, "request_commitment": None,
+            obs = {**base, **deny_fields("invoke", predicate, repairs=TOOL_REPAIRS, retry_prefix=RETRY_PREFIX,
+                                         code_prefix="SANDBOX_TOOL"),
+                   "decided_by": "SANDBOX_PRE_INVOCATION", "stegbrowser_invoked": False, "request_commitment": None,
                    "sandbox_request_digest": None, "lease_id": None, "allowed_origins": None,
                    "observed_origin": None, "local_disposition": None, "local_receipt_commitment": None,
                    "terminal_receipt": None, "result_commitment": None, "result": None, **known}
@@ -164,9 +209,9 @@ class StegBrowserTool:
 
         if playwright_factory is None and importlib.util.find_spec("playwright") is None:
             # AT-20: no real browser runtime here. Fail closed now; never wait for another machine.
-            obs = {**base, **known, "disposition": "FAIL_CLOSED", "decided_by": "SANDBOX_RUNTIME_CHECK",
-                   "failed_predicate": "SANDBOX_ENVIRONMENT_PYTHON_PLAYWRIGHT_CHROMIUM_AVAILABLE",
-                   "stegbrowser_invoked": False, "request_commitment": None, "observed_origin": None,
+            obs = {**base, **known, **deny_fields("invoke", ENVIRONMENT_PREDICATE, disposition="FAIL_CLOSED",
+                                                  repairs=TOOL_REPAIRS, retry_prefix=RETRY_PREFIX, code_prefix="SANDBOX_TOOL"),
+                   "decided_by": "SANDBOX_RUNTIME_CHECK", "stegbrowser_invoked": False, "request_commitment": None, "observed_origin": None,
                    "local_disposition": None, "local_receipt_commitment": None, "terminal_receipt": None,
                    "result_commitment": None, "result": None}
             return self.sandbox.record_tool_observation(obs)
@@ -187,6 +232,9 @@ class StegBrowserTool:
                "local_receipt_commitment": receipt["receipt_commitment"],
                "evaluation_stage": receipt["evaluation_stage"], "failed_predicate": receipt["failed_predicate"],
                "failure_code": receipt["failure_code"], "retry_entrypoint": receipt["retry_entrypoint"],
+               "required_evidence_or_repair": receipt["required_evidence_or_repair"],
+               "owning_existing_goal": OWNING_EXISTING_GOAL if outcome["disposition"] != "ALLOW" else None,
+               "next_attempt": STEGBROWSER_NEXT_ATTEMPT if outcome["disposition"] != "ALLOW" else None,
                "terminal_receipt": receipt["terminal_receipt"],
                "observed_origin": host if receipt["evaluation_stage"] in NAVIGATED_STAGES else None,
                "observed_origin_basis": "REQUESTED_SECURE_URL_HOST_AFTER_SUCCESSFUL_NAVIGATION; final URL after redirects is not reported by StegBrowser",
