@@ -144,8 +144,21 @@ def organization_execution() -> str | None:
 
 
 def reference_store(agg):
-    """D7: the organization ledger exactly as the StegVerse-org reference binds it."""
-    return agg.PosixLedgerStore(agg.ledger_root())
+    """D7: the organization ledger exactly as the StegVerse-org reference binds it.
+
+    The reference opens the store the supplied location names: a POSIX root as
+    before, or a `git+<repository>#<ref>` locator for the organization's
+    designated ledger ref (StegVerse-org/.github#118, #120). An adopted
+    reference that predates `open_store` is opened as a POSIX root, as it was.
+    """
+    return getattr(agg, "open_store", agg.PosixLedgerStore)(agg.ledger_root())
+
+
+def ledger_persistence(lane: str, store=None) -> str:
+    """What outlives this run: a git-ref store is durable, a POSIX root under the runner is not."""
+    if lane == AUTHENTIC and getattr(store, "kind", None) == "GIT_REF":
+        return "DURABLE_GIT_REF_SAME_AS_REFERENCE"
+    return LEDGER_PERSISTENCE.get(lane)
 
 
 def keyed_readback(agg, store, org_receipt: dict, source_receipt: dict) -> str | None:
@@ -244,6 +257,7 @@ def main(argv=None, *, playwright_factory=None) -> int:
         except Refused as refused:
             refuse(report, refused)
             return finish(EVIDENCE, report, 1)
+        report["ledger_persistence"] = ledger_persistence(lane, store)
         if "--preflight" in argv:
             report.update(disposition="ALLOW", preflight="ORGANIZATION_EXECUTION_LEDGER_OPENED_PARENT_AND_SUBJECT_PRESENT")
             return finish(EVIDENCE, report, 0)
@@ -260,7 +274,7 @@ def main(argv=None, *, playwright_factory=None) -> int:
     if lane == CONFORMANCE:
         subject = {"intended_action": INTENDED_ACTION, "target_id": target["target_id"]}
         agg = load_dotgithub(DOTGITHUB)
-        store = agg.PosixLedgerStore(EVIDENCE / "sv-llm-org-ledger")
+        store = getattr(agg, "open_store", agg.PosixLedgerStore)(EVIDENCE / "sv-llm-org-ledger")
         run = subprocess.run([sys.executable, str(DOTGITHUB / ".stegverse/transition-ledger/emit.py"),
                               "--transition-id", "LIVE_FIXTURE_PARENT:" + sha(subject)[7:31],
                               "--transition-class", "ORGANIZATION_INGRESS_MATERIALIZED",
