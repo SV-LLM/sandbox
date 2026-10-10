@@ -151,7 +151,12 @@ def reference_store(agg):
     designated ledger ref (StegVerse-org/.github#118, #120). An adopted
     reference that predates `open_store` is opened as a POSIX root, as it was.
     """
-    return getattr(agg, "open_store", agg.PosixLedgerStore)(agg.ledger_root())
+    return store_opener(agg)(agg.ledger_root())
+
+
+def store_opener(agg):
+    """The reference's open_store, or PosixLedgerStore from an adopted reference that predates it."""
+    return getattr(agg, "open_store", None) or agg.PosixLedgerStore
 
 
 def ledger_persistence(lane: str, store=None) -> str:
@@ -274,7 +279,7 @@ def main(argv=None, *, playwright_factory=None) -> int:
     if lane == CONFORMANCE:
         subject = {"intended_action": INTENDED_ACTION, "target_id": target["target_id"]}
         agg = load_dotgithub(DOTGITHUB)
-        store = getattr(agg, "open_store", agg.PosixLedgerStore)(EVIDENCE / "sv-llm-org-ledger")
+        store = store_opener(agg)(EVIDENCE / "sv-llm-org-ledger")
         run = subprocess.run([sys.executable, str(DOTGITHUB / ".stegverse/transition-ledger/emit.py"),
                               "--transition-id", "LIVE_FIXTURE_PARENT:" + sha(subject)[7:31],
                               "--transition-class", "ORGANIZATION_INGRESS_MATERIALIZED",
