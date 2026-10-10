@@ -73,7 +73,7 @@ class LaneCase(unittest.TestCase):
             recorded = crossing.record("ORGANIZATION_INGRESS_MATERIALIZED", subject={"intended_action": "AUTHENTIC_PARENT"},
                                        outcome=outcome, root=DOTGITHUB) if parent else None
         agg = live.load_dotgithub(DOTGITHUB)
-        return agg, agg.PosixLedgerStore(Path(self.org_env["STEGVERSE_ORG_LEDGER_ROOT"])), opened, recorded
+        return agg, live.store_opener(agg)(Path(self.org_env["STEGVERSE_ORG_LEDGER_ROOT"])), opened, recorded
 
     def assertRefused(self, predicate, detail=None, **kw):
         with mock.patch.object(live.subprocess, "run", side_effect=AssertionError("emit.py must not run")):
@@ -107,7 +107,7 @@ class Conformance(LaneCase):
         self.assertEqual(report["authority_effect"], "NONE")
         self.assertEqual(report["org_readback"], "EXACT_KEYED_READBACK_PASS")
         agg = live.load_dotgithub(DOTGITHUB)
-        store = agg.PosixLedgerStore(self.evidence / "sv-llm-org-ledger")
+        store = live.store_opener(agg)(self.evidence / "sv-llm-org-ledger")
         receipts = [store.get(agg.receipt_key(d)) for d in report["org_receipts"]]
         self.assertIs(receipts[0]["chain_genesis"], True)
         for previous, receipt in zip(receipts, receipts[1:]):
@@ -118,7 +118,7 @@ class Conformance(LaneCase):
     def test_keyed_readback_detects_tampering(self):
         self.run_lane(live.CONFORMANCE)
         agg = live.load_dotgithub(DOTGITHUB)
-        store = agg.PosixLedgerStore(self.evidence / "sv-llm-org-ledger")
+        store = live.store_opener(agg)(self.evidence / "sv-llm-org-ledger")
         digest = json.loads((self.evidence / "report.json").read_text())["org_receipts"][-1]
         org = store.get(agg.receipt_key(digest))
         source = store.get(agg.source_key(org["source_transition_sha256"]))
