@@ -23,8 +23,16 @@ Two lanes (LIVE_LANE):
                passes GENESIS and never synthesizes its parent: the parent is
                the PARENT_ORG_RECEIPT_SHA256 claim, proven by exact keyed
                readback, and the work subject is that parent's own recorded
-               outcome. Refusals, in order: not organization execution, ledger
-               not opened, parent not present, parent subject mismatch.
+               outcome. This repository's own chain is opened at
+               SANDBOX_REPO_LEDGER_ROOT, which the organization workflow
+               supplies as the declared subtree of the organization ledger ref
+               (`repository_ledger_location` in the transition-ledger
+               contract), so it outlives the run and the next run continues it.
+               The work identity is bound to the run's authentic parent, so a
+               continued chain never sees the same work twice. Refusals, in
+               order: not organization execution, ledger not opened, parent not
+               present, parent subject mismatch, repository ledger location not
+               supplied as declared.
 
 Both lanes prove each organization receipt and its retained source receipt by
 exact keyed whole-document readback. Evidence goes to EVIDENCE_DIR, which the
@@ -47,6 +55,9 @@ PARENT_BASIS = {CONFORMANCE: "WORKFLOW_LOCAL_SV_LLM_DOTGITHUB_EMIT_FIXTURE",
 RETENTION = "LIVE_RUN_EVIDENCE_RETENTION_NOT_PERMANENT_CUSTODY"
 ORGANIZATION_EXECUTION = "SV-LLM/.github"
 LEDGER_PERSISTENCE = {CONFORMANCE: "WORKFLOW_LOCAL_CONFORMANCE_ONLY", AUTHENTIC: "EXECUTION_SCOPED_SAME_AS_REFERENCE"}
+REPOSITORY_LEDGER_LOCATION = json.loads(
+    (ROOT / ".stegverse/transition-ledger/contract.json").read_text())["repository_ledger_location"]
+SANDBOX_REPO_LEDGER_ROOT = "SANDBOX_REPO_LEDGER_ROOT"
 INTENDED_ACTION = "STEGBROWSER_LIVE_PATH_CONFORMANCE"
 RETRY_ENTRYPOINT = ("SV-LLM/.github:.github/workflows/organization-authentic-live-lane.yml (workflow_dispatch)"
                     " -> SV-LLM/sandbox live/run_live_llm.py::main")
@@ -69,6 +80,11 @@ REFUSALS = {
         "Append a parent whose recorded outcome is {disposition: ALLOW, intended_action: "
         "STEGBROWSER_LIVE_PATH_CONFORMANCE, target_id: <this lane's live/target.json target_id>}.",
         "Retry the organization workflow with a parent whose outcome names this lane's intended action and target."),
+    "SANDBOX_REPOSITORY_LEDGER_LOCATION_SUPPLIED": (
+        "Supply SANDBOX_REPO_LEDGER_ROOT from the organization workflow as the declared subtree of the organization "
+        "ledger ref: git+<SV-LLM/.github checkout>#" + REPOSITORY_LEDGER_LOCATION["ref"] + ":"
+        + REPOSITORY_LEDGER_LOCATION["namespace"] + " (or a POSIX root in an offline reproduction).",
+        "Retry the organization workflow once it supplies the declared repository ledger location."),
 }
 
 
@@ -166,6 +182,31 @@ def ledger_persistence(lane: str, store=None) -> str:
     return LEDGER_PERSISTENCE.get(lane)
 
 
+def sandbox_repository_store(agg):
+    """This repository's own ledger store, at the location the organization workflow supplies.
+
+    A git locator must name the declared subtree of the declared ref; nothing
+    here chooses a root. A POSIX root is accepted for an offline reproduction
+    and reported as execution-scoped.
+    """
+    supplied = os.environ.get(SANDBOX_REPO_LEDGER_ROOT)
+    if not supplied:
+        raise Refused("SANDBOX_REPOSITORY_LEDGER_LOCATION_SUPPLIED", "NOT_SUPPLIED")
+    if supplied.startswith("git+"):
+        _, _, tail = supplied.partition("#")
+        ref, _, namespace = tail.partition(":")
+        if (ref, namespace) != (REPOSITORY_LEDGER_LOCATION["ref"], REPOSITORY_LEDGER_LOCATION["namespace"]):
+            raise Refused("SANDBOX_REPOSITORY_LEDGER_LOCATION_SUPPLIED", "NOT_THE_DECLARED_SUBTREE")
+        if getattr(agg, "open_store", None) is None:
+            raise Refused("SANDBOX_REPOSITORY_LEDGER_LOCATION_SUPPLIED", "ADOPTED_REFERENCE_CANNOT_OPEN_A_GIT_REF")
+        return agg.open_store(supplied)
+    return store_opener(agg)(Path(supplied))
+
+
+def repository_ledger_persistence(ledger) -> str:
+    return "DURABLE_GIT_REF_SUBTREE" if ledger.kind == "GIT_REF" else "EXECUTION_SCOPED"
+
+
 def keyed_readback(agg, store, org_receipt: dict, source_receipt: dict) -> str | None:
     """Exact keyed whole-document readback; returns the failed predicate or None."""
     if store.get(agg.receipt_key(org_receipt["receipt_sha256"])) != org_receipt:
@@ -208,13 +249,17 @@ def parent_subject(source: dict, target: dict) -> dict:
 
 
 def preflight(dotgithub: Path, claimed_parent, target: dict):
-    """Authentic-lane gate, run before any browser is installed. Order: organization execution, opened, parent, subject."""
+    """Authentic-lane gate, run before any browser is installed.
+
+    Order: organization execution, opened, parent, subject, repository ledger location.
+    """
     if organization_execution() != ORGANIZATION_EXECUTION:
         raise Refused("AUTHENTIC_LANE_NOT_ORGANIZATION_EXECUTION")
     agg = load_dotgithub(dotgithub)
     store = reference_store(agg)
     org, source = authentic_parent(agg, store, claimed_parent)
-    return agg, store, org, source, parent_subject(source, target)
+    subject = parent_subject(source, target)
+    return agg, store, org, source, subject, sandbox_repository_store(agg)
 
 
 def new_report(lane: str, target: dict) -> dict:
@@ -258,7 +303,7 @@ def main(argv=None, *, playwright_factory=None) -> int:
         return finish(EVIDENCE, report, 1)
     if lane == AUTHENTIC:
         try:
-            agg, store, parent_org, parent_repo, subject = preflight(DOTGITHUB, claimed_parent, target)
+            agg, store, parent_org, parent_repo, subject, repo_store = preflight(DOTGITHUB, claimed_parent, target)
         except Refused as refused:
             refuse(report, refused)
             return finish(EVIDENCE, report, 1)
@@ -300,8 +345,12 @@ def main(argv=None, *, playwright_factory=None) -> int:
         appended.append((org, receipt))
         return org
 
-    sb = Sandbox(dotgithub_root=DOTGITHUB, ledger=Ledger(EVIDENCE / "sandbox-repo-ledger"), propagate=propagate)
-    work = {"schema": "sv-llm.sandbox-work/v0.1", "work_id": "live-llm-" + sha(inv)[7:19],
+    ledger = Ledger(store=repo_store) if lane == AUTHENTIC else Ledger(EVIDENCE / "sandbox-repo-ledger")
+    sb = Sandbox(dotgithub_root=DOTGITHUB, ledger=ledger, propagate=propagate)
+    prior = {r["receipt_sha256"] for r in ledger.chain()}
+    # One work item per authentic parent: a continued chain already holds earlier runs' work.
+    work_identity = {"invocation": inv, "parent_org_receipt_sha256": parent_org["receipt_sha256"]}
+    work = {"schema": "sv-llm.sandbox-work/v0.1", "work_id": "live-llm-" + sha(work_identity)[7:19],
             "manifested_request": {"manifest_id": "at04-stage1-live-path-conformance", "tool_invocations": [inv]},
             "parent_transition": {"transition_class": parent_repo.get("transition_class"),
                                   "repo_receipt_sha256": parent_repo["receipt_sha256"],
@@ -324,7 +373,9 @@ def main(argv=None, *, playwright_factory=None) -> int:
                   synthesis=synth["disposition"], completion=done["disposition"],
                   org_receipts=[org["receipt_sha256"] for org, _ in appended],
                   org_readback="EXACT_KEYED_READBACK_PASS" if not failed_readback else "EXACT_KEYED_READBACK_FAIL",
-                  repo_receipts=[r["receipt_sha256"] for r in sb.ledger.chain()])
+                  repo_receipts=[r["receipt_sha256"] for r in sb.ledger.chain() if r["receipt_sha256"] not in prior],
+                  repository_ledger_persistence=repository_ledger_persistence(ledger),
+                  repository_chain_length=len(sb.ledger.chain()))
     allowed = obs["disposition"] == "ALLOW" and done["disposition"] == "ALLOW" and not failed_readback \
         and admitted["disposition"] == "ALLOW"
     if failed_readback and obs["disposition"] == "ALLOW":

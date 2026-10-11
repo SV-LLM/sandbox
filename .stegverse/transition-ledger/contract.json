@@ -19,5 +19,16 @@
   "replay_rule": "REPOSITORY_REPLAY_MUST_NOT_REQUIRE_ORGANIZATION_OR_ECOSYSTEM_REPLAY",
   "propagation_rule": "PROPAGATE_ONLY_EVIDENCE_NEEDED_BY_NEXT_HIGHER_LEVEL",
   "organization_propagation": "SV-LLM/.github resident-runtime/aggregate_repo_transition.py aggregate_transition",
-  "authority_effect": "NONE_CONTRACT_ONLY"
+  "authority_effect": "NONE_CONTRACT_ONLY",
+  "repository_ledger_location": {
+    "repository": "SV-LLM/sandbox",
+    "ref": "refs/stegverse/organization-ledger",
+    "ref_repository": "SV-LLM/.github",
+    "namespace": "repository-ledger/SV-LLM/sandbox",
+    "locator_form": "git+<SV-LLM/.github checkout>#refs/stegverse/organization-ledger:repository-ledger/SV-LLM/sandbox",
+    "new_ledger_root": false,
+    "designation_source": "SV-LLM/.github .stegverse/transition-ledger/org-contract.json organization_ledger_ref; the same subtree layout SV-LLM/.github keeps for its own chain (repository-ledger/<repository>); StegVerse-org/.github#118 and #120",
+    "supplied_as": "SANDBOX_REPO_LEDGER_ROOT, by the SV-LLM organization workflow that runs the authentic lane",
+    "rule": "In the authentic lane the repository chain is kept in this subtree of the designated organization ledger ref and published by the organization workflow's single fast-forward push, so the next run continues from the published HEAD. Repository replay walks repository-ledger/SV-LLM/sandbox/HEAD.json back through its own receipts and never reads an organization receipt. Receipts minted before this location was bound (execution-scoped, retained in the organization ledger under source-receipts/) are history, not the head of this chain."
+  }
 }

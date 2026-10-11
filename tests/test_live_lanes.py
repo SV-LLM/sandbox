@@ -11,10 +11,15 @@ GENESIS), crossing.record (authentic parent), then the lane. They also check
 each refusal in its fixed order and the red exit on every non-ALLOW. The
 browser is an injected Playwright mock.
 
+The sandbox repository's own chain is opened at SANDBOX_REPO_LEDGER_ROOT. A
+second run on the same store continues that chain from its HEAD with a work
+item of its own; a git locator must name the declared subtree of the declared
+ref (`repository_ledger_location`).
+
 Run: SV_LLM_DOTGITHUB_ROOT=<SV-LLM/.github checkout> python -B tests/test_live_lanes.py
 """
 from __future__ import annotations
-import contextlib, importlib.util, io, json, os, sys, tempfile, unittest
+import contextlib, importlib.util, io, json, os, subprocess, sys, tempfile, unittest
 from pathlib import Path
 from unittest import mock
 
@@ -49,17 +54,24 @@ class LaneCase(unittest.TestCase):
         # One execution-scoped root for the whole simulated organization run.
         self.org_env = {"STEGVERSE_ORG_LEDGER_ROOT": str(self.tmp / "org-ledger"),
                         "STEGVERSE_REPO_LEDGER_ROOT": str(self.tmp / "dotgithub-repo-ledger")}
+        # Outside the evidence directory, as the organization workflow supplies it.
+        self.sandbox_ledger = str(self.tmp / "sandbox-repo-ledger")
 
-    def run_lane(self, lane, *, parent=None, argv=(), playwright=None, repository=ORG):
+    def run_lane(self, lane, *, parent=None, argv=(), playwright=None, repository=ORG, sandbox_ledger=True):
         env = {"SV_LLM_DOTGITHUB_ROOT": str(DOTGITHUB), "EVIDENCE_DIR": str(self.evidence), "LIVE_LANE": lane,
                "STEGVERSE_ORG_LEDGER_ROOT": self.org_env["STEGVERSE_ORG_LEDGER_ROOT"]}
         with mock.patch.dict(os.environ, env), contextlib.redirect_stdout(io.StringIO()):
             os.environ.pop("GITHUB_REPOSITORY", None)
             os.environ.pop("PARENT_ORG_RECEIPT_SHA256", None)
+            os.environ.pop(live.SANDBOX_REPO_LEDGER_ROOT, None)
             if repository is not None:
                 os.environ["GITHUB_REPOSITORY"] = repository
             if parent is not None:
                 os.environ["PARENT_ORG_RECEIPT_SHA256"] = parent
+            if sandbox_ledger is True:
+                os.environ[live.SANDBOX_REPO_LEDGER_ROOT] = self.sandbox_ledger
+            elif sandbox_ledger:
+                os.environ[live.SANDBOX_REPO_LEDGER_ROOT] = sandbox_ledger
             code = live.main(list(argv), playwright_factory=playwright or factory(text=REPLY))
         report = json.loads((self.evidence / "report.json").read_text())
         digests = json.loads((self.evidence / "digests.json").read_text())
@@ -174,6 +186,21 @@ class AuthenticRefusals(LaneCase):
         self.assertRefused("AUTHENTIC_PARENT_TRANSITION_NOT_IN_AUTHORITATIVE_STORE", "SOURCE_RECEIPT_NOT_PRESENT",
                            parent=recorded["org_receipt_sha256"])
 
+    def test_repository_ledger_location_must_be_supplied(self):
+        _, _, _, recorded = self.organization()
+        self.assertRefused("SANDBOX_REPOSITORY_LEDGER_LOCATION_SUPPLIED", "NOT_SUPPLIED",
+                           parent=recorded["org_receipt_sha256"], sandbox_ledger=None)
+
+    def test_a_git_locator_must_name_the_declared_subtree(self):
+        _, _, _, recorded = self.organization()
+        declared = live.REPOSITORY_LEDGER_LOCATION
+        for locator in ("git+" + str(self.tmp) + "#" + declared["ref"] + ":repository-ledger/SV-LLM/.github",
+                        "git+" + str(self.tmp) + "#refs/stegverse/other:" + declared["namespace"],
+                        "git+" + str(self.tmp) + "#" + declared["ref"]):
+            with self.subTest(locator=locator):
+                self.assertRefused("SANDBOX_REPOSITORY_LEDGER_LOCATION_SUPPLIED", "NOT_THE_DECLARED_SUBTREE",
+                                   parent=recorded["org_receipt_sha256"], sandbox_ledger=locator)
+
     def test_parent_subject_must_name_this_lane(self):
         for change in ({"target_id": "another.target"}, {"intended_action": "SOMETHING_ELSE"}, {"disposition": "DENY"}):
             with self.subTest(change=change):
@@ -225,6 +252,56 @@ class SingleOrganizationRun(LaneCase):
         self.assertEqual(first["predecessor_org_state_sha256"], recorded["org_receipt_sha256"])
         self.assertEqual(store.get(agg.HEAD_KEY)["receipt_sha256"], report["org_receipts"][-1])
         self.assertEqual(len(store.list_prefix(agg.RECEIPT_PREFIX)), 2 + len(report["org_receipts"]))
+        self.assertEqual(report["repository_ledger_persistence"], "EXECUTION_SCOPED")
+        self.assertEqual(report["repository_chain_length"], len(report["repo_receipts"]))
+
+    def test_a_second_run_continues_the_repository_chain_with_its_own_work(self):
+        first = self.run_twice_on_one_sandbox_ledger(self.sandbox_ledger)
+        self.assertEqual(first, "EXECUTION_SCOPED")
+
+    def test_the_declared_git_subtree_is_durable_and_continued(self):
+        agg = live.load_dotgithub(DOTGITHUB)
+        if getattr(agg, "open_store", None) is None:
+            self.skipTest("adopted reference at this SV-LLM/.github commit predates the git-ref store")
+        bare = self.tmp / "ledger.git"
+        subprocess.run(["git", "init", "-q", "--bare", str(bare)], check=True)
+        declared = live.REPOSITORY_LEDGER_LOCATION
+        locator = "git+" + str(bare) + "#" + declared["ref"] + ":" + declared["namespace"]
+        self.assertEqual(self.run_twice_on_one_sandbox_ledger(locator), "DURABLE_GIT_REF_SUBTREE")
+        # The chain is in the declared subtree of the ref and nowhere else.
+        names = subprocess.run(["git", "--git-dir", str(bare), "ls-tree", "-r", "--name-only", declared["ref"]],
+                               capture_output=True, text=True, check=True).stdout.split()
+        self.assertTrue(names and all(n.startswith(declared["namespace"] + "/") for n in names), names)
+        self.assertIn(declared["namespace"] + "/HEAD.json", names)
+
+    def run_twice_on_one_sandbox_ledger(self, sandbox_ledger):
+        """Two organization runs, each with its own authentic parent, on one sandbox repository ledger."""
+        reports = []
+        for run in range(2):
+            if run == 0:
+                agg, _, _, recorded = self.organization()
+            else:
+                _, _, _, recorded = self.organization(open_ledger=False)
+            # Only this module's reference: the git-ref store itself runs git through subprocess.
+            no_emit = mock.Mock(run=mock.Mock(side_effect=AssertionError("emit.py must not run")))
+            with mock.patch.object(live, "subprocess", no_emit):
+                code, report, _ = self.run_lane(live.AUTHENTIC, parent=recorded["org_receipt_sha256"],
+                                                sandbox_ledger=sandbox_ledger)
+            self.assertEqual((code, report["admitted"], report["completion"]), (0, "ALLOW", "ALLOW"), report)
+            reports.append(report)
+        first, second = reports
+        self.assertNotEqual(first["work_id"], second["work_id"])
+        self.assertEqual(second["repository_chain_length"], len(first["repo_receipts"]) + len(second["repo_receipts"]))
+        self.assertTrue(set(first["repo_receipts"]).isdisjoint(second["repo_receipts"]))
+        from ledger import Ledger
+        with mock.patch.dict(os.environ, {live.SANDBOX_REPO_LEDGER_ROOT: sandbox_ledger}):
+            chain = Ledger(store=live.sandbox_repository_store(agg)).chain()
+        digests = [r["receipt_sha256"] for r in chain]
+        self.assertEqual(digests, first["repo_receipts"] + second["repo_receipts"])
+        # The second run's first receipt links back to the first run's last: one chain, not two.
+        self.assertEqual(chain[len(first["repo_receipts"])]["previous_receipt_sha256"], first["repo_receipts"][-1])
+        self.assertIsNone(chain[0]["previous_receipt_sha256"])
+        return second["repository_ledger_persistence"]
 
 
 if __name__ == "__main__":
