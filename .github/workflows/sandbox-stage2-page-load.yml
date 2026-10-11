@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
     inputs:
       repositories:
-        description: "Comma-separated provider repositories from live/page_load_targets.json (empty = all 16)"
+        description: "Comma-separated provider repositories from live/page_load_targets.json (empty = all 18)"
         required: false
         default: ""
 

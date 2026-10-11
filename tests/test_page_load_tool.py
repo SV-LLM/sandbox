@@ -196,12 +196,12 @@ class Runner(unittest.TestCase):
             self.assertEqual((Path(tmp) / "test-results/Z_AI/screenshot.png").read_bytes(), PNG)
             self.assertIn("test-results/Z_AI/screenshot.png", json.loads((Path(tmp) / "digests.json").read_text())["files"])
 
-    def test_targets_exclude_anthropic_and_openai_and_stay_in_their_leases(self):
+    def test_targets_cover_all_18_providers_and_stay_in_their_leases(self):
         import run_page_load
         from stegbrowser_tool import _host, _host_allowed
         rows = run_page_load.targets(None)
-        self.assertEqual(len(rows), 16)
-        self.assertFalse({"Anthropic", "OpenAI"} & {t["repository"] for t in rows})
+        self.assertEqual(len(rows), 18)
+        self.assertTrue({"Anthropic", "OpenAI"} <= {t["repository"] for t in rows})
         for t in rows:
             self.assertTrue(_host_allowed(_host(t["secure_url"]), t["allowed_origins"]), t["repository"])
             self.assertFalse(any(o in ("*", "*.com", "*.ai") for o in t["allowed_origins"]), t["repository"])
