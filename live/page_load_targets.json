@@ -1,0 +1,127 @@
+{
+  "schema": "sv-llm.stage2-page-load-targets/v1",
+  "purpose": "AT-04 Stage 2 first test: load each provider's public LLM URL and capture a screenshot. No interaction, no prompt, no credentials.",
+  "excluded": {
+    "Anthropic": "contracts/provider-interaction-contract.json notes StegBrowser is never pointed at an Anthropic consumer surface while NO_APPROVED_AUTOMATION_SURFACE holds.",
+    "OpenAI": "contracts/provider-interaction-contract.json notes StegBrowser is never pointed at an OpenAI consumer surface while NO_APPROVED_AUTOMATION_SURFACE holds."
+  },
+  "url_basis": "Logged-out public LLM product entry point; IBM and Amazon_Web_Services have no logged-out consumer chat, so their public product page is used.",
+  "targets": [
+    {
+      "repository": "Google",
+      "secure_url": "https://gemini.google.com/",
+      "allowed_origins": [
+        "*.google.com"
+      ]
+    },
+    {
+      "repository": "Meta",
+      "secure_url": "https://www.meta.ai/",
+      "allowed_origins": [
+        "*.meta.ai"
+      ]
+    },
+    {
+      "repository": "Microsoft",
+      "secure_url": "https://copilot.microsoft.com/",
+      "allowed_origins": [
+        "*.microsoft.com",
+        "copilot.com",
+        "*.copilot.com"
+      ]
+    },
+    {
+      "repository": "xAI",
+      "secure_url": "https://grok.com/",
+      "allowed_origins": [
+        "grok.com",
+        "*.grok.com"
+      ]
+    },
+    {
+      "repository": "MoonShot_AI",
+      "secure_url": "https://www.kimi.com/",
+      "allowed_origins": [
+        "kimi.com",
+        "*.kimi.com"
+      ]
+    },
+    {
+      "repository": "DeepSeek",
+      "secure_url": "https://chat.deepseek.com/",
+      "allowed_origins": [
+        "*.deepseek.com"
+      ]
+    },
+    {
+      "repository": "Mistral",
+      "secure_url": "https://chat.mistral.ai/",
+      "allowed_origins": [
+        "*.mistral.ai"
+      ]
+    },
+    {
+      "repository": "MiniMax",
+      "secure_url": "https://agent.minimax.io/",
+      "allowed_origins": [
+        "*.minimax.io"
+      ]
+    },
+    {
+      "repository": "Perplexity_AI",
+      "secure_url": "https://www.perplexity.ai/",
+      "allowed_origins": [
+        "*.perplexity.ai"
+      ]
+    },
+    {
+      "repository": "Cohere",
+      "secure_url": "https://coral.cohere.com/",
+      "allowed_origins": [
+        "*.cohere.com"
+      ]
+    },
+    {
+      "repository": "IBM",
+      "secure_url": "https://www.ibm.com/products/watsonx-ai",
+      "allowed_origins": [
+        "*.ibm.com"
+      ]
+    },
+    {
+      "repository": "Z_AI",
+      "secure_url": "https://chat.z.ai/",
+      "allowed_origins": [
+        "*.z.ai"
+      ]
+    },
+    {
+      "repository": "Alibaba_Cloud",
+      "secure_url": "https://chat.qwen.ai/",
+      "allowed_origins": [
+        "*.qwen.ai"
+      ]
+    },
+    {
+      "repository": "NVIDIA",
+      "secure_url": "https://build.nvidia.com/",
+      "allowed_origins": [
+        "*.nvidia.com"
+      ]
+    },
+    {
+      "repository": "Amazon_Web_Services",
+      "secure_url": "https://aws.amazon.com/bedrock/",
+      "allowed_origins": [
+        "*.amazon.com"
+      ]
+    },
+    {
+      "repository": "AI21_Labs",
+      "secure_url": "https://www.ai21.com/",
+      "allowed_origins": [
+        "*.ai21.com"
+      ]
+    }
+  ]
+}
