@@ -1,12 +1,26 @@
 {
   "schema": "sv-llm.stage2-page-load-targets/v1",
   "purpose": "AT-04 Stage 2 first test: load each provider's public LLM URL and capture a screenshot. No interaction, no prompt, no credentials.",
-  "excluded": {
-    "Anthropic": "contracts/provider-interaction-contract.json notes StegBrowser is never pointed at an Anthropic consumer surface while NO_APPROVED_AUTOMATION_SURFACE holds.",
-    "OpenAI": "contracts/provider-interaction-contract.json notes StegBrowser is never pointed at an OpenAI consumer surface while NO_APPROVED_AUTOMATION_SURFACE holds."
-  },
   "url_basis": "Logged-out public LLM product entry point; IBM and Amazon_Web_Services have no logged-out consumer chat, so their public product page is used.",
   "targets": [
+    {
+      "repository": "Anthropic",
+      "secure_url": "https://claude.ai/",
+      "allowed_origins": [
+        "claude.ai",
+        "*.claude.ai",
+        "*.anthropic.com"
+      ]
+    },
+    {
+      "repository": "OpenAI",
+      "secure_url": "https://chatgpt.com/",
+      "allowed_origins": [
+        "chatgpt.com",
+        "*.chatgpt.com",
+        "*.openai.com"
+      ]
+    },
     {
       "repository": "Google",
       "secure_url": "https://gemini.google.com/",
