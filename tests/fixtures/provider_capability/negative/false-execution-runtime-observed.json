@@ -1,0 +1,112 @@
+{
+  "expected_disposition": "DENY",
+  "expected_predicate": "NO_UNEVIDENCED_EXECUTION_CLAIM",
+  "declaration": {
+    "schema": "sv-llm.provider-capability/v0.1",
+    "entity": "FixtureProvider",
+    "repository": "FixtureProvider",
+    "provider_family": "Fixture provider (synthetic; no real provider)",
+    "role": "INTELLIGENCE_CAPABILITY",
+    "authority_effect": "NONE",
+    "installation": {
+      "task_id": null,
+      "cosv": null,
+      "registry_status": "REGISTRY_RECONCILIATION_PENDING"
+    },
+    "lifecycle_claim": "RUNTIME_OBSERVED",
+    "capabilities": [
+      "reasoning",
+      "synthesis"
+    ],
+    "capability_basis": "DECLARED",
+    "interfaces": [
+      {
+        "interface_id": "fixture-api",
+        "kind": "PROVIDER_API",
+        "name": "Fixture API",
+        "status": "DOCUMENTED_NOT_INVOKED",
+        "documentation_source_indexes": [
+          0
+        ],
+        "live_invocation": false,
+        "credential_mode": "NOT_PROVISIONED",
+        "credential_material_in_repository": false
+      },
+      {
+        "interface_id": "fixture-consumer",
+        "kind": "CONSUMER_PRODUCT",
+        "name": "Fixture consumer app",
+        "status": "NO_APPROVED_AUTOMATION_SURFACE",
+        "documentation_source_indexes": [
+          1
+        ],
+        "live_invocation": false,
+        "credential_mode": "NOT_PROVISIONED",
+        "credential_material_in_repository": false
+      }
+    ],
+    "operations": [
+      {
+        "operation": "text_generation",
+        "interface_id": "fixture-api",
+        "status": "DOCUMENTED",
+        "evidence": {
+          "source_index": 0,
+          "url": "https://docs.fixture.example/api",
+          "matched": "text generation",
+          "excerpt": "The Fixture API supports text generation."
+        }
+      },
+      {
+        "operation": "embeddings",
+        "interface_id": "fixture-api",
+        "status": "UNVERIFIED"
+      },
+      {
+        "operation": "reranking",
+        "interface_id": "fixture-api",
+        "status": "UNSUPPORTED"
+      }
+    ],
+    "provenance": {
+      "epistemic_state": "DERIVED",
+      "method": "synthetic fixture",
+      "sources": [
+        {
+          "url": "https://docs.fixture.example/api",
+          "observed_at": "2026-10-11T00:00:00Z",
+          "http_status": 200,
+          "final_url": "https://docs.fixture.example/api",
+          "body_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "url": "https://app.fixture.example/",
+          "observed_at": "2026-10-11T00:00:00Z",
+          "fetch_error": "HTTPError: 403"
+        }
+      ]
+    },
+    "runtime_observations": [],
+    "crossing": {
+      "boundary": "SV-LLM/.github",
+      "transition_authority": "Interlock/InTr",
+      "credential_authority": "TV/TVC",
+      "transport_in_this_repository": false,
+      "credential_material_in_this_repository": false,
+      "live_invocation": false
+    },
+    "prohibited": [
+      "GOVERNANCE_DISPOSITION",
+      "TASK_REGISTRY_AUTHORITY",
+      "WORKER_CLAIM_AUTHORITY",
+      "TRANSITION_AUTHORITY",
+      "CREDENTIAL_AUTHORITY",
+      "PUBLISHER_AUTHORITY",
+      "LEDGER_AUTHORITY",
+      "MASTER_RECORDS_CUSTODY",
+      "DIRECT_CONSEQUENCE_EXECUTION",
+      "MODEL_CONSENSUS_AS_TRUTH",
+      "TRANSPORT_OUTSIDE_ORGANIZATION_INTR_BOUNDARY"
+    ]
+  }
+}

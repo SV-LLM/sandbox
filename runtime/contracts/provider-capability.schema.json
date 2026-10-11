@@ -1,0 +1,394 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sv-llm.provider-capability/v0.1",
+  "title": "SV-LLM provider capability declaration",
+  "description": "Structural contract for a provider repository's capability.json. Policy predicates (authority, credentials, execution claims, provenance binding) are enforced by runtime/provider_capability.py, which returns ALLOW, DENY or FAIL_CLOSED. Evidence only; not transition authority.",
+  "type": "object",
+  "required": [
+    "schema",
+    "entity",
+    "repository",
+    "provider_family",
+    "role",
+    "authority_effect",
+    "installation",
+    "lifecycle_claim",
+    "capabilities",
+    "interfaces",
+    "operations",
+    "provenance",
+    "runtime_observations",
+    "crossing",
+    "prohibited"
+  ],
+  "properties": {
+    "schema": {
+      "const": "sv-llm.provider-capability/v0.1"
+    },
+    "entity": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repository": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provider_family": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role": {
+      "const": "INTELLIGENCE_CAPABILITY"
+    },
+    "authority_effect": {
+      "const": "NONE"
+    },
+    "installation": {
+      "type": "object",
+      "required": [
+        "task_id",
+        "cosv",
+        "registry_status"
+      ],
+      "properties": {
+        "task_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cosv": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9]+$"
+        },
+        "registry_status": {
+          "type": "string"
+        }
+      }
+    },
+    "lifecycle_claim": {
+      "enum": [
+        "SOURCE_IMPLEMENTED"
+      ]
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "reasoning",
+          "synthesis",
+          "code_analysis",
+          "code_generation",
+          "document_analysis",
+          "cross_repository_contract_analysis",
+          "adversarial_review",
+          "candidate_repair",
+          "forward_disposition_inference"
+        ]
+      }
+    },
+    "interfaces": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "interface_id",
+          "kind",
+          "name",
+          "status",
+          "live_invocation",
+          "credential_material_in_repository"
+        ],
+        "properties": {
+          "interface_id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "PROVIDER_API",
+              "CONSUMER_PRODUCT",
+              "OPEN_WEIGHTS"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "DOCUMENTED_NOT_INVOKED",
+              "NO_APPROVED_AUTOMATION_SURFACE"
+            ]
+          },
+          "documentation_source_indexes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "live_invocation": {
+            "const": false
+          },
+          "credential_mode": {
+            "const": "NOT_PROVISIONED"
+          },
+          "credential_material_in_repository": {
+            "const": false
+          }
+        }
+      }
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "operation",
+          "interface_id",
+          "status"
+        ],
+        "properties": {
+          "operation": {
+            "type": "string"
+          },
+          "interface_id": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "DOCUMENTED",
+              "UNVERIFIED",
+              "UNSUPPORTED"
+            ]
+          },
+          "evidence": {
+            "type": "object",
+            "required": [
+              "source_index",
+              "excerpt"
+            ],
+            "properties": {
+              "source_index": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "url": {
+                "type": "string",
+                "pattern": "^https://.+"
+              },
+              "matched": {
+                "type": "string"
+              },
+              "excerpt": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "if": {
+          "properties": {
+            "status": {
+              "const": "DOCUMENTED"
+            }
+          }
+        },
+        "then": {
+          "required": [
+            "evidence"
+          ]
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "epistemic_state",
+        "method",
+        "sources"
+      ],
+      "properties": {
+        "epistemic_state": {
+          "const": "DERIVED"
+        },
+        "method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "url",
+              "observed_at"
+            ],
+            "properties": {
+              "url": {
+                "type": "string",
+                "pattern": "^https://.+"
+              },
+              "observed_at": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+              },
+              "http_status": {
+                "type": "integer"
+              },
+              "final_url": {
+                "type": "string",
+                "pattern": "^https://.+"
+              },
+              "body_sha256": {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$"
+              },
+              "fetch_error": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "oneOf": [
+              {
+                "required": [
+                  "http_status",
+                  "final_url",
+                  "body_sha256"
+                ],
+                "properties": {
+                  "http_status": {
+                    "const": 200
+                  }
+                }
+              },
+              {
+                "required": [
+                  "fetch_error"
+                ],
+                "not": {
+                  "required": [
+                    "body_sha256"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "runtime_observations": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "crossing": {
+      "type": "object",
+      "required": [
+        "boundary",
+        "transition_authority",
+        "credential_authority",
+        "transport_in_this_repository",
+        "credential_material_in_this_repository",
+        "live_invocation"
+      ],
+      "properties": {
+        "boundary": {
+          "const": "SV-LLM/.github"
+        },
+        "transition_authority": {
+          "const": "Interlock/InTr"
+        },
+        "credential_authority": {
+          "const": "TV/TVC"
+        },
+        "transport_in_this_repository": {
+          "const": false
+        },
+        "credential_material_in_this_repository": {
+          "const": false
+        },
+        "live_invocation": {
+          "const": false
+        }
+      }
+    },
+    "prohibited": {
+      "type": "array",
+      "allOf": [
+        {
+          "contains": {
+            "const": "GOVERNANCE_DISPOSITION"
+          }
+        },
+        {
+          "contains": {
+            "const": "TASK_REGISTRY_AUTHORITY"
+          }
+        },
+        {
+          "contains": {
+            "const": "WORKER_CLAIM_AUTHORITY"
+          }
+        },
+        {
+          "contains": {
+            "const": "TRANSITION_AUTHORITY"
+          }
+        },
+        {
+          "contains": {
+            "const": "CREDENTIAL_AUTHORITY"
+          }
+        },
+        {
+          "contains": {
+            "const": "PUBLISHER_AUTHORITY"
+          }
+        },
+        {
+          "contains": {
+            "const": "LEDGER_AUTHORITY"
+          }
+        },
+        {
+          "contains": {
+            "const": "DIRECT_CONSEQUENCE_EXECUTION"
+          }
+        },
+        {
+          "contains": {
+            "const": "MODEL_CONSENSUS_AS_TRUTH"
+          }
+        },
+        {
+          "contains": {
+            "const": "TRANSPORT_OUTSIDE_ORGANIZATION_INTR_BOUNDARY"
+          }
+        }
+      ]
+    },
+    "validator_ref": {
+      "type": "object",
+      "required": [
+        "canonical_source",
+        "sha256"
+      ],
+      "properties": {
+        "canonical_source": {
+          "const": "SV-LLM/sandbox:runtime/provider_capability.py"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    }
+  }
+}
