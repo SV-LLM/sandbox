@@ -70,6 +70,15 @@ class _Result:
         return {"disposition": d, "failed_predicates": sorted(set(self.fail_closed)) + sorted(set(self.deny))}
 
 
+def _text(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _indexes(value: Any) -> bool:
+    """documentation_source_indexes: a list of non-negative integers (booleans are not integers here)."""
+    return isinstance(value, list) and all(isinstance(v, int) and not isinstance(v, bool) and v >= 0 for v in value)
+
+
 def _member(value: Any, allowed) -> bool:
     """Membership for declared string vocabularies; a list or object never raises, it is simply not a member."""
     return isinstance(value, str) and value in allowed
@@ -171,7 +180,10 @@ def _installation(decl: dict, r: _Result) -> None:
     if not isinstance(inst, dict) or not {"task_id", "cosv", "registry_status"} <= set(inst):
         r.fail_closed.append("INSTALLATION_TASK_BOUND")
         return
-    if inst["task_id"] is None or inst["cosv"] is None:
+    if (not (inst["task_id"] is None or isinstance(inst["task_id"], str))
+            or not (inst["cosv"] is None or (isinstance(inst["cosv"], str) and inst["cosv"].isdigit()))):
+        r.fail_closed.append("INSTALLATION_TASK_BOUND")
+    elif inst["task_id"] is None or inst["cosv"] is None:
         if inst["registry_status"] != REGISTRY_PENDING:
             r.fail_closed.append("INSTALLATION_TASK_BOUND")
     elif not (isinstance(inst["task_id"], str) and isinstance(inst["cosv"], str) and inst["cosv"].isdigit()):
@@ -185,7 +197,7 @@ def _provenance(decl: dict, r: _Result) -> list[dict]:
     if not isinstance(prov, dict) or not isinstance(prov.get("sources"), list) or not prov["sources"]:
         r.fail_closed.append("PROVENANCE_BOUND")
         return []
-    if prov.get("epistemic_state") != "DERIVED" or not prov.get("method"):
+    if prov.get("epistemic_state") != "DERIVED" or not _text(prov.get("method")):
         r.fail_closed.append("PROVENANCE_BOUND")
     for s in prov["sources"]:
         if not isinstance(s, dict) or not _is_https(s.get("url")) or not TIMESTAMP.match(str(s.get("observed_at"))):
@@ -194,7 +206,7 @@ def _provenance(decl: dict, r: _Result) -> list[dict]:
         if s.get("http_status") == 200:
             if not SHA256.match(str(s.get("body_sha256"))) or not _is_https(s.get("final_url")):
                 r.fail_closed.append("PROVENANCE_BOUND")
-        elif not s.get("fetch_error"):
+        elif not _text(s.get("fetch_error")):
             r.fail_closed.append("PROVENANCE_BOUND")
     return prov["sources"]
 
@@ -213,7 +225,10 @@ def _interfaces(decl: dict, r: _Result) -> set[str]:
         if not _member(i.get("kind"), INTERFACE_KINDS) or not _member(i.get("status"), INTERFACE_STATUSES):
             r.fail_closed.append("FIELD_TYPES_VALID")
             continue
-        if i.get("live_invocation") is not False or i.get("credential_material_in_repository") is not False:
+        if not isinstance(i.get("name"), str) or not _indexes(i.get("documentation_source_indexes", [])):
+            r.fail_closed.append("FIELD_TYPES_VALID")
+        if (i.get("live_invocation") is not False or i.get("credential_material_in_repository") is not False
+                or i.get("credential_mode", "NOT_PROVISIONED") != "NOT_PROVISIONED"):
             r.deny.append("NO_UNEVIDENCED_EXECUTION_CLAIM")
         if i["status"] == "AUTHENTIC_INTERFACE_AVAILABLE":
             # v0.1 has no admissible receipt form for an authentic interface; every such claim is refused.
@@ -244,7 +259,8 @@ def _operations(decl: dict, sources: list[dict], interface_ids: set[str], r: _Re
             idx = ev.get("source_index") if isinstance(ev, dict) else None
             if (not isinstance(idx, int) or isinstance(idx, bool) or not 0 <= idx < len(sources)
                     or not isinstance(sources[idx], dict) or sources[idx].get("http_status") != 200
-                    or not isinstance(ev.get("excerpt"), str) or not ev["excerpt"].strip()):
+                    or not isinstance(ev.get("excerpt"), str) or not ev["excerpt"].strip()
+                    or ("url" in ev and not _is_https(ev["url"])) or ("matched" in ev and not isinstance(ev["matched"], str))):
                 r.fail_closed.append("PROVENANCE_BOUND")
 
 
