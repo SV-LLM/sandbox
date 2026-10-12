@@ -68,6 +68,20 @@ class ProviderCapabilityContract(unittest.TestCase):
             with self.subTest(path.stem):
                 self.assertTrue(list(v.iter_errors(case["declaration"])), path.stem)
 
+    def test_unhashable_capability_and_prohibition_values_fail_closed(self):
+        for field, values in (
+            ("capabilities", [["reasoning"]]),
+            ("capabilities", [{"unexpected": "reasoning"}]),
+            ("prohibited", [{"unexpected": "authority"}]),
+            ("prohibited", [["LEDGER_AUTHORITY"]]),
+        ):
+            with self.subTest(field=field, values=values):
+                d = json.loads(json.dumps(VALID))
+                d[field] = values
+                result = pc.validate(d, "FixtureProvider")
+                self.assertEqual(result["disposition"], pc.FAIL_CLOSED)
+                self.assertIn("FIELD_TYPES_VALID", result["failed_predicates"])
+
     def test_non_integer_numbers_fail_closed(self):
         d = json.loads(json.dumps(VALID)); d["confidence"] = 0.5
         self.assertEqual(pc.validate(d)["disposition"], pc.FAIL_CLOSED)
