@@ -22,8 +22,8 @@
     },
     "Google": {
       "repository": "SV-LLM/Google",
-      "commit": "f62b0afcb2a3ebef55148dd3f0cbce42617f04b9",
-      "pull_request": "PENDING",
+      "commit": "dabeff22f519ea251f81b204d0b1cdda8dfeb2d8",
+      "pull_request": "PR #9",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_google/core.py"
@@ -31,8 +31,8 @@
     },
     "Microsoft": {
       "repository": "SV-LLM/Microsoft",
-      "commit": "8328c933f51c5dfb9062b3f84d0391baa6e0f751",
-      "pull_request": "PENDING",
+      "commit": "454e60a7671dd1e1d7aa2d9fccce9539655568bc",
+      "pull_request": "PR #9",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_microsoft/core.py"
@@ -40,8 +40,8 @@
     },
     "Meta": {
       "repository": "SV-LLM/Meta",
-      "commit": "9c72d7f2ee9a0c657957fa6e26ab9cfbcda1719c",
-      "pull_request": "PENDING",
+      "commit": "296e7394775dac413ab19be523926523b312a5a9",
+      "pull_request": "PR #9",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_meta/core.py"
@@ -49,8 +49,8 @@
     },
     "DeepSeek": {
       "repository": "SV-LLM/DeepSeek",
-      "commit": "8f366b9659419a9df2018e9fbddabaf3b12e4c04",
-      "pull_request": "PENDING",
+      "commit": "969147ceae075b6e09e3e852e78d0247b37645b2",
+      "pull_request": "PR #9",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_deepseek/core.py"
@@ -58,8 +58,8 @@
     },
     "MoonShot_AI": {
       "repository": "SV-LLM/MoonShot_AI",
-      "commit": "6d71fb4ceaa11d256c8d8515306ddf930e874f85",
-      "pull_request": "PENDING",
+      "commit": "b18040ba3541364b2620e3465db6047adb7276fe",
+      "pull_request": "PR #9",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_moonshot_ai/core.py"
@@ -67,8 +67,8 @@
     },
     "xAI": {
       "repository": "SV-LLM/xAI",
-      "commit": "cef98adedd63db483aa29b0cd73df235c2cee75d",
-      "pull_request": "PENDING",
+      "commit": "34489b214f51c4b6db6e58fc7f11406661b436ec",
+      "pull_request": "PR #9",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_xai/core.py"
@@ -76,8 +76,8 @@
     },
     "Mistral": {
       "repository": "SV-LLM/Mistral",
-      "commit": "65884c58b390bd02c8e50672bd5ec143575f8c32",
-      "pull_request": "PENDING",
+      "commit": "3658476478aef66b62309fa64bf9f060876bc096",
+      "pull_request": "PR #9",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_mistral/core.py"
@@ -85,8 +85,8 @@
     },
     "MiniMax": {
       "repository": "SV-LLM/MiniMax",
-      "commit": "59b91158dc1dfd50b8bdefbc09a6d58b319bf280",
-      "pull_request": "PENDING",
+      "commit": "1a0e9d0c74f1870d5a8376611108743cd7c654f7",
+      "pull_request": "PR #9",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_minimax/core.py"
@@ -94,8 +94,8 @@
     },
     "Perplexity_AI": {
       "repository": "SV-LLM/Perplexity_AI",
-      "commit": "00c133336735d90538bfc42fb8cb8ca1f2cee06f",
-      "pull_request": "PENDING",
+      "commit": "fac8df243da02f74434c76407884f0a43a8ccef2",
+      "pull_request": "PR #9",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_perplexity_ai/core.py"
@@ -103,8 +103,8 @@
     },
     "Cohere": {
       "repository": "SV-LLM/Cohere",
-      "commit": "bdf09dcd813df7bb24f8b8394e8cba4d55d704c3",
-      "pull_request": "PENDING",
+      "commit": "059ad461429e432c51a02a4ecba7fcc0c346b1b5",
+      "pull_request": "PR #9",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_cohere/core.py"
@@ -112,8 +112,8 @@
     },
     "IBM": {
       "repository": "SV-LLM/IBM",
-      "commit": "316dc5be3824085af987be2ad1814d032facec61",
-      "pull_request": "PENDING",
+      "commit": "6551e3d7bffcd09959487eb0e632e2820ea91c7a",
+      "pull_request": "PR #9",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_ibm/core.py"
@@ -121,8 +121,8 @@
     },
     "Z_AI": {
       "repository": "SV-LLM/Z_AI",
-      "commit": "41ac61cbb46861b6f54d1c03a6596224d6384946",
-      "pull_request": "PENDING",
+      "commit": "d86a16a046073d9de0c6c442f1fbeb8c20411390",
+      "pull_request": "PR #9",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_z_ai/core.py"
@@ -130,8 +130,8 @@
     },
     "Alibaba_Cloud": {
       "repository": "SV-LLM/Alibaba_Cloud",
-      "commit": "7a044f7d74a8e136c88731db0a5c3c4aab23d35d",
-      "pull_request": "PENDING",
+      "commit": "7148fab34fdcf65fc6a56e04c5c886efd66de69f",
+      "pull_request": "PR #9",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_alibaba_cloud/core.py"
@@ -139,8 +139,8 @@
     },
     "NVIDIA": {
       "repository": "SV-LLM/NVIDIA",
-      "commit": "3cf39dfa72f15298d2e83da7ed5e6529abc231c3",
-      "pull_request": "PENDING",
+      "commit": "fa7dd399bda670d11c66e4a68c416bc858ada52c",
+      "pull_request": "PR #9",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_nvidia/core.py"
@@ -148,8 +148,8 @@
     },
     "Amazon_Web_Services": {
       "repository": "SV-LLM/Amazon_Web_Services",
-      "commit": "fd089b6f57db42fb8c520b6ffaca5b251b9d72cf",
-      "pull_request": "PENDING",
+      "commit": "908d228c4988f57dda0de109a91392c028c3bee1",
+      "pull_request": "PR #9",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_amazon_web_services/core.py"
@@ -157,8 +157,8 @@
     },
     "AI21_Labs": {
       "repository": "SV-LLM/AI21_Labs",
-      "commit": "3eb996f346887ebeedd56823aa7f5105a4555f1d",
-      "pull_request": "PENDING",
+      "commit": "bed98f4dfc77d377075262bed3e5f37d94a9baf0",
+      "pull_request": "PR #9",
       "paths": {
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_ai21_labs/core.py"
