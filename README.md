@@ -29,6 +29,22 @@ Every attempt is a receipt propagated to the organization ledger, and a second p
 
 `runtime/contracts/provider-capability.schema.json` (`sv-llm.provider-capability/v0.1`) fixes the structure of each `SV-LLM/<Provider>` repository's `capability.json`. `runtime/provider_capability.py` is the offline validator those repositories vendor byte-for-byte (each records its sha256 in `validator_ref`). It returns ALLOW, DENY or FAIL_CLOSED: FAIL_CLOSED for malformed declarations or unbound provenance (an operation marked DOCUMENTED or UNSUPPORTED must cite a fetched page); DENY for authority claims, credential or endpoint material, live-invocation or runtime-observation claims, an authentic interface without a receipt, or a foreign identity. Negative fixtures are in `tests/fixtures/provider_capability/negative/`. The validator contacts no provider, and its disposition is evidence about a source file, not a transition.
 
+## Conformance proposal check
+
+`runtime/conformance_proposal.py` is the Ecosystem Chat sandbox check described in SV-LLM/StegVerse_AI `docs/CANONICAL_INVARIANT_AVAILABILITY_AND_ECOSYSTEM_CHAT_SANDBOX_ENFORCEMENT.md`. Before an approved solution is proposed to the SDK, it evaluates the `stegverse.ai-invariant-conformance-proposal/v1` artifact against the canonical sources the caller resolved and passed in as bytes; it fetches nothing.
+
+- It computes the applicable set itself: every `invariants` key and `prohibitions` entry of each cited `stegverse.task-registry-global-invariants/v1` document. Prompt wording and the proposal's author have no effect.
+- It recomputes each source's digest.
+- It inspects the proposed changes themselves for added dependency manifests, installs, schedules, sleeps or polling, and any canonical `false` invariant set to true.
+
+The disposition is:
+
+- FAIL_CLOSED when the proposal cannot be evaluated: a source is missing, unbound or conflicting, coverage is incomplete, an assessment lacks evidence, or an invariant is left unresolved.
+- DENY when it is nonconforming: an invariant violation, an added dependency, routing by model/provider/repository identity, self-declared conformance, an inflated evidence class, a claimed runtime transition, or a settled finding reopened without new evidence.
+- ALLOW otherwise.
+
+Each non-ALLOW outcome carries the six conformance fields. ALLOW only lets the proposal be offered to the SDK; it is not an SDK, Interlock/InTr or Organization disposition. `tests/test_conformance_proposal.py` covers the document's acceptance tests against a synthetic canonical fixture.
+
 ## Stage 2 page load (first test)
 
 `runtime/page_load_tool.py` adds the StegBrowser `page_load.v1` profile: admitted work declares a provider's public URL and lease origins; Sandbox checks the invocation (admitted, declared, well-formed, no prompt/selector/credential field, URL inside the lease), then opens the vendored `EphemeralBrowserSession` lease (`navigate` and `read_public` only, no persistent profile, cookies, history or credentials), loads the page in a fresh Chromium context with main-frame navigations outside the lease aborted, takes a screenshot and closes the session. Every attempt is a `SANDBOX_TOOL_OBSERVATION_RECORDED` receipt carrying the HTTP status, final URL, title, screenshot digest, refused navigations and the lease's terminal receipt. An HTTP 403 or bot challenge is recorded as observed, not bypassed. Nothing is typed, clicked or submitted, so this is not provider interaction and no provider contract is consulted.
