@@ -1,0 +1,17 @@
+{
+  "schema": "sv-llm.sandbox-service/v1",
+  "service_id": "sv-llm.sandbox",
+  "repository": "SV-LLM/sandbox",
+  "boundary_role": "INTERNAL_ENDPOINT",
+  "admits_processing": [
+    {
+      "capability": "sandbox-work-cycle",
+      "route_id": "sv-llm.sandbox.work-cycle.v1"
+    }
+  ],
+  "materialization_prefix": "ingress/materialized/sandbox/",
+  "intake_prefix": "sandbox/intake/",
+  "result_prefix": "sandbox/result/",
+  "route_owner": "StegVerse-org/StegVerse-SDK",
+  "authority_effect": "NONE"
+}
