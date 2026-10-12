@@ -183,15 +183,16 @@ class Sandbox:
         sys.path.insert(0, str(root / "org-runtime"))
         self.registration = _load("sandbox_registration", root / "org-runtime/sandbox_registration.py")
         self.canon = self.registration.CANON
-        from jsonschema import Draft202012Validator
-        from referencing import Registry, Resource
+        evaluator = self.registration.SCHEMA  # SV-LLM native schema evaluator, digest-verified vendored copy
         vendor = self.registration.VENDOR
         docs = [json.loads((vendor / n).read_text()) for n in ("entity-capability.schema.json", "capability-id.schema.json")]
         local = Path(__file__).resolve().parent / "contracts"
         self.registration.verify_vendor(local)
         docs +=[json.loads((local / n).read_text()) for n in ("sandbox-work.schema.json", "contribution.schema.json")]
-        registry = Registry().with_resources((d["$id"], Resource.from_contents(d)) for d in docs)
-        by_id = {d["title"]: Draft202012Validator(d, registry=registry) for d in docs}
+        for d in docs:
+            evaluator.check_schema(d)
+        registry = evaluator.Registry(docs)
+        by_id = {d["title"]: evaluator.Validator(d, registry=registry) for d in docs}
         self.work_validator = by_id["sv-llm.sandbox-work/v0.1"]
         self.contribution_validator = by_id["sv-llm.contribution/v0.1"]
         self.ledger = ledger or Ledger()

@@ -1,7 +1,8 @@
 """Step 2 (successor order 3): Sandbox runtime with its own ledger, fixture entities only.
 
 Requires SV_LLM_DOTGITHUB_ROOT pointing at an SV-LLM/.github checkout (the
-workflow pins it), and jsonschema.
+workflow pins it). Schemas are evaluated by its vendored native evaluator
+(tools/sv_llm_schema.py); no third-party validator.
 
 Run: SV_LLM_DOTGITHUB_ROOT=<path> python -B tests/test_sandbox_runtime.py
 """

@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: SV-LLM/.github
-          ref: 856d9197f4c3e6ff7f0b6a9c3c2dfa55876f0807
+          ref: b71a35d158cd333d6b20840208d21277446d1d6c
           path: sv-llm-dotgithub
       - uses: actions/setup-python@v5
         with:
@@ -51,7 +51,7 @@ jobs:
       - name: Install dependencies and Chromium
         if: steps.gate.outputs.verified == 'true'
         run: |
-          python -m pip install "jsonschema==4.26.0" "playwright==1.52.0"
+          python -m pip install "playwright==1.52.0"
           python -m playwright install --with-deps chromium
       - name: Live llm.v1 call
         run: python -B live/run_live_llm.py
