@@ -1,12 +1,17 @@
-name: Sandbox Live llm.v1 Path Conformance (manual)
+name: Sandbox Live llm.v1 Path Proof of Concept (manual)
 
-# AT-04 Stage 1: live StegBrowser llm.v1 path conformance against the
+# AT-04 Stage 1 PROOF OF CONCEPT: live StegBrowser llm.v1 path against the
 # StegVerse.org fixture page (live/target.json). Manual only; never runs on push
 # or pull_request. No provider attribution: a pass proves the live browser path,
 # not provider integration. Until live/target.json is verified, the runner fails
 # closed with LIVE_TARGET_SELECTED_AND_VERIFIED before installing a browser.
 # Evidence is uploaded as a 90-day artifact (live-run evidence retention, not
 # permanent custody).
+#
+# Proof of concept only: it runs a browser on a GitHub-hosted runner, which the
+# ecosystem invariants do not admit as a runtime surface (GitHub/CI holds no
+# runtime authority). Its results are CI-class evidence at most, never
+# SANDBOX_RUNTIME_OBSERVED, and it is not the manifest-bound execution path.
 #
 # This workflow runs the conformance lane only:
 # WORKFLOW_LOCAL_ORGANIZATION_LEDGER_CONFORMANCE, never authoritative
