@@ -370,6 +370,18 @@
           "contains": {
             "const": "TRANSPORT_OUTSIDE_ORGANIZATION_INTR_BOUNDARY"
           }
+        },
+        {
+          "contains": {
+            "const": "MASTER_RECORDS_ORGANIZATION_RECORD"
+          }
+        },
+        {
+          "not": {
+            "contains": {
+              "const": "MASTER_RECORDS_CUSTODY"
+            }
+          }
         }
       ]
     },
