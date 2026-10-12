@@ -231,7 +231,8 @@ def _operations(decl: dict, sources: list[dict], interface_ids: set[str], r: _Re
             continue
         if op.get("interface_id") not in interface_ids:
             r.fail_closed.append("FIELD_TYPES_VALID")
-        if status == "DOCUMENTED":
+        if status in ("DOCUMENTED", "UNSUPPORTED"):
+            # Both are claims about the provider's documentation; each must cite a fetched page.
             ev = op.get("evidence")
             idx = ev.get("source_index") if isinstance(ev, dict) else None
             if (not isinstance(idx, int) or isinstance(idx, bool) or not 0 <= idx < len(sources)

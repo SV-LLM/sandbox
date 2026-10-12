@@ -66,7 +66,11 @@
       {
         "operation": "reranking",
         "interface_id": "fixture-api",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "evidence": {
+          "source_index": 0,
+          "excerpt": "FixtureProvider does not offer a reranking model."
+        }
       }
     ],
     "provenance": {
