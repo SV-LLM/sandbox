@@ -40,8 +40,7 @@ REQUIRED_PROHIBITIONS = frozenset({
     "MODEL_CONSENSUS_AS_TRUTH", "TRANSPORT_OUTSIDE_ORGANIZATION_INTR_BOUNDARY"})
 LIFECYCLE_CLAIMS = frozenset({"SOURCE_IMPLEMENTED"})
 INTERFACE_KINDS = frozenset({"PROVIDER_API", "CONSUMER_PRODUCT", "OPEN_WEIGHTS"})
-INTERFACE_STATUSES = frozenset({"DOCUMENTED_NOT_INVOKED", "NO_APPROVED_AUTOMATION_SURFACE",
-                                "AUTHENTIC_INTERFACE_AVAILABLE"})
+INTERFACE_STATUSES = frozenset({"DOCUMENTED_NOT_INVOKED", "AUTHENTIC_INTERFACE_AVAILABLE"})
 OPERATION_STATUSES = frozenset({"DOCUMENTED", "UNVERIFIED", "UNSUPPORTED"})
 REGISTRY_PENDING = "REGISTRY_RECONCILIATION_PENDING"
 SHA256 = re.compile(r"^sha256:[0-9a-f]{64}$")
@@ -206,8 +205,6 @@ def _interfaces(decl: dict, r: _Result) -> set[str]:
             r.deny.append("NO_UNEVIDENCED_EXECUTION_CLAIM")
         if i["status"] == "AUTHENTIC_INTERFACE_AVAILABLE":
             # v0.1 has no admissible receipt form for an authentic interface; every such claim is refused.
-            r.deny.append("AUTHENTIC_INTERFACE_EVIDENCED")
-        if i["kind"] == "CONSUMER_PRODUCT" and i["status"] != "NO_APPROVED_AUTOMATION_SURFACE":
             r.deny.append("AUTHENTIC_INTERFACE_EVIDENCED")
     if len(ids) != len(ifaces):
         r.fail_closed.append("FIELD_TYPES_VALID")

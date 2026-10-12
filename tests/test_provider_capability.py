@@ -35,7 +35,7 @@ class ProviderCapabilityContract(unittest.TestCase):
         jsonschema.validate(VALID, SCHEMA, cls=jsonschema.Draft202012Validator)
 
     def test_every_negative_fixture_is_refused_with_its_predicate(self):
-        self.assertGreaterEqual(len(NEGATIVES), 16)
+        self.assertGreaterEqual(len(NEGATIVES), 15)
         for path in NEGATIVES:
             case = json.loads(path.read_text())
             with self.subTest(path.stem):

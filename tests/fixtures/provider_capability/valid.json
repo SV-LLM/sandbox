@@ -33,7 +33,7 @@
       "interface_id": "fixture-consumer",
       "kind": "CONSUMER_PRODUCT",
       "name": "Fixture consumer app",
-      "status": "NO_APPROVED_AUTOMATION_SURFACE",
+      "status": "DOCUMENTED_NOT_INVOKED",
       "documentation_source_indexes": [
         1
       ],
