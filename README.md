@@ -27,7 +27,7 @@ Every attempt is a receipt propagated to the organization ledger, and a second p
 
 ## Provider capability contract
 
-`runtime/contracts/provider-capability.schema.json` (`sv-llm.provider-capability/v0.1`) fixes the structure of each `SV-LLM/<Provider>` repository's `capability.json`. `runtime/provider_capability.py` is the offline validator those repositories vendor byte-for-byte (each records its sha256 in `validator_ref`). It returns ALLOW, DENY or FAIL_CLOSED: FAIL_CLOSED for malformed declarations or unbound provenance; DENY for authority claims, credential or endpoint material, live-invocation or runtime-observation claims, an authentic interface without a receipt, or a foreign identity. Negative fixtures are in `tests/fixtures/provider_capability/negative/`. The validator contacts no provider, and its disposition is evidence about a source file, not a transition.
+`runtime/contracts/provider-capability.schema.json` (`sv-llm.provider-capability/v0.1`) fixes the structure of each `SV-LLM/<Provider>` repository's `capability.json`. `runtime/provider_capability.py` is the offline validator those repositories vendor byte-for-byte (each records its sha256 in `validator_ref`). It returns ALLOW, DENY or FAIL_CLOSED: FAIL_CLOSED for malformed declarations or unbound provenance (an operation marked DOCUMENTED or UNSUPPORTED must cite a fetched page); DENY for authority claims, credential or endpoint material, live-invocation or runtime-observation claims, an authentic interface without a receipt, or a foreign identity. Negative fixtures are in `tests/fixtures/provider_capability/negative/`. The validator contacts no provider, and its disposition is evidence about a source file, not a transition.
 
 ## Stage 2 page load (first test)
 

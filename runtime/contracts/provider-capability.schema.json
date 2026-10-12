@@ -195,7 +195,10 @@
         "if": {
           "properties": {
             "status": {
-              "const": "DOCUMENTED"
+              "enum": [
+                "DOCUMENTED",
+                "UNSUPPORTED"
+              ]
             }
           }
         },
