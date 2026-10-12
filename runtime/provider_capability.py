@@ -70,6 +70,11 @@ class _Result:
         return {"disposition": d, "failed_predicates": sorted(set(self.fail_closed)) + sorted(set(self.deny))}
 
 
+def _member(value: Any, allowed) -> bool:
+    """Membership for declared string vocabularies; a list or object never raises, it is simply not a member."""
+    return isinstance(value, str) and value in allowed
+
+
 def _canonical_domain(value: Any) -> bool:
     if value is None or isinstance(value, (bool, str)):
         return True
@@ -171,7 +176,7 @@ def _installation(decl: dict, r: _Result) -> None:
             r.fail_closed.append("INSTALLATION_TASK_BOUND")
     elif not (isinstance(inst["task_id"], str) and isinstance(inst["cosv"], str) and inst["cosv"].isdigit()):
         r.fail_closed.append("INSTALLATION_TASK_BOUND")
-    if decl["lifecycle_claim"] not in LIFECYCLE_CLAIMS:
+    if not _member(decl["lifecycle_claim"], LIFECYCLE_CLAIMS):
         r.deny.append("NO_UNEVIDENCED_EXECUTION_CLAIM")
 
 
@@ -205,7 +210,7 @@ def _interfaces(decl: dict, r: _Result) -> set[str]:
             r.fail_closed.append("FIELD_TYPES_VALID")
             continue
         ids.add(i["interface_id"])
-        if i.get("kind") not in INTERFACE_KINDS or i.get("status") not in INTERFACE_STATUSES:
+        if not _member(i.get("kind"), INTERFACE_KINDS) or not _member(i.get("status"), INTERFACE_STATUSES):
             r.fail_closed.append("FIELD_TYPES_VALID")
             continue
         if i.get("live_invocation") is not False or i.get("credential_material_in_repository") is not False:
@@ -228,10 +233,10 @@ def _operations(decl: dict, sources: list[dict], interface_ids: set[str], r: _Re
             r.fail_closed.append("FIELD_TYPES_VALID")
             continue
         status = op.get("status")
-        if status not in OPERATION_STATUSES:
+        if not _member(status, OPERATION_STATUSES):
             r.deny.append("NO_UNEVIDENCED_EXECUTION_CLAIM")
             continue
-        if op.get("interface_id") not in interface_ids:
+        if not _member(op.get("interface_id"), interface_ids):
             r.fail_closed.append("FIELD_TYPES_VALID")
         if status in ("DOCUMENTED", "UNSUPPORTED"):
             # Both are claims about the provider's documentation; each must cite a fetched page.

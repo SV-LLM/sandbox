@@ -82,6 +82,23 @@ class ProviderCapabilityContract(unittest.TestCase):
                 self.assertEqual(result["disposition"], pc.FAIL_CLOSED)
                 self.assertIn("FIELD_TYPES_VALID", result["failed_predicates"])
 
+    def test_wrong_typed_values_never_raise(self):
+        """Every field of the valid fixture, replaced by values of other JSON types, yields a disposition."""
+        def paths(v, p=()):
+            yield p
+            if isinstance(v, dict):
+                for k in v: yield from paths(v[k], p + (k,))
+            elif isinstance(v, list):
+                for i, x in enumerate(v[:2]): yield from paths(x, p + (i,))
+        for path in list(paths(VALID))[1:]:
+            for bad in (None, 1, True, [], {}, [1], [[1]], {"a": []}, "x", ["x"]):
+                d = json.loads(json.dumps(VALID))
+                o = d
+                for k in path[:-1]: o = o[k]
+                o[path[-1]] = bad
+                with self.subTest(path=path, value=bad):
+                    self.assertIn(pc.validate(d, "FixtureProvider")["disposition"], (pc.DENY, pc.FAIL_CLOSED, pc.ALLOW))
+
     def test_non_integer_numbers_fail_closed(self):
         d = json.loads(json.dumps(VALID)); d["confidence"] = 0.5
         self.assertEqual(pc.validate(d)["disposition"], pc.FAIL_CLOSED)
