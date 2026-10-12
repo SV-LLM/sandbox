@@ -15,7 +15,6 @@ Transition classes:
   SANDBOX_SYNTHESIS_RECORDED / SANDBOX_SYNTHESIS_DENIED
   SANDBOX_WORK_COMPLETED / SANDBOX_WORK_COMPLETION_DENIED
   SANDBOX_TOOL_OBSERVATION_RECORDED (ALLOW, DENY or FAIL_CLOSED tool attempts; runtime/stegbrowser_tool.py)
-  PROVIDER_INTERACTION_RESOLVED / PROVIDER_INTERACTION_REFUSED (provider contract resolution; runtime/provider_contract.py)
   ORGANIZATION_PROPAGATION_FAILED (repo-level FAIL_CLOSED; no org receipt is fabricated)
   ORGANIZATION_PROPAGATION_RECOVERED (repropagate() succeeded for a failed receipt)
 
@@ -146,8 +145,8 @@ def deny_fields(method: str, predicate: str, *, disposition: str = DENY,
                 code_prefix: str = "SANDBOX") -> dict[str, Any]:
     """The six conformance fields of a non-ALLOW outcome refused by <retry_prefix><method> on <predicate>.
 
-    Defaults describe a Sandbox DENY; Sandbox-side modules (runtime/provider_contract.py,
-    runtime/stegbrowser_tool.py) pass their own disposition, repairs, retry prefix and code prefix.
+    Defaults describe a Sandbox DENY; Sandbox-side modules (runtime/stegbrowser_tool.py)
+    pass their own disposition, repairs, retry prefix and code prefix.
     """
     repair, next_attempt = repairs.get(predicate, (
         f"Satisfy predicate {predicate} for this attempt.",

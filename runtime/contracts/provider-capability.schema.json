@@ -121,8 +121,7 @@
           },
           "status": {
             "enum": [
-              "DOCUMENTED_NOT_INVOKED",
-              "NO_APPROVED_AUTOMATION_SURFACE"
+              "DOCUMENTED_NOT_INVOKED"
             ]
           },
           "documentation_source_indexes": {

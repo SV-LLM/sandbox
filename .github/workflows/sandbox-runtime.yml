@@ -53,10 +53,6 @@ jobs:
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub-registered
         run: python -B tests/test_live_lanes.py
-      - name: Provider interaction contract resolution (AT-04 Stage 2 contract layer)
-        env:
-          SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub-registered
-        run: python -B tests/test_provider_contract.py
       - name: Provider capability contract (sv-llm.provider-capability/v0.1, offline)
         run: python -B tests/test_provider_capability.py
       - name: Stage 2 page_load.v1 tool (synthetic browser, no network)
