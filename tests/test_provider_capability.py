@@ -19,6 +19,20 @@ import provider_capability as pc  # noqa: E402
 
 FIXTURES = ROOT / "tests/fixtures/provider_capability"
 SCHEMA = json.loads((ROOT / "runtime/contracts/provider-capability.schema.json").read_text())
+
+
+def schema_evaluator():
+    """The SV-LLM native schema evaluator from SV-LLM/.github's digest-verified vendored copy."""
+    import importlib.util, os
+    vendor = Path(os.environ["SV_LLM_DOTGITHUB_ROOT"]) / "org-runtime/vendor/sv-llm-schemas"
+    manifest = json.loads((vendor / "vendor-manifest.json").read_text())
+    path = vendor / "tools/sv_llm_schema.py"
+    import hashlib
+    assert "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest() == manifest["files"]["tools/sv_llm_schema.py"]
+    spec = importlib.util.spec_from_file_location("sv_llm_schema", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 VALID = json.loads((FIXTURES / "valid.json").read_text())
 NEGATIVES = sorted((FIXTURES / "negative").glob("*.json"))
 
@@ -30,9 +44,9 @@ class ProviderCapabilityContract(unittest.TestCase):
         self.assertEqual(pc.validate(json.loads(json.dumps(VALID)), "FixtureProvider"), first)
 
     def test_valid_fixture_satisfies_the_schema(self):
-        import jsonschema
-        jsonschema.Draft202012Validator.check_schema(SCHEMA)
-        jsonschema.validate(VALID, SCHEMA, cls=jsonschema.Draft202012Validator)
+        evaluator = schema_evaluator()
+        evaluator.check_schema(SCHEMA)
+        self.assertEqual(list(evaluator.Validator(SCHEMA).iter_errors(VALID)), [])
 
     def test_every_negative_fixture_is_refused_with_its_predicate(self):
         self.assertGreaterEqual(len(NEGATIVES), 15)
@@ -44,8 +58,7 @@ class ProviderCapabilityContract(unittest.TestCase):
                 self.assertIn(case["expected_predicate"], result["failed_predicates"])
 
     def test_structural_negatives_also_fail_the_schema(self):
-        import jsonschema
-        v = jsonschema.Draft202012Validator(SCHEMA)
+        v = schema_evaluator().Validator(SCHEMA)
         for path in NEGATIVES:
             case = json.loads(path.read_text())
             if case["expected_predicate"] in {"PROVIDER_IDENTITY_BOUND", "NO_CREDENTIAL_MATERIAL",
