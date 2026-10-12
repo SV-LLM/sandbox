@@ -2,7 +2,7 @@
   "schema": "sv-llm.stegbrowser-live-target/v1",
   "target_id": "stegverse.integration.llm-browser-test.v1",
   "purpose": "STEGBROWSER_LIVE_PATH_CONFORMANCE",
-  "role": "TEST_SURFACE_CONFIGURATION_ONLY; not a provider interaction contract and must not be reused as one",
+  "role": "TEST_SURFACE_CONFIGURATION_ONLY",
   "origin": "https://stegverse.org",
   "secure_url": "https://stegverse.org/integration/llm-browser-test/v1/",
   "page_source": {
