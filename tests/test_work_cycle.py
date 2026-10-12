@@ -5,8 +5,8 @@ org-runtime/tests/peer_organization.py with its own kernel and ledgers)
 publishes a manifest addressed to SV-LLM/sandbox. One runtime/work_cycle.py
 pass then runs: boundary ingress (materialization), Sandbox intake (manifest
 selection, admission against the ingress receipts, assignment, request),
-entity response (the real Anthropic and OpenAI entity packages, vendored in
-tests/real_entities, answering UNAVAILABLE: no SV-LLM code invokes a model),
+entity response (the real entity core packages, vendored in tests/real_entities,
+answering UNAVAILABLE: no SV-LLM code invokes a model),
 synthesis, completion and result egress to the peer, which consumes it.
 Every step is on the organization ledger. No network, no external machine.
 Source-level evidence only: CI-class, never SANDBOX_RUNTIME_OBSERVED.
@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from work_cycle import WorkCycle, Entity, SERVICE, NO_INVOCATION  # noqa: E402
 
 REAL = ROOT / "tests/real_entities"
+VENDORED = tuple(json.loads((REAL / "vendor-manifest.json").read_text())["sources"])
 STANDING = {"mode": "ESTABLISH_GENESIS", "node_ref": "sv-llm-work-cycle-test-node", "predecessor": None}
 ROUTE = SERVICE["admits_processing"][0]
 
@@ -168,8 +169,31 @@ class WorkCycleEndToEnd(unittest.TestCase):
                             for t in out["intake"]))
         self.assertEqual((out["respond"], out["close"]), ([], []))
 
+    def test_every_registered_intelligence_provider_answers_in_one_cycle(self):
+        tree = json.loads((DOTGITHUB / "data/organization-tree.json").read_text())
+        providers = {r["name"] for r in tree["repositories"] if r["class"] == "INTELLIGENCE_PROVIDER"}
+        self.assertEqual(len(providers), 18)
+        self.assertEqual(set(VENDORED), providers)
+        self.cycle.entities = {e: Entity(REAL / e / "core.py", REAL / e / "entity-capability.json") for e in VENDORED}
+        self.send(manifest("work-cycle-004", participants=[{"entity": e, "capability": "adversarial_review"}
+                                                           for e in sorted(providers)]))
+        out = self.run_pass()
+        taken, = out["intake"]
+        self.assertEqual(taken["admit"]["disposition"], "ALLOW", taken["admit"])
+        self.assertEqual([a["disposition"] for a in taken["assign"]], ["ALLOW"] * 18, taken["assign"])
+        self.assertEqual(len(taken["request"]), 18)
+        self.assertEqual(sorted(r["evidence"]["entity"] for r in self.cycle.sandbox.contributions("work-cycle-004")),
+                         sorted(providers))
+        self.assertEqual({(r["disposition"], r["status"]) for r in out["respond"]}, {("ALLOW", "UNAVAILABLE")})
+        closed, = out["close"]
+        self.assertEqual(closed["complete"]["disposition"], "ALLOW")
+        got = self.labs.consume_addressed(mesh_root=self.mesh)
+        payload = got[0]["result"]["packet"]["payload"]["manifest"]["payload"]
+        self.assertEqual((payload["synthesis"]["contributed"], payload["synthesis"]["non_success"]), (0, 18))
+
     def test_an_unregistered_participant_is_refused_and_recorded(self):
-        self.send(manifest("work-cycle-003", participants=[{"entity": "Google", "capability": "adversarial_review"}]))
+        self.send(manifest("work-cycle-003", participants=[{"entity": "NotAnSvLlmEntity",
+                                                            "capability": "adversarial_review"}]))
         out = self.run_pass()
         taken, = out["intake"]
         self.assertEqual(taken["admit"]["disposition"], "ALLOW")
