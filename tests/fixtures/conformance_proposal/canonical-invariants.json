@@ -1,0 +1,19 @@
+{
+  "schema": "stegverse.task-registry-global-invariants/v1",
+  "invariant_set_id": "FIXTURE-NOT-CANONICAL",
+  "applies_to": "TEST_FIXTURE_ONLY",
+  "invariants": {
+    "actions_by_manifest_required": true,
+    "external_machine_awaiting_allowed": false,
+    "always_on_receiver_required": false,
+    "second_user_operated_device_allowed": false,
+    "receiver_unavailable_disposition": "DURABLE_QUEUE_OR_EVENT_EPHEMERAL_MATERIALIZATION",
+    "transition_authority": "Interlock/InTr"
+  },
+  "prohibitions": [
+    "NO_EXTERNAL_MACHINE_AWAITING_AS_TRANSITION_PREDICATE",
+    "NO_DESTINATION_LIVENESS_OR_ALWAYS_ON_RECEIVER_AS_TRANSITION_PREDICATE",
+    "NO_CI_VALIDATED_AS_RUNTIME_COMPLETE"
+  ],
+  "authority_effect": "NONE_TEST_FIXTURE"
+}

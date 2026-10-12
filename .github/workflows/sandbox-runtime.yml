@@ -57,6 +57,8 @@ jobs:
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
         run: python -B tests/test_provider_capability.py
+      - name: Ecosystem Chat sandbox conformance proposal (stegverse.ai-invariant-conformance-proposal/v1, offline)
+        run: python -B tests/test_conformance_proposal.py
       - name: Stage 2 page_load.v1 tool (synthetic browser, no network)
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub-registered
