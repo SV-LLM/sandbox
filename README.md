@@ -23,7 +23,7 @@ The live call (`.github/workflows/sandbox-live-llm.yml`) is manual and is a proo
 3. lets each entity answer through its own package. No SV-LLM code invokes a model: until an admitted Sandbox tool does, with credentials held by TV/TVC, an entity answers `UNAVAILABLE NO_ADMITTED_INVOCATION_SURFACE`. A request with no entity surface stays outstanding for a later pass.
 4. synthesizes and completes work whose every request is answered, and egresses the result to the organization the manifest's `return_to` names. The mesh is the durable queue; nothing waits for the receiver.
 
-Every attempt is a receipt propagated to the organization ledger, and a second pass changes nothing. `tests/test_work_cycle.py` runs the cycle end to end offline: a peer organization's manifest goes in, a result goes back, and the peer consumes it. That is CI-class evidence; running the same pass on a StegVerse substrate is what would make it runtime-observed.
+Every attempt is a receipt propagated to the organization ledger, and a second pass changes nothing. `tests/test_work_cycle.py` runs the cycle end to end offline: a peer organization's manifest goes in, a result goes back, and the peer consumes it. One case assigns all 18 intelligence providers in the canonical organization tree; each registers against its digest-bound declaration and answers through its own core package (vendored in `tests/real_entities`, bound by `vendor-manifest.json`). That is CI-class evidence; running the same pass on a StegVerse substrate is what would make it runtime-observed.
 
 ## Provider capability contract
 

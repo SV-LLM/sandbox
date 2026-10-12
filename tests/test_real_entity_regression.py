@@ -46,6 +46,15 @@ class RealEntityRegression(unittest.TestCase):
         swapped = self.s.registration.register("Anthropic", declaration=self.decl["OpenAI"])
         self.assertEqual((swapped["disposition"], swapped["failed_predicate"]), (DENY, "DECLARATION_DIGEST_MATCHES"))
 
+    def test_canonical_tree_registers_every_vendored_entity(self):
+        vendored = json.loads((REAL / "vendor-manifest.json").read_text())["sources"]
+        providers = {row["name"] for row in self.tree["repositories"] if row["class"] == "INTELLIGENCE_PROVIDER"}
+        self.assertEqual(set(vendored), providers)
+        for e in sorted(vendored):
+            result = self.s.registration.register(e, declaration=(REAL / e / "entity-capability.json").read_bytes())
+            self.assertEqual(result["disposition"], ALLOW, (e, result))
+            self.assertEqual(entity_core(e).ENTITY, e)
+
     def test_same_bounded_work_two_real_entities_end_to_end(self):
         h, s = self.h, self.s
         self.assertEqual(h.admit()["disposition"], ALLOW)

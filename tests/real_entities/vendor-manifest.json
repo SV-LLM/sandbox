@@ -19,6 +19,150 @@
         "entity-capability.json": "contracts/entity-capability.json",
         "core.py": "src/sv_llm_openai/core.py"
       }
+    },
+    "Google": {
+      "repository": "SV-LLM/Google",
+      "commit": "dabeff22f519ea251f81b204d0b1cdda8dfeb2d8",
+      "pull_request": "PR #9",
+      "paths": {
+        "entity-capability.json": "contracts/entity-capability.json",
+        "core.py": "src/sv_llm_google/core.py"
+      }
+    },
+    "Microsoft": {
+      "repository": "SV-LLM/Microsoft",
+      "commit": "454e60a7671dd1e1d7aa2d9fccce9539655568bc",
+      "pull_request": "PR #9",
+      "paths": {
+        "entity-capability.json": "contracts/entity-capability.json",
+        "core.py": "src/sv_llm_microsoft/core.py"
+      }
+    },
+    "Meta": {
+      "repository": "SV-LLM/Meta",
+      "commit": "296e7394775dac413ab19be523926523b312a5a9",
+      "pull_request": "PR #9",
+      "paths": {
+        "entity-capability.json": "contracts/entity-capability.json",
+        "core.py": "src/sv_llm_meta/core.py"
+      }
+    },
+    "DeepSeek": {
+      "repository": "SV-LLM/DeepSeek",
+      "commit": "969147ceae075b6e09e3e852e78d0247b37645b2",
+      "pull_request": "PR #9",
+      "paths": {
+        "entity-capability.json": "contracts/entity-capability.json",
+        "core.py": "src/sv_llm_deepseek/core.py"
+      }
+    },
+    "MoonShot_AI": {
+      "repository": "SV-LLM/MoonShot_AI",
+      "commit": "b18040ba3541364b2620e3465db6047adb7276fe",
+      "pull_request": "PR #9",
+      "paths": {
+        "entity-capability.json": "contracts/entity-capability.json",
+        "core.py": "src/sv_llm_moonshot_ai/core.py"
+      }
+    },
+    "xAI": {
+      "repository": "SV-LLM/xAI",
+      "commit": "34489b214f51c4b6db6e58fc7f11406661b436ec",
+      "pull_request": "PR #9",
+      "paths": {
+        "entity-capability.json": "contracts/entity-capability.json",
+        "core.py": "src/sv_llm_xai/core.py"
+      }
+    },
+    "Mistral": {
+      "repository": "SV-LLM/Mistral",
+      "commit": "3658476478aef66b62309fa64bf9f060876bc096",
+      "pull_request": "PR #9",
+      "paths": {
+        "entity-capability.json": "contracts/entity-capability.json",
+        "core.py": "src/sv_llm_mistral/core.py"
+      }
+    },
+    "MiniMax": {
+      "repository": "SV-LLM/MiniMax",
+      "commit": "1a0e9d0c74f1870d5a8376611108743cd7c654f7",
+      "pull_request": "PR #9",
+      "paths": {
+        "entity-capability.json": "contracts/entity-capability.json",
+        "core.py": "src/sv_llm_minimax/core.py"
+      }
+    },
+    "Perplexity_AI": {
+      "repository": "SV-LLM/Perplexity_AI",
+      "commit": "fac8df243da02f74434c76407884f0a43a8ccef2",
+      "pull_request": "PR #9",
+      "paths": {
+        "entity-capability.json": "contracts/entity-capability.json",
+        "core.py": "src/sv_llm_perplexity_ai/core.py"
+      }
+    },
+    "Cohere": {
+      "repository": "SV-LLM/Cohere",
+      "commit": "059ad461429e432c51a02a4ecba7fcc0c346b1b5",
+      "pull_request": "PR #9",
+      "paths": {
+        "entity-capability.json": "contracts/entity-capability.json",
+        "core.py": "src/sv_llm_cohere/core.py"
+      }
+    },
+    "IBM": {
+      "repository": "SV-LLM/IBM",
+      "commit": "6551e3d7bffcd09959487eb0e632e2820ea91c7a",
+      "pull_request": "PR #9",
+      "paths": {
+        "entity-capability.json": "contracts/entity-capability.json",
+        "core.py": "src/sv_llm_ibm/core.py"
+      }
+    },
+    "Z_AI": {
+      "repository": "SV-LLM/Z_AI",
+      "commit": "d86a16a046073d9de0c6c442f1fbeb8c20411390",
+      "pull_request": "PR #9",
+      "paths": {
+        "entity-capability.json": "contracts/entity-capability.json",
+        "core.py": "src/sv_llm_z_ai/core.py"
+      }
+    },
+    "Alibaba_Cloud": {
+      "repository": "SV-LLM/Alibaba_Cloud",
+      "commit": "7148fab34fdcf65fc6a56e04c5c886efd66de69f",
+      "pull_request": "PR #9",
+      "paths": {
+        "entity-capability.json": "contracts/entity-capability.json",
+        "core.py": "src/sv_llm_alibaba_cloud/core.py"
+      }
+    },
+    "NVIDIA": {
+      "repository": "SV-LLM/NVIDIA",
+      "commit": "fa7dd399bda670d11c66e4a68c416bc858ada52c",
+      "pull_request": "PR #9",
+      "paths": {
+        "entity-capability.json": "contracts/entity-capability.json",
+        "core.py": "src/sv_llm_nvidia/core.py"
+      }
+    },
+    "Amazon_Web_Services": {
+      "repository": "SV-LLM/Amazon_Web_Services",
+      "commit": "908d228c4988f57dda0de109a91392c028c3bee1",
+      "pull_request": "PR #9",
+      "paths": {
+        "entity-capability.json": "contracts/entity-capability.json",
+        "core.py": "src/sv_llm_amazon_web_services/core.py"
+      }
+    },
+    "AI21_Labs": {
+      "repository": "SV-LLM/AI21_Labs",
+      "commit": "bed98f4dfc77d377075262bed3e5f37d94a9baf0",
+      "pull_request": "PR #9",
+      "paths": {
+        "entity-capability.json": "contracts/entity-capability.json",
+        "core.py": "src/sv_llm_ai21_labs/core.py"
+      }
     }
   },
   "reason": "Entity repositories are private; CI here cannot check them out. Declarations are bound by the canonical organization tree's declaration_sha256, so the source of these bytes is not trusted (R3). core.py is vendored so the contract-level regression exercises each entity's own contribution code.",
@@ -27,6 +171,38 @@
     "Anthropic/entity-capability.json": "sha256:44b6e67a33d2f09da6813ed18c99a062078d2f4d1c6d847ee440dd6ab645ccb4",
     "Anthropic/core.py": "sha256:1f2ea8bd6a3c0939d7625708ffe92315611a7444e3214bc05db6b32c9bbe967d",
     "OpenAI/entity-capability.json": "sha256:d9dfc571761402de8957e71f6c31e30f681ca5adf691bdf76123800b4ab7aa1f",
-    "OpenAI/core.py": "sha256:95c4363c20275052aa3d73cf6de54a1176459cc0e4304c5aea5c8da891ef3d9d"
+    "OpenAI/core.py": "sha256:95c4363c20275052aa3d73cf6de54a1176459cc0e4304c5aea5c8da891ef3d9d",
+    "Google/entity-capability.json": "sha256:d3e4c410acfa96899ded62100ab2c3532f3774a9a4f4a70497cfad0c3c9071ef",
+    "Google/core.py": "sha256:31098761cfd2b3ca5bf158b90cbce132f48f35fc03cab4ce56f6c32f165c87e3",
+    "Microsoft/entity-capability.json": "sha256:15167de5ba71ac7f1b5b6b03e44ca51d3be4d7a730711128901930f8d70af01f",
+    "Microsoft/core.py": "sha256:097d68b899a0901a181d5404a10c26e84a5da2e74298faf4e61466bedc25298b",
+    "Meta/entity-capability.json": "sha256:91c9fcbedd1ff6a4c7f00666c94cde7a252bc9769a71b06b1efd91b3da753536",
+    "Meta/core.py": "sha256:033547cfce5b9f3abfbda2c94a73d5ca58f080c04a64a92e41b3dc13c9faea5f",
+    "DeepSeek/entity-capability.json": "sha256:20ab1bb4b0c9db2ebf1de00e5fe12daa58b6accf8c23cb6ac25e34aeaea97c03",
+    "DeepSeek/core.py": "sha256:0e977d17a225acbbf191a527bbf9a4d67588acf0c4669318ff2c692214ebfe70",
+    "MoonShot_AI/entity-capability.json": "sha256:a6e216097f5350075bb6a04a628e8941d625972d71579bbcb3c5e5b8e8274a47",
+    "MoonShot_AI/core.py": "sha256:83b67f31683e3f91eb017bd31a925ba1196667133fa7bc18470f43ac00ffe378",
+    "xAI/entity-capability.json": "sha256:a5bad51d5c0dbd5914dcfc7030821fe61ca4d197c0c87b9cc6815476fb8d224d",
+    "xAI/core.py": "sha256:a0a75fcfdf59ea01dbf7ac9d47237aeae2df5eb82f01e57a64844771c8c79397",
+    "Mistral/entity-capability.json": "sha256:175ed65668bac77ee50c189b26052bee70f76631e4915bc6b3ba37eae7c0a94d",
+    "Mistral/core.py": "sha256:14e755232f88114daa564bc1a944c8cf80726481950965c327f4c8425818ae9c",
+    "MiniMax/entity-capability.json": "sha256:a51da0d5ba096849a9532a7f60c68b302f0179090c56139698b09411e5123dc9",
+    "MiniMax/core.py": "sha256:4ae21f4cb8eb791120dd5f0fff07ffbe1158ef17b80651119ca3203018193ad7",
+    "Perplexity_AI/entity-capability.json": "sha256:8c84417ab215b9fd7a30b7fd420ebb3950f6e2ea85843dda83cc49bc4f79584c",
+    "Perplexity_AI/core.py": "sha256:b5d14ca680c2b752d1689b976312b166d344a1656f28cb62c17fa3b959fdd04d",
+    "Cohere/entity-capability.json": "sha256:c723273a541ead47c261a29435490e071977da008ec31acc673513932206e5a7",
+    "Cohere/core.py": "sha256:2902942f92e70cd296dcc6d1aa880f8dffd60505599ead5a4899f225ad63a561",
+    "IBM/entity-capability.json": "sha256:b9cbe41ffd92b5f33e2a34e85b4579cb8401f3e2dbe6848faf63ece0717e3847",
+    "IBM/core.py": "sha256:b3f02c087109def29d6ce5981fb176b35131d8f1ba344e4d883e338d6efff170",
+    "Z_AI/entity-capability.json": "sha256:30895a9f473d5f7ae69e2e3df42754de90899aa851e3d1b1027682408aa31ea8",
+    "Z_AI/core.py": "sha256:4d32e775d64dec5ea7d307a8c6b13d6a4b59839d3b6876d71c5766afead7fd10",
+    "Alibaba_Cloud/entity-capability.json": "sha256:43e8f168efcd3559fc988f7b58032d5fda3306a4b897f4c70798e745f72e2b6c",
+    "Alibaba_Cloud/core.py": "sha256:904a8382b80c10a0c328486a37f4f18d1cb0c11c89fca5401402fc917595a7b9",
+    "NVIDIA/entity-capability.json": "sha256:9376f3786a3b78de0b88654f6fcd4046bdf57a6ab06f4bd4509697f2c243496d",
+    "NVIDIA/core.py": "sha256:c0917a861acc3eae722ac0aa6dc255e796c8a0ea411487db051159dfaa82b0a5",
+    "Amazon_Web_Services/entity-capability.json": "sha256:dd6a69f1a09ac7665e9b0b59fb591e77fda73d7bd35eaccab69bf8df9eb38af9",
+    "Amazon_Web_Services/core.py": "sha256:0279c6591f7bd4cb1718385ed8b5b229ece48ec9c046c35c4fcb39ef0e067381",
+    "AI21_Labs/entity-capability.json": "sha256:97e5f1342ac41aa139286ca1f66ee50ddb927a96b0e2f30620541f4b49ab2d58",
+    "AI21_Labs/core.py": "sha256:67780d28da0816c3a74178db7d37720907359e98796887feffb74facc5d48d9a"
   }
 }
