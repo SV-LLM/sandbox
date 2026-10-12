@@ -144,7 +144,9 @@ def _authority(decl: dict, r: _Result) -> None:
     elif not set(caps) <= CAPABILITY_VOCABULARY:
         r.deny.append("NO_ALTERNATE_GOVERNANCE_AUTHORITY")
     prohibited = decl["prohibited"]
-    if not isinstance(prohibited, list) or any(not isinstance(v, str) for v in prohibited) or not REQUIRED_PROHIBITIONS <= set(prohibited):
+    if isinstance(prohibited, list) and any(not isinstance(v, str) for v in prohibited):
+        r.fail_closed.append("FIELD_TYPES_VALID")
+    elif not isinstance(prohibited, list) or not REQUIRED_PROHIBITIONS <= set(prohibited):
         r.deny.append("NO_ALTERNATE_GOVERNANCE_AUTHORITY")
     if isinstance(prohibited, list) and LEGACY_MASTER_RECORDS_PROHIBITION in prohibited:
         r.deny.append("MASTER_RECORDS_SEMANTICS_CURRENT")
