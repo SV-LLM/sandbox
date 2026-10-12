@@ -99,6 +99,25 @@ class ProviderCapabilityContract(unittest.TestCase):
                 with self.subTest(path=path, value=bad):
                     self.assertIn(pc.validate(d, "FixtureProvider")["disposition"], (pc.DENY, pc.FAIL_CLOSED, pc.ALLOW))
 
+    def test_schema_invalid_substitutions_are_never_allowed(self):
+        """The validator is at least as strict as its schema: a declaration the schema rejects is never ALLOW."""
+        v = schema_evaluator().Validator(SCHEMA)
+        def paths(node, p=()):
+            yield p
+            if isinstance(node, dict):
+                for k in node: yield from paths(node[k], p + (k,))
+            elif isinstance(node, list):
+                for i, x in enumerate(node[:2]): yield from paths(x, p + (i,))
+        for path in list(paths(VALID))[1:]:
+            for bad in (None, 1, True, [], {}, [1], [[1]], {"a": []}, "x", ["x"], -1, ""):
+                d = json.loads(json.dumps(VALID))
+                o = d
+                for k in path[:-1]: o = o[k]
+                o[path[-1]] = bad
+                if list(v.iter_errors(d)):
+                    with self.subTest(path=path, value=bad):
+                        self.assertNotEqual(pc.validate(d, "FixtureProvider")["disposition"], pc.ALLOW)
+
     def test_non_integer_numbers_fail_closed(self):
         d = json.loads(json.dumps(VALID)); d["confidence"] = 0.5
         self.assertEqual(pc.validate(d)["disposition"], pc.FAIL_CLOSED)
