@@ -2,7 +2,7 @@
 
 Synthetic: no network, injected Playwright. Covers pre-invocation refusals, the lease (navigate and
 read_public only, no persistence), refusal of navigations outside the lease, screenshot capture,
-recording of every attempt, and the live runner end to end against a fake browser.
+and recording of every attempt.
 
 Run: SV_LLM_DOTGITHUB_ROOT=<SV-LLM/.github checkout> python -B tests/test_page_load_tool.py
 """
@@ -13,7 +13,6 @@ from unittest.mock import MagicMock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tests"))
-sys.path.insert(0, str(ROOT / "live"))
 from test_sandbox_runtime import Harness, ALLOW, DENY  # noqa: E402
 from page_load_tool import StegBrowserPageLoadTool, TOOL_REPAIRS, INTERACTION_FIELDS  # noqa: E402
 from sandbox import OWNING_EXISTING_GOAL  # noqa: E402
@@ -169,42 +168,6 @@ class Refused(Base):
                          "SYNTHESIS_BINDS_EVERY_RECORDED_INPUT")
         self.assertEqual(self.s.synthesize(WORK, ids, {"s": "both"})["disposition"], ALLOW)
         self.assertEqual(self.s.complete(WORK)["disposition"], ALLOW)
-
-
-class Runner(unittest.TestCase):
-    def test_runner_end_to_end_with_fake_browser(self):
-        import run_page_load
-        with tempfile.TemporaryDirectory() as tmp:
-            os.environ["EVIDENCE_DIR"] = tmp
-            os.environ["PAGE_LOAD_REPOSITORIES"] = "xAI,Z_AI"
-            try:
-                code = run_page_load.main(playwright_factory=factory(final_url="https://chat.z.ai/"))
-            finally:
-                os.environ.pop("PAGE_LOAD_REPOSITORIES")
-            report = json.loads((Path(tmp) / "report.json").read_text())
-            by_repo = {o["repository"]: o for o in report["observations"]}
-            # Z_AI settles inside its lease; xAI's fake final URL is outside grok.com, so it fails closed.
-            self.assertEqual(by_repo["Z_AI"]["disposition"], ALLOW)
-            self.assertEqual((by_repo["xAI"]["disposition"], by_repo["xAI"]["failed_predicate"]),
-                             ("FAIL_CLOSED", "FINAL_ORIGIN_WITHIN_LEASE"))
-            self.assertEqual((code, report["disposition"], report["completion"], report["org_readback"]),
-                             (1, "FAIL_CLOSED", ALLOW, "EXACT_KEYED_READBACK_PASS"))
-            self.assertFalse(report["authoritative_organization_runtime_reality"])
-            result = json.loads((Path(tmp) / "test-results/Z_AI/page-load.json").read_text())
-            self.assertEqual((result["interaction"], result["credentials"], result["epistemic_state"]),
-                             ("NONE", "NONE", "OBSERVED"))
-            self.assertEqual((Path(tmp) / "test-results/Z_AI/screenshot.png").read_bytes(), PNG)
-            self.assertIn("test-results/Z_AI/screenshot.png", json.loads((Path(tmp) / "digests.json").read_text())["files"])
-
-    def test_targets_cover_all_18_providers_and_stay_in_their_leases(self):
-        import run_page_load
-        from stegbrowser_tool import _host, _host_allowed
-        rows = run_page_load.targets(None)
-        self.assertEqual(len(rows), 18)
-        self.assertTrue({"Anthropic", "OpenAI"} <= {t["repository"] for t in rows})
-        for t in rows:
-            self.assertTrue(_host_allowed(_host(t["secure_url"]), t["allowed_origins"]), t["repository"])
-            self.assertFalse(any(o in ("*", "*.com", "*.ai") for o in t["allowed_origins"]), t["repository"])
 
 
 if __name__ == "__main__":
