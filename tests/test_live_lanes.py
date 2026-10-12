@@ -208,13 +208,16 @@ class AuthenticRefusals(LaneCase):
                 _, _, _, recorded = self.organization(outcome={**LANE_OUTCOME, **change})
                 self.assertRefused("AUTHENTIC_PARENT_SUBJECT_MISMATCH", parent=recorded["org_receipt_sha256"])
 
-    def test_sandbox_workflow_offers_conformance_only(self):
-        text = (ROOT / ".github/workflows/sandbox-live-llm.yml").read_text()
-        triggers = text.split("\non:\n", 1)[1].split("\npermissions:", 1)[0]
-        self.assertEqual(triggers.strip(), "workflow_dispatch:")  # no lane or parent inputs
-        self.assertIn("      LIVE_LANE: conformance\n", text)
-        self.assertNotIn("PARENT_ORG_RECEIPT_SHA256:", text)
-        self.assertNotIn("--preflight", text)
+    def test_no_workflow_runs_a_live_lane(self):
+        # GitHub/CI holds no runtime authority (StegVerse-Labs/.github
+        # data/task-registry-global-invariants.json): no workflow here runs
+        # this lane; it executes only on a substrate from the canonical
+        # runtime substrate order.
+        for wf in (ROOT / ".github/workflows").glob("*.yml"):
+            with self.subTest(workflow=wf.name):
+                text = wf.read_text()
+                self.assertNotIn("live/run_live_llm.py", text)
+                self.assertNotIn("playwright install", text)
 
 
 class SingleOrganizationRun(LaneCase):

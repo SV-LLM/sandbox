@@ -1,6 +1,10 @@
 """AT-04 Stage 1: live StegBrowser llm.v1 path conformance against the StegVerse.org fixture page.
 
-Manual workflow only; fails closed until live/target.json is verified. The
+No workflow runs this lane: GitHub/CI holds no runtime authority, so it
+executes only as a manifest-bound transition on a substrate from the
+canonical runtime substrate order, and it fails closed until
+live/target.json is verified. Its earlier GitHub-hosted runs (proof of
+concept) are CI-class evidence only. The
 target is a StegVerse-controlled conformance surface, never a provider: no
 provider attribution, no provider/model labels, and a pass proves only the
 live browser path, not OpenAI/Anthropic integration.
@@ -35,9 +39,8 @@ Two lanes (LIVE_LANE):
                supplied as declared.
 
 Both lanes prove each organization receipt and its retained source receipt by
-exact keyed whole-document readback. Evidence goes to EVIDENCE_DIR, which the
-calling workflow uploads as a 90-day artifact: live-run evidence retention, not
-permanent custody. Every non-ALLOW result exits 1; report.json is the
+exact keyed whole-document readback. Evidence goes to EVIDENCE_DIR (live-run evidence
+retention, not permanent custody). Every non-ALLOW result exits 1; report.json is the
 disposition record.
 """
 from __future__ import annotations
@@ -59,8 +62,9 @@ REPOSITORY_LEDGER_LOCATION = json.loads(
     (ROOT / ".stegverse/transition-ledger/contract.json").read_text())["repository_ledger_location"]
 SANDBOX_REPO_LEDGER_ROOT = "SANDBOX_REPO_LEDGER_ROOT"
 INTENDED_ACTION = "STEGBROWSER_LIVE_PATH_CONFORMANCE"
-RETRY_ENTRYPOINT = ("SV-LLM/.github:.github/workflows/organization-authentic-live-lane.yml (workflow_dispatch)"
-                    " -> SV-LLM/sandbox live/run_live_llm.py::main")
+RETRY_ENTRYPOINT = ("SV-LLM/sandbox live/run_live_llm.py::main, invoked by no workflow; exempted in"
+                    " SV-LLM/.github data/organization-role-exemption-register.json until a conforming substrate"
+                    " invokes it")
 DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 REFUSALS = {
