@@ -92,6 +92,18 @@ DENY_REPAIRS = {
         "Supply the subject whose digest equals parent_transition.subject_or_artifact_digest and the parent repo "
         "receipt's successor_state_sha256.",
         "Call admit again with the parent's successor-state subject."),
+    "PROCESSING_SELECTED_BY_ADMITTED_MANIFEST": (
+        "Declare processing.capability bound to processing.route_id in the manifest, as a binding this service "
+        "admits (runtime/contracts/sandbox-service.json); the detail names the selection refusal.",
+        "Send a new manifest declaring an admitted capability and route; runtime/work_cycle.py takes it in."),
+    "PARENT_INGRESS_RECEIPT_PRESENT": (
+        "Materialize the manifest through SV-LLM/.github org-runtime/crossing.py::ingress so its "
+        "ORGANIZATION_INGRESS_MATERIALIZED receipt is on the organization ledger.",
+        "Run the boundary ingress, then the next runtime/work_cycle.py pass takes the manifest in."),
+    "WORK_DECLARED_BY_MANIFEST": (
+        "Declare payload.work with requested_capabilities, permitted_capabilities, participation_policy, "
+        "expected_output_or_handoff and participants in the manifest.",
+        "Send a new manifest declaring the work; runtime/work_cycle.py takes it in."),
     "WORK_IS_ADMITTED": (
         "Admit the work item first (a SANDBOX_WORK_ADMITTED receipt for this work_id).",
         "Call admit, then retry this call for the same work_id."),

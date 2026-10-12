@@ -14,6 +14,17 @@ The call is declared in the work object at `manifested_request.tool_invocations[
 
 The live call (`.github/workflows/sandbox-live-llm.yml`) is manual and is a proof of concept: it runs on a GitHub-hosted runner, so its results are CI-class evidence at most, never SANDBOX_RUNTIME_OBSERVED, and it is not the manifest-bound execution path. Stage 1 targets a StegVerse-controlled conformance page, `https://stegverse.org/integration/llm-browser-test/v1/` (served from StegVerse-Labs/Site), configured in `live/target.json`. It proves only the live browser path: no provider attribution, and no provider or model labels are sent. The workflow fails closed until that target is verified. Its evidence is uploaded as a 90-day artifact: live-run evidence retention, not permanent custody. Each `SV-LLM/<Provider>` repository records its provider's published access policies under `access-policy/` (`sv-llm.provider-access-policy/v0.1`) as stated awareness; those records have no gating effect.
 
+## Work cycle
+
+`runtime/work_cycle.py` is the Sandbox side of the SV-LLM work cycle. SV-LLM/.github `org-runtime/crossing.py::ingress` materializes a manifest addressed to `sandbox` in the supplied node state and records `ORGANIZATION_INGRESS_MATERIALIZED`. One pass of the work cycle then:
+
+1. takes each materialization in once. Processing is selected only by the manifest's `processing.capability` bound to `processing.route_id`, which this service must admit (`runtime/contracts/sandbox-service.json`, evaluated by SV-LLM/.github `manifest_selection.py`).
+2. admits the work, using the ingress receipt pair read back from the organization ledger as its parent, then assigns each declared participant and requests its contribution.
+3. lets each entity answer through its own package. No SV-LLM code invokes a model: until an admitted Sandbox tool does, with credentials held by TV/TVC, an entity answers `UNAVAILABLE NO_ADMITTED_INVOCATION_SURFACE`. A request with no entity surface stays outstanding for a later pass.
+4. synthesizes and completes work whose every request is answered, and egresses the result to the organization the manifest's `return_to` names. The mesh is the durable queue; nothing waits for the receiver.
+
+Every attempt is a receipt propagated to the organization ledger, and a second pass changes nothing. `tests/test_work_cycle.py` runs the cycle end to end offline: a peer organization's manifest goes in, a result goes back, and the peer consumes it. That is CI-class evidence; running the same pass on a StegVerse substrate is what would make it runtime-observed.
+
 ## Provider capability contract
 
 `runtime/contracts/provider-capability.schema.json` (`sv-llm.provider-capability/v0.1`) fixes the structure of each `SV-LLM/<Provider>` repository's `capability.json`. `runtime/provider_capability.py` is the offline validator those repositories vendor byte-for-byte (each records its sha256 in `validator_ref`). It returns ALLOW, DENY or FAIL_CLOSED: FAIL_CLOSED for malformed declarations or unbound provenance; DENY for authority claims, credential or endpoint material, live-invocation or runtime-observation claims, an authentic interface without a receipt, or a foreign identity. Negative fixtures are in `tests/fixtures/provider_capability/negative/`. The validator contacts no provider, and its disposition is evidence about a source file, not a transition.
