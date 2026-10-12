@@ -24,12 +24,14 @@
   },
   "sandbox_authored_not_upstream": [
     "__init__.py",
-    "../../../tests/stegbrowser_upstream/conftest.py"
+    "../../../tests/stegbrowser_upstream/conftest.py",
+    "../../../tests/run_stegbrowser_upstream.py"
   ],
   "python_dependencies": {
     "runtime": "standard library only for these four modules",
     "browser": "playwright==1.52.0 (imported lazily by llm_browser_execution; required only for a real browser call)",
-    "browser_runtime": "Chromium via 'python -m playwright install chromium'"
+    "browser_runtime": "Chromium via 'python -m playwright install chromium'",
+    "upstream_tests": "standard library only: tests/run_stegbrowser_upstream.py runs them byte-for-byte; pytest.raises is the only pytest name used and is provided by a fail-closed stand-in"
   },
   "upstream_requirements_not_needed_by_these_modules": [
     "jsonschema==4.23.0",
