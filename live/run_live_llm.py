@@ -144,7 +144,6 @@ def derive_invocation(target: dict):
             "allowed_origins": [o.hostname.lower().rstrip(".")],
             "browser_actions": [{"op": "fill", "selector": sel["prompt_input"], "value": prompt},
                                 {"op": "click", "selector": sel["submit"]},
-                                {"op": "wait_for", "selector": sel["response_ready"]},
                                 {"op": "read_text", "selector": sel["response"]}]}, None
 
 

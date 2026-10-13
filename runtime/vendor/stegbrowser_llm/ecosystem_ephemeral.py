@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import hashlib
 import json
+import re
 from typing import Any, Iterable, Mapping
 from urllib.parse import urlsplit
 
@@ -35,6 +36,7 @@ _ALLOWED_RETAINED_ARTIFACTS = {
     "publication_receipt",
     "error_receipt",
 }
+_SHA256_HEX = re.compile(r"[0-9a-f]{64}")
 
 
 def _parse_time(value: str) -> datetime:
@@ -146,6 +148,22 @@ def validate_ephemeral_lease(lease: Mapping[str, Any], *, now: datetime | None =
         "persist_cookies": False,
         "persist_history": False,
     }
+    # Optional scope naming the one governed provider transition this lease serves.
+    # It is part of the lease commitment, so the terminal receipt binds it too.
+    governed = lease.get("governed_transition")
+    if governed is not None:
+        if not isinstance(governed, Mapping):
+            raise ValueError("governed_transition must be an object")
+        for key in ("transition_id", "runtime_profile_id"):
+            if not isinstance(governed.get(key), str) or not governed.get(key):
+                raise ValueError(f"governed_transition.{key} is required")
+        if not isinstance(governed.get("request_hash"), str) or not _SHA256_HEX.fullmatch(governed["request_hash"]):
+            raise ValueError("governed_transition.request_hash must be lowercase sha256")
+        normalized["governed_transition"] = {
+            "transition_id": governed["transition_id"],
+            "request_hash": governed["request_hash"],
+            "runtime_profile_id": governed["runtime_profile_id"],
+        }
     normalized["lease_commitment"] = _commit(normalized)
     return normalized
 

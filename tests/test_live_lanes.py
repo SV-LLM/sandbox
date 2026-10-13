@@ -208,22 +208,17 @@ class AuthenticRefusals(LaneCase):
                 _, _, _, recorded = self.organization(outcome={**LANE_OUTCOME, **change})
                 self.assertRefused("AUTHENTIC_PARENT_SUBJECT_MISMATCH", parent=recorded["org_receipt_sha256"])
 
-    def test_sandbox_workflow_offers_conformance_only(self):
-        text = (ROOT / ".github/workflows/sandbox-live-llm.yml").read_text()
-        triggers = text.split("\non:\n", 1)[1].split("\npermissions:", 1)[0]
-        self.assertEqual(triggers.strip(), "workflow_dispatch:")  # no lane or parent inputs
-        self.assertIn("      LIVE_LANE: conformance\n", text)
-        self.assertNotIn("PARENT_ORG_RECEIPT_SHA256:", text)
-        self.assertNotIn("--preflight", text)
+    def test_no_workflow_runs_the_live_lane_on_an_external_machine(self):
+        # GitHub-hosted runners are external machines; the lane runs only where a manifest admits it.
+        workflows = sorted((ROOT / ".github/workflows").glob("*.y*ml"))
+        self.assertTrue(workflows)
+        for path in workflows:
+            text = path.read_text()
+            self.assertNotIn("run_live_llm", text, path.name)
+            self.assertNotIn("playwright", text.lower(), path.name)
 
-    def test_llm_v1_tool_has_one_runtime_caller_the_registered_lane(self):
-        # llm.v1 awaits the provider's answer inside one lease (SV-LLM/.github SV-LLM-EXEMPTION-003);
-        # only the manual proof-of-concept lane (SV-LLM-EXEMPTION-002) may reach it.
-        callers = sorted(str(path.relative_to(ROOT)) for folder in ("runtime", "live")
-                         for path in (ROOT / folder).glob("*.py")
-                         if path.name != "stegbrowser_tool.py"
-                         and re.search(r"\bStegBrowserTool\b", path.read_text()))
-        self.assertEqual(callers, ["live/run_live_llm.py"])
+    def test_the_lane_never_asks_the_browser_to_wait(self):
+        self.assertNotIn("wait_for", (ROOT / "live/run_live_llm.py").read_text())
 
 
 class SingleOrganizationRun(LaneCase):
