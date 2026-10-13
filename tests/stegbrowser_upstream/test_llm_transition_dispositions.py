@@ -41,7 +41,7 @@ def factory(*, fail_launch=False):
     context = browser.new_context.return_value
     page = context.new_page.return_value
     page.goto.return_value.status = 200
-    page.locator.return_value.inner_text.return_value = "TEST5_A"
+    page.locator.return_value.all_inner_texts.return_value = ["TEST5_A"]  # read now; never a waiting inner_text
     if fail_launch:
         p.chromium.launch.side_effect = RuntimeError("synthetic launch failure")
     return playwright
@@ -66,6 +66,24 @@ class ManifestedBrowserTransitionTests(unittest.TestCase):
         self.assertFalse(result["receipt"]["organization_receipt_claimed"])
         self.assertIsNotNone(result["execution_result"]["result"]["response_commitment"])
         session.close.assert_called_once_with(reason="completed")
+
+    def test_declared_provider_is_not_attested_and_usage_is_unobserved(self):
+        result, _ = self._run(request())
+        attribution = result["execution_result"]["attribution"]
+        self.assertEqual(attribution["provider"], "test-provider")
+        self.assertEqual(attribution["provider_source"], "MANIFEST_DECLARED")
+        self.assertEqual(attribution["model_source"], "MANIFEST_DECLARED")
+        self.assertIs(attribution["provider_identity_attested"], False)
+        self.assertIs(attribution["usage_observed"], False)
+
+    def test_undeclared_provider_is_labelled_as_default_not_attribution(self):
+        req = request()
+        del req["provider"], req["model"]
+        result, _ = self._run(req)
+        attribution = result["execution_result"]["attribution"]
+        self.assertEqual(attribution["provider_source"], "DEFAULT_LABEL_UNDECLARED")
+        self.assertEqual(attribution["model_source"], "DEFAULT_LABEL_UNDECLARED")
+        self.assertIs(attribution["provider_identity_attested"], False)
 
     def test_navigation_scope_denial(self):
         session = ephemeral()

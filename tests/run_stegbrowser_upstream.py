@@ -6,45 +6,22 @@ runtime/vendor/stegbrowser_llm/vendor-manifest.json before it is loaded, and
 nothing in them is edited. conftest.py (SV-LLM/sandbox-authored) maps the
 upstream ``src.stegbrowser`` imports onto the vendored modules, as before.
 
-The upstream tests use one third-party name, ``pytest.raises(exc, match=...)``.
-That single call is provided here by a standard-library stand-in registered as
-``pytest`` for these tests only; any other ``pytest`` attribute fails closed, so
-an upstream change that needs more of pytest is a test failure, not a silent
-pass. Every ``test_*`` function and ``unittest.TestCase`` test in the files is
-collected, and the run fails if the collected count differs from the count
-parsed from the sources.
+The upstream tests are standard-library ``unittest`` tests (pytest was removed
+upstream in StegVerse-Labs/StegBrowser#61), so no stand-in is installed: an
+upstream test that imports pytest fails to load, which fails the run. Every
+``test_*`` function and ``unittest.TestCase`` test in the files is collected,
+and the run fails if the collected count differs from the count parsed from
+the sources.
 
 Run: python -B tests/run_stegbrowser_upstream.py   (standard library only)
 """
 from __future__ import annotations
-import ast, contextlib, hashlib, importlib.util, json, re, sys, types, unittest
+import ast, hashlib, importlib.util, json, sys, types, unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 UPSTREAM = ROOT / "tests/stegbrowser_upstream"
 MANIFEST = json.loads((ROOT / "runtime/vendor/stegbrowser_llm/vendor-manifest.json").read_text())
-
-
-@contextlib.contextmanager
-def _raises(expected, match=None):
-    try:
-        yield
-    except expected as exc:
-        if match is not None and not re.search(match, str(exc)):
-            raise AssertionError(f"{type(exc).__name__}({exc!r}) does not match {match!r}") from exc
-        return
-    raise AssertionError(f"DID NOT RAISE {expected}")
-
-
-def _stand_in() -> types.ModuleType:
-    module = types.ModuleType("pytest")
-    module.__doc__ = "SV-LLM/sandbox standard-library stand-in: raises() only."
-    module.raises = _raises
-
-    def __getattr__(name):
-        raise AttributeError(f"pytest.{name} is not provided by the standard-library stand-in")
-    module.__getattr__ = __getattr__
-    return module
 
 
 def _verify_digests() -> list[Path]:
@@ -77,7 +54,6 @@ def _load(path: Path) -> types.ModuleType:
 
 def suite() -> tuple[unittest.TestSuite, int]:
     paths = _verify_digests()
-    sys.modules["pytest"] = _stand_in()
     _load(UPSTREAM / "conftest.py")
     loader, collected, expected = unittest.TestLoader(), unittest.TestSuite(), 0
     for path in paths:

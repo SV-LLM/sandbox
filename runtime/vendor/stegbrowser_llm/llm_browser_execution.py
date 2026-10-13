@@ -5,7 +5,13 @@ from typing import Any, Mapping
 from .ecosystem_ephemeral import EphemeralBrowserSession
 from .llm_profile import validate_llm_profile_request, begin_llm_profile_packet, bind_llm_profile_result, complete_llm_profile_packet
 
-_ALLOWED_ACTIONS = {"fill", "click", "press", "wait_for", "read_text"}
+_ALLOWED_ACTIONS = {"fill", "click", "press", "read_text"}
+# wait_for is refused: holding the lease until a provider renders an answer awaits
+# an external machine, which is never a transition predicate (StegVerse-Labs/.github
+# data/task-registry-global-invariants.json, actions_by_manifest). read_text reads
+# what the page holds at that moment; an absent answer is a recorded non-success
+# that a later manifest may retry, never a wait.
+_REFUSED_ACTIONS = {"wait_for"}
 
 def execute_manifested_llm_browser_operation(
     request: Mapping[str, Any],
@@ -69,11 +75,16 @@ def execute_manifested_llm_browser_operation(
                         raise ValueError("llm.v1 browser action must be an object")
                     op = step.get("op")
                     selector = step.get("selector")
+                    if op in _REFUSED_ACTIONS:
+                        raise ValueError("llm.v1 wait_for is refused: the browser never waits on the provider")
                     if op not in _ALLOWED_ACTIONS or not isinstance(selector, str) or not selector:
                         raise ValueError("unsupported llm.v1 browser action")
                     frame_selector = step.get("frame_selector")
                     loc = (page.frame_locator(str(frame_selector)).locator(selector)
                            if isinstance(frame_selector, str) and frame_selector else page.locator(selector))
+                    if op != "read_text" and loc.count() == 0:
+                        # Act only on what the delivered page holds; never wait for it to appear.
+                        raise RuntimeError(f"llm.v1 {op} target not present: {selector}")
                     if op == "fill":
                         value = step.get("value")
                         if value != normalized["prompt"]:
@@ -83,10 +94,9 @@ def execute_manifested_llm_browser_operation(
                         loc.click()
                     elif op == "press":
                         loc.press(str(step.get("key") or "Enter"))
-                    elif op == "wait_for":
-                        loc.wait_for(state=str(step.get("state") or "visible"), timeout=int(step.get("timeout_ms") or 60000))
                     elif op == "read_text":
-                        result_text = loc.inner_text(timeout=int(step.get("timeout_ms") or 60000))
+                        # all_inner_texts() returns what is present now; it never waits.
+                        result_text = "\n".join(loc.all_inner_texts())
                 if attempt_evidence is not None:
                     attempt_evidence["stage"] = "RESULT_OBSERVATION"
                 if not isinstance(result_text, str) or not result_text.strip():
@@ -104,6 +114,19 @@ def execute_manifested_llm_browser_operation(
 
     provider = normalized.get("provider") or "credential-free-browser-model"
     model = normalized.get("model") or "manifest-selected-free-model"
+    # The browser observes page text only: provider/model are manifest-declared
+    # labels (or defaults when undeclared), never attested provider identity, and
+    # the DOM path exposes no provider usage. Say so, so no consumer can count this
+    # result as provider-attested or usage-attributed evidence.
+    attribution = {
+        "provider": provider,
+        "model": model,
+        "provider_source": "MANIFEST_DECLARED" if normalized.get("provider") else "DEFAULT_LABEL_UNDECLARED",
+        "model_source": "MANIFEST_DECLARED" if normalized.get("model") else "DEFAULT_LABEL_UNDECLARED",
+        "provider_identity_attested": False,
+        "usage_observed": False,
+        "usage_unavailable_reason": "BROWSER_DOM_PATH_EXPOSES_NO_PROVIDER_USAGE",
+    }
     if attempt_evidence is not None:
         attempt_evidence["stage"] = "RESULT_BINDING"
     bound = bind_llm_profile_result(
@@ -122,5 +145,6 @@ def execute_manifested_llm_browser_operation(
         "terminal_receipt": terminal,
         "result": completed["result"],
         "endpoint_receipts": completed["endpoint_receipts"],
+        "attribution": attribution,
         "authority_effect": "NONE_MANIFEST_BOUND_BROWSER_EXECUTION",
     }

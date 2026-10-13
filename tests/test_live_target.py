@@ -47,7 +47,7 @@ class Derivation(unittest.TestCase):
         self.assertIsNone(refused)
         self.assertEqual(inv["allowed_origins"], ["stegverse.org"])
         self.assertEqual(inv["secure_url"], TARGET["secure_url"])
-        self.assertEqual([a["op"] for a in inv["browser_actions"]], ["fill", "click", "wait_for", "read_text"])
+        self.assertEqual([a["op"] for a in inv["browser_actions"]], ["fill", "click", "read_text"])
         self.assertEqual(inv["browser_actions"][0]["value"], TARGET["prompt"])
         self.assertIn(TARGET["response_marker"], inv["prompt"])
         self.assertNotIn("provider", inv)

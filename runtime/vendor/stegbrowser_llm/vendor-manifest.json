@@ -1,9 +1,9 @@
 {
   "schema": "sv-llm.vendored-contract-manifest/v1",
   "canonical_source": "StegVerse-Labs/StegBrowser",
-  "source_commit": "7353176612f4590d0d8220153869cd6e95e241d8",
+  "source_commit": "3900aa2f2a9d1760a9a68062c279c62845480463",
   "published_tag_not_used": "v0.1.0-source (41404e72e21f17b803b8cd3fb062cfc9790f06e0, older)",
-  "integration_date": "2026-10-08",
+  "integration_date": "2026-10-13",
   "upstream_paths": {
     "ecosystem_ephemeral.py": "src/stegbrowser/ecosystem_ephemeral.py",
     "llm_profile.py": "src/stegbrowser/llm_profile.py",
@@ -11,15 +11,15 @@
     "llm_transition.py": "src/stegbrowser/llm_transition.py"
   },
   "files": {
-    "ecosystem_ephemeral.py": "sha256:92914410acc8a1205288d2db48076da660a3e531900809934d3c17c1927f57e8",
+    "ecosystem_ephemeral.py": "sha256:a678e3055691013fa24d8232805e55c67d4de9bbda69f2f2664479df85a19300",
     "llm_profile.py": "sha256:d00d4bd573332bb64dd694d82c09784db055fc9f30afc6dfca3ec99dde4cc80e",
-    "llm_browser_execution.py": "sha256:01603914746fc9b981eb9325123e72a021453370f71d6dd990b8741a37bbd46a",
+    "llm_browser_execution.py": "sha256:4f7661f0b99995c5f56a317c28b4c71f77e506dc490a9476cf6cb9fdc037a49b",
     "llm_transition.py": "sha256:6e9e168f63f779d54d1c26734b20f3501f81bf991a86acea43acc91bf5128f2f"
   },
   "upstream_tests": {
     "tests/stegbrowser_upstream/test_llm_profile.py": "sha256:5f19a1e1e1785755c433a08f8ffe604f82ee1a0e2668846f91360d5961177237",
-    "tests/stegbrowser_upstream/test_llm_transition_dispositions.py": "sha256:1a57556b8f4d8cda4d361c6823c363abee7394b45d0afccd52937db98ca15003",
-    "tests/stegbrowser_upstream/test_llm_manifested_browser_execution.py": "sha256:339883131bbac3154952e09f46ab77a208b28234d4afaee5b42f5bda09a277b8",
+    "tests/stegbrowser_upstream/test_llm_transition_dispositions.py": "sha256:c52f4fc2caff7daf349b002864c9a280e0e95cc4cdf5ed3ec2f0a9bab9db64e6",
+    "tests/stegbrowser_upstream/test_llm_manifested_browser_execution.py": "sha256:2c8a137a6af3415eb80afe47ab988ab902a9e7b3d958bd962cd6636dabca7cfa",
     "tests/stegbrowser_upstream/test_ecosystem_ephemeral.py": "sha256:6c5f87e05d351c72c215a579b9d2e9b40e4d17cef1df813e171cebd5fecef488"
   },
   "sandbox_authored_not_upstream": [
@@ -31,7 +31,7 @@
     "runtime": "standard library only for these four modules",
     "browser": "playwright==1.52.0 (imported lazily by llm_browser_execution; required only for a real browser call)",
     "browser_runtime": "Chromium via 'python -m playwright install chromium'",
-    "upstream_tests": "standard library only: tests/run_stegbrowser_upstream.py runs them byte-for-byte; pytest.raises is the only pytest name used and is provided by a fail-closed stand-in"
+    "upstream_tests": "standard library only: the upstream tests are unittest test cases with no pytest import (StegVerse-Labs/StegBrowser#61); tests/run_stegbrowser_upstream.py runs them byte-for-byte"
   },
   "upstream_requirements_not_needed_by_these_modules": [
     "jsonschema==4.23.0",

@@ -25,7 +25,6 @@ def invocation(**changes):
            "browser_actions": [], "provider": "label-only-provider", "model": "label-only-model"}
     inv["browser_actions"] = [{"op": "fill", "selector": "textarea", "value": inv["prompt"]},
                               {"op": "press", "selector": "textarea", "key": "Enter"},
-                              {"op": "wait_for", "selector": "[data-answer]"},
                               {"op": "read_text", "selector": "[data-answer]"}]
     inv.update(changes)
     return inv
@@ -38,7 +37,7 @@ def factory(*, text=f"{MARKER}: a reply.", fail_launch=False, status=200):
     context = browser.new_context.return_value
     page = context.new_page.return_value
     page.goto.return_value.status = status
-    page.locator.return_value.inner_text.return_value = text
+    page.locator.return_value.all_inner_texts.return_value = [text]
     if fail_launch:
         p.chromium.launch.side_effect = RuntimeError("synthetic launch failure")
     return playwright
@@ -89,7 +88,7 @@ class Base(unittest.TestCase):
 
 class Vendoring(Base):
     def test_AT01_vendored_bytes_match_manifest_and_upstream_commit(self):
-        self.assertEqual(MANIFEST["source_commit"], "7353176612f4590d0d8220153869cd6e95e241d8")
+        self.assertEqual(MANIFEST["source_commit"], "3900aa2f2a9d1760a9a68062c279c62845480463")
         self.s.registration.verify_vendor(VENDOR)
         for rel, digest in MANIFEST["upstream_tests"].items():
             self.assertEqual("sha256:" + hashlib.sha256((ROOT / rel).read_bytes()).hexdigest(), digest, rel)
