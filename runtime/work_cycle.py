@@ -24,6 +24,11 @@ processor there. This module is the Sandbox side of that hand-off:
            and completed, and the result is egressed to the organization the
            manifest's `return_to` names (crossing.py::egress). The mesh is the
            durable queue: the receiver's availability is never a predicate.
+           When the manifest's payload carries an `sdk_proposal`, the proposal is
+           evaluated first by runtime/conformance_proposal.py against the
+           canonical sources the manifest itself carries as digest-bound
+           attachments (nothing is fetched); the disposition rides in the
+           receipted result, and the proposal is offered to the SDK only on ALLOW.
 
 Every attempt, admitted or refused, is a Sandbox receipt propagated to the
 organization ledger, or a crossing receipt on both ledgers. Each pass is
@@ -38,7 +43,7 @@ Run (one pass, nothing waits):
 Nothing here confers governance authority.
 """
 from __future__ import annotations
-import argparse, hashlib, importlib.util, json, os, sys
+import argparse, base64, binascii, hashlib, importlib.util, json, os, sys
 from pathlib import Path
 from typing import Any, Callable
 
@@ -46,6 +51,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime"))
 from ledger import Ledger  # noqa: E402
 from sandbox import Sandbox, ALLOW  # noqa: E402
+import conformance_proposal  # noqa: E402
 
 SERVICE = json.loads((ROOT / "runtime/contracts/sandbox-service.json").read_text())
 NO_INVOCATION = "NO_ADMITTED_INVOCATION_SURFACE"
@@ -250,11 +256,43 @@ class WorkCycle:
                               "synthesis": synthesis["evidence"]["synthesis"],
                               "synthesis_digest": synthesis["evidence"]["synthesis_digest"],
                               "authority_effect": "NONE"}}
+        declared = (manifest.get("payload") or {}).get("sdk_proposal")
+        if declared is not None:
+            result["payload"]["sdk_proposal_conformance"] = self._proposal_conformance(declared)
         emitted = self.crossing.egress(result, standing=standing, mesh_root=mesh_root, root=self.dotgithub)
         self.node_state.put_once(marker, {"schema": "sv-llm.sandbox-result-marker/v1", "work_id": work["work_id"],
                                           "transition_class": emitted["transition_class"],
                                           "org_receipt_sha256": emitted["org_receipt_sha256"]})
         return emitted
+
+    @staticmethod
+    def _proposal_conformance(declared: Any) -> dict[str, Any]:
+        """Evaluate a manifest-carried SDK proposal against the canonical bytes the manifest carries.
+
+        declared: {"conformance_proposal": <stegverse.ai-invariant-conformance-proposal/v1>,
+                   "canonical_source_attachments": [{"repository", "path", "revision", "content_base64"}]}.
+        An attachment that is not well formed is simply not supplied, so the evaluator answers
+        FAIL_CLOSED CANONICAL_SOURCE_SUPPLIED for the source it cites: nothing is fetched or awaited.
+        """
+        declared = declared if isinstance(declared, dict) else {}
+        attachments = declared.get("canonical_source_attachments")
+        sources = []
+        for a in attachments if isinstance(attachments, list) else []:
+            if not (isinstance(a, dict) and all(isinstance(a.get(k), str) and a[k]
+                                                for k in ("repository", "path", "revision", "content_base64"))):
+                continue
+            try:
+                content = base64.b64decode(a["content_base64"], validate=True)
+            except (binascii.Error, ValueError):
+                continue
+            sources.append({"repository": a["repository"], "path": a["path"], "revision": a["revision"],
+                            "content": content})
+        evaluation = conformance_proposal.evaluate(declared.get("conformance_proposal"), sources)
+        offered = evaluation["disposition"] == ALLOW
+        return {"schema": "sv-llm.sdk-proposal-conformance/v1", "evaluation": evaluation,
+                "proposal_offered_to_sdk": offered,
+                "proposal": declared.get("conformance_proposal") if offered else None,
+                "authority_effect": "NONE"}
 
     # -- one pass -----------------------------------------------------------------------
     def run(self, *, standing: dict[str, Any], mesh_root: Path) -> dict[str, Any]:
