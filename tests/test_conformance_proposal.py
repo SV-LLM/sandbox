@@ -269,5 +269,13 @@ class ConformanceProposal(unittest.TestCase):
         self.assertLessEqual(imports, {"hashlib", "json", "re", "sys", "typing"})
 
 
+    def test_sandbox_runtime_itself_neither_schedules_nor_waits(self):
+        # The check this module applies to proposals holds for the sandbox's own runtime source.
+        # Vendored StegBrowser bytes belong to their upstream owner and are registered separately.
+        offenders = [f"{path.name}: {what}" for path in sorted((ROOT / "runtime").glob("*.py"))
+                     for rx, what in ((cp.SCHEDULER, "schedule"), (cp.WAIT, "wait"))
+                     if rx.search(path.read_text())]
+        self.assertEqual(offenders, [])
+
 if __name__ == "__main__":
     unittest.main()

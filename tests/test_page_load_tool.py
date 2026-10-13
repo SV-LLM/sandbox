@@ -98,6 +98,15 @@ class Allowed(Base):
         self.assertNotIn("storage_state", ctx_kwargs)
         self.assertEqual(ctx_kwargs["service_workers"], "block")
 
+    def test_nothing_waits_on_the_provider_after_delivery(self):
+        pw = factory()
+        e = self.obs(self.tool.invoke(WORK, "load-1", playwright_factory=pw))
+        self.assertEqual(e["disposition"], ALLOW)
+        page = page_of(pw)
+        for method in ("wait_for_timeout", "wait_for_load_state", "wait_for_event", "wait_for_function"):
+            self.assertFalse(getattr(page, method).called, method)
+        self.assertEqual(page.goto.call_args.kwargs["wait_until"], "domcontentloaded")
+
     def test_navigation_outside_the_lease_is_aborted(self):
         pw = factory()
         page = page_of(pw)
