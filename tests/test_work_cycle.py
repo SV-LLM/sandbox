@@ -20,6 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DOTGITHUB = Path(os.environ["SV_LLM_DOTGITHUB_ROOT"]).resolve()
 sys.path.insert(0, str(ROOT / "runtime"))
+sys.path.insert(0, str(ROOT / "tests"))
 from work_cycle import WorkCycle, Entity, SERVICE, NO_INVOCATION  # noqa: E402
 
 REAL = ROOT / "tests/real_entities"
@@ -202,6 +203,36 @@ class WorkCycleEndToEnd(unittest.TestCase):
         self.assertTrue(assigned["org_receipt_sha256"])
         self.assertEqual((taken["request"], out["close"]), ([], []))
 
+
+    def _proposal_round_trip(self, manifest_id, *, content):
+        import base64
+        import test_conformance_proposal as fixture
+        m = manifest(manifest_id)
+        m["payload"]["sdk_proposal"] = {
+            "conformance_proposal": fixture.proposal(),
+            "canonical_source_attachments": [{"repository": fixture.REPO, "path": fixture.PATH,
+                                              "revision": fixture.REVISION,
+                                              "content_base64": base64.b64encode(content).decode("ascii")}]}
+        self.send(m)
+        out = self.run_pass()
+        closed, = out["close"]
+        self.assertEqual(closed["egress"]["transition_class"], "ORGANIZATION_EGRESS_EMITTED")
+        got = self.labs.consume_addressed(mesh_root=self.mesh)
+        return got[0]["result"]["packet"]["payload"]["manifest"]["payload"]["sdk_proposal_conformance"], fixture
+
+    def test_a_manifest_carried_sdk_proposal_is_evaluated_and_offered_only_on_allow(self):
+        import test_conformance_proposal as fixture
+        conformance, fixture = self._proposal_round_trip("work-cycle-004", content=fixture.CONTENT)
+        self.assertEqual(conformance["evaluation"]["disposition"], "ALLOW", conformance["evaluation"])
+        self.assertIs(conformance["proposal_offered_to_sdk"], True)
+        self.assertEqual(conformance["proposal"], fixture.proposal())
+
+    def test_canonical_bytes_that_do_not_match_the_cited_digest_are_not_offered(self):
+        conformance, _ = self._proposal_round_trip("work-cycle-005", content=b'{"tampered": true}')
+        self.assertEqual(conformance["evaluation"]["disposition"], "FAIL_CLOSED")
+        self.assertIn("CANONICAL_SOURCE_BOUND", conformance["evaluation"]["failed_predicates"])
+        self.assertIs(conformance["proposal_offered_to_sdk"], False)
+        self.assertIsNone(conformance["proposal"])
 
 if __name__ == "__main__":
     unittest.main()
