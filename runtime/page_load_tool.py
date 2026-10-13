@@ -38,7 +38,6 @@ TOOL, PROFILE = "StegBrowser", "page_load.v1"
 LEASE_SCHEMA = "stegbrowser.ecosystem-ephemeral-lease.v1"
 MAX_LEASE_SECONDS = 900
 MAX_NAVIGATIONS = 10
-SETTLE_MS = 8000
 VIEWPORT = {"width": 1280, "height": 800}
 INTERACTION_FIELDS = ("prompt", "browser_actions", "selectors", "response_marker", "credential_mode",
                       "credentials", "cookies", "storage_state")
@@ -183,12 +182,9 @@ class StegBrowserPageLoadTool:
 
                     page.route("**/*", guard)
                     try:
+                        # The observation is the page as delivered: nothing waits for the provider to
+                        # go idle or settle. Waiting on an external machine is not a transition predicate.
                         resp = page.goto(inv["secure_url"], wait_until="domcontentloaded", timeout=45000)
-                        try:
-                            page.wait_for_load_state("networkidle", timeout=15000)
-                        except Exception:  # long-polling pages never go idle; the settle wait below still applies
-                            pass
-                        page.wait_for_timeout(SETTLE_MS)
                         seen = {"http_status": resp.status if resp else None, "final_url": page.url,
                                 "title": (page.title() or "")[:200]}
                         try:
