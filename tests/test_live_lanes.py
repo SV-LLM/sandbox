@@ -19,7 +19,7 @@ ref (`repository_ledger_location`).
 Run: SV_LLM_DOTGITHUB_ROOT=<SV-LLM/.github checkout> python -B tests/test_live_lanes.py
 """
 from __future__ import annotations
-import contextlib, importlib.util, io, json, os, subprocess, sys, tempfile, unittest
+import contextlib, importlib.util, io, json, os, re, subprocess, sys, tempfile, unittest
 from pathlib import Path
 from unittest import mock
 
@@ -215,6 +215,15 @@ class AuthenticRefusals(LaneCase):
         self.assertIn("      LIVE_LANE: conformance\n", text)
         self.assertNotIn("PARENT_ORG_RECEIPT_SHA256:", text)
         self.assertNotIn("--preflight", text)
+
+    def test_llm_v1_tool_has_one_runtime_caller_the_registered_lane(self):
+        # llm.v1 awaits the provider's answer inside one lease (SV-LLM/.github SV-LLM-EXEMPTION-003);
+        # only the manual proof-of-concept lane (SV-LLM-EXEMPTION-002) may reach it.
+        callers = sorted(str(path.relative_to(ROOT)) for folder in ("runtime", "live")
+                         for path in (ROOT / folder).glob("*.py")
+                         if path.name != "stegbrowser_tool.py"
+                         and re.search(r"\bStegBrowserTool\b", path.read_text()))
+        self.assertEqual(callers, ["live/run_live_llm.py"])
 
 
 class SingleOrganizationRun(LaneCase):
