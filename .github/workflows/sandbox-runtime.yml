@@ -20,9 +20,6 @@ jobs:
           repository: SV-LLM/.github
           ref: f6d7ae27efff576ab4e1d71c68d2898a60698feb
           path: sv-llm-dotgithub
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
       - name: Sandbox runtime
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
