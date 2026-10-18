@@ -60,7 +60,7 @@ class Harness:
                               "--transition-class", "ORGANIZATION_INGRESS_MATERIALIZED",
                               "--predecessor-state-sha256", sha({"fixture": "predecessor"}),
                               "--successor-state-sha256", sha(self.subject),
-                              "--evidence-json", json.dumps({"disposition": "ALLOW"})],
+                              "--evidence-json", json.dumps({"disposition": "ALLOW"}), "--hb-epoch", "4000"],
                              capture_output=True, text=True, env=env, check=True)
         self.parent_repo = json.loads(run.stdout)
         # The parent is the first organization append on this fresh ledger, so it declares genesis.

@@ -89,7 +89,7 @@ class WorkCycleEndToEnd(unittest.TestCase):
         self.labs.publish(k.build_packet(origin_org="StegVerse-Labs", origin_service="stegverse-labs.org-control",
                                          destination_org="SV-LLM", destination_service="sv-llm.org-control",
                                          payload={"manifest": m}, standing=STANDING, packet_id="in-" + m["manifest_id"]),
-                          mesh_root=self.mesh)
+                          mesh_root=self.mesh, epoch=4000)
 
     def run_pass(self):
         return self.cycle.run(standing=STANDING, mesh_root=self.mesh)
