@@ -70,7 +70,7 @@ def _parse_with_lines(text: str) -> tuple[Any, dict[str, int]]:
             i = skip(i + 1)
             if text[i] == "}":
                 return obj, i + 1
-            while True:
+            while i < len(text):  # bounded by the input; every member advances i
                 i = skip(i)
                 if text[i] != '"':
                     raise ValueError(f"expected key at offset {i}")
@@ -88,12 +88,13 @@ def _parse_with_lines(text: str) -> tuple[Any, dict[str, int]]:
                 if text[i] == "}":
                     return obj, i + 1
                 raise ValueError(f"expected ',' or '}}' at offset {i}")
+            raise ValueError("unterminated object")
         if c == "[":
             arr: list[Any] = []
             i = skip(i + 1)
             if text[i] == "]":
                 return arr, i + 1
-            while True:
+            while i < len(text):  # bounded by the input; every element advances i
                 sub = f"{path}[{len(arr)}]"
                 lines[sub] = line_at(skip(i))
                 v, i = value(i, sub)
@@ -105,6 +106,7 @@ def _parse_with_lines(text: str) -> tuple[Any, dict[str, int]]:
                 if text[i] == "]":
                     return arr, i + 1
                 raise ValueError(f"expected ',' or ']' at offset {i}")
+            raise ValueError("unterminated array")
         if c == '"':
             return scanstring(text, i + 1)
         for lit, val in (("true", True), ("false", False), ("null", None)):
@@ -162,7 +164,7 @@ def _load_source(ref: Any, sources: list[dict[str, Any]], problems: list[str]) -
                 return None
             try:
                 src = _Source(ref, bytes(content))
-            except (ValueError, UnicodeDecodeError) as exc:
+            except (ValueError, IndexError, UnicodeDecodeError) as exc:
                 problems.append(f"{ref['repository']}:{ref['path']} is not parseable JSON: {exc}")
                 return None
             if _str(ref.get("digest")) and ref["digest"] != src.digest:

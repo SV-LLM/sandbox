@@ -119,6 +119,12 @@ class InvariantEvaluation(unittest.TestCase):
         r = ie.evaluate(q, [src(CANON), src(SPEAKS)], self.queue)
         self.assertEqual((r["disposition"], r["failed_predicate"]), (ie.FAIL_CLOSED, "CANONICAL_SOURCE_BOUND"), r)
 
+    def test_truncated_subject_fails_closed_instead_of_crashing(self):
+        for bad in (b'{"a": 1', b'[1, 2', b'{"a": [1,', b'{'):
+            r = ie.evaluate(question("fixtures/truncated.json"), [src(CANON), src("fixtures/truncated.json", bad)], self.queue)
+            self.assertEqual((r["disposition"], r["failed_predicate"]), (ie.FAIL_CLOSED, "SUBJECT_SOURCE_BOUND"), bad)
+            self.assertSixFields(r)
+
     def test_malformed_question_fails_closed(self):
         r = ie.evaluate({"schema": "nope"}, [], self.queue)
         self.assertEqual((r["disposition"], r["failed_predicate"]), (ie.FAIL_CLOSED, "QUESTION_WELL_FORMED"))
