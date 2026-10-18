@@ -1,0 +1,12 @@
+{
+  "schema": "sv-llm.sandbox-fixture-manifest/v0.1",
+  "source_repository": "StegVerse-Labs/.github",
+  "source_revision": "3deb6997ba50c032b3401349dbf3c0bc471dd92a",
+  "note": "Byte-for-byte copies of canonical StegVerse-Labs/.github files at the pinned revision, used only as read-only evaluation subjects in tests. They carry no authority here.",
+  "files": {
+    "data/canonical-task-records/ADMISSIBILITY-WIKI-PUBLIC-DOMAIN-001.json": "sha256:6c4f00b00fd33467dd844ff46054df2f55b016357b98f60788409e0c17f808f3",
+    "data/canonical-task-records/SDK-GENERIC-MANIFEST-ECOSYSTEM-INVARIANT-005.json": "sha256:de99bb36aae9c4677c6be0e9d045da3a8924151828d8f62f83da561b8688dd61",
+    "data/canonical-task-records/STEGDB-ORGANIZATION-ROLE-VERSION-PROPAGATION-002.json": "sha256:03dfe04ee52018dfca04e1b8881ceb2df098c099a4e90506b48127d3b486cdf0",
+    "data/task-registry-global-invariants.json": "sha256:dfc0a53de9a11f0214bdef0f07708628e1176c86bf99b94829d71e4c227a8176"
+  }
+}
