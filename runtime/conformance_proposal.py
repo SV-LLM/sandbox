@@ -322,7 +322,8 @@ def _evaluator_violations(p: dict, canonical_sources: list[dict], applicable: di
             if answer["disposition"] == invariant_evaluation.FAIL_CLOSED:
                 # The evaluator could not bind the question (e.g. an invariant that only a secondary source
                 # declares). Not a violation, but never silent: keep its six fields in the findings.
-                r.findings.append({"predicate": "EVALUATOR_ANSWER_UNBOUND", "invariant_id": iid, "path": ch["path"],
+                r.findings.append({"predicate": "EVALUATOR_ANSWER_UNBOUND", "classification": EVIDENCE_INSUFFICIENT,
+                                   "invariant_id": iid, "path": ch["path"],
                                    **{k: answer[k] for k in ("failure_code", "failed_predicate",
                                                              "required_evidence_or_repair", "retry_entrypoint",
                                                              "owning_existing_goal", "next_attempt")}})

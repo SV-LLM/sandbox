@@ -127,7 +127,9 @@ class InvariantEvaluation(unittest.TestCase):
 
     def test_authority_effect_must_be_a_NONE_variant(self):
         canon = json.loads((LABS / CANON).read_text())
-        for value, expected in (("NONE_TEST_FIXTURE", ie.ALLOW), ("GRANTS_ADMISSION", ie.FAIL_CLOSED)):
+        # Non-string values (list, object, None, number) must fail closed, never raise TypeError (relay re-review).
+        for value, expected in (("NONE_TEST_FIXTURE", ie.ALLOW), ("GRANTS_ADMISSION", ie.FAIL_CLOSED),
+                                ([], ie.FAIL_CLOSED), ({"a": 1}, ie.FAIL_CLOSED), (None, ie.FAIL_CLOSED), (0, ie.FAIL_CLOSED)):
             doc = dict(canon, authority_effect=value)
             r = ie.evaluate(question(SPEAKS), [src(CANON, json.dumps(doc, indent=2).encode()), src(SPEAKS)], self.queue)
             self.assertEqual(r["disposition"], expected, (value, r))

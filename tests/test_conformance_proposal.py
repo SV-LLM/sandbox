@@ -288,6 +288,7 @@ class ConformanceProposal(unittest.TestCase):
         p["proposed_changes"].append({"path": "data/deep.json", "action": "add", "content": "[" * 300 + "]" * 300})
         r = evaluate(p)
         unbound = [f for f in r["findings"] if f.get("predicate") == "EVALUATOR_ANSWER_UNBOUND"]
+        self.assertTrue(all("classification" in f for f in r["findings"]), r["findings"])
         self.assertTrue(unbound, r["findings"][:3])
         self.assertEqual(unbound[0]["failed_predicate"], "SUBJECT_SOURCE_BOUND")
         # 1500 levels: the stdlib parser itself raises RecursionError; the check must not crash.
