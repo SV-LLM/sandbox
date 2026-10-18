@@ -266,8 +266,27 @@ class ConformanceProposal(unittest.TestCase):
         text = (ROOT / "runtime/conformance_proposal.py").read_text()
         imports = {line.split()[1].split(".")[0] for line in text.splitlines()
                    if line.startswith(("import ", "from ")) and not line.startswith("from __future__")}
-        self.assertLessEqual(imports, {"hashlib", "json", "re", "sys", "typing"})
+        # invariant_evaluation is the sibling runtime module (RT-INVARIANT-EVALUATION-001), itself stdlib-only.
+        self.assertLessEqual(imports, {"hashlib", "json", "re", "sys", "typing", "invariant_evaluation"})
 
+
+    def test_json_change_contradicting_a_canonical_string_value_is_denied_by_the_evaluator(self):
+        # Only the evaluator sees this: _inspect_changes checks false->true assignments, not string values.
+        p = proposal()
+        p["proposed_changes"].append({"path": "data/receiver-policy.json", "action": "add",
+                                      "content": json.dumps({"runtime": {"receiver_unavailable_disposition": "WAIT_FOR_RECEIVER"}}, indent=2)})
+        r = evaluate(p)
+        self.assertOutcome(r, cp.DENY, "INVARIANT_CONFORMS")
+        detail = [f for f in r["findings"] if f.get("invariant_id") == "invariant:receiver_unavailable_disposition"]
+        self.assertTrue(detail, r["findings"])
+        self.assertIn("data/receiver-policy.json:3", json.dumps(detail))
+
+    def test_json_change_asserting_the_canonical_value_stays_allowed(self):
+        p = proposal()
+        p["proposed_changes"].append({"path": "data/receiver-policy.json", "action": "add",
+                                      "content": json.dumps({"runtime": {"receiver_unavailable_disposition":
+                                                                         CANON["invariants"]["receiver_unavailable_disposition"]}})})
+        self.assertEqual(evaluate(p)["disposition"], cp.ALLOW)
 
     def test_sandbox_runtime_itself_neither_schedules_nor_waits(self):
         # The check this module applies to proposals holds for the sandbox's own runtime source.

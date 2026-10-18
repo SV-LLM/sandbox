@@ -125,6 +125,13 @@ class InvariantEvaluation(unittest.TestCase):
             self.assertEqual((r["disposition"], r["failed_predicate"]), (ie.FAIL_CLOSED, "SUBJECT_SOURCE_BOUND"), bad)
             self.assertSixFields(r)
 
+    def test_authority_effect_must_be_a_NONE_variant(self):
+        canon = json.loads((LABS / CANON).read_text())
+        for value, expected in (("NONE_TEST_FIXTURE", ie.ALLOW), ("GRANTS_ADMISSION", ie.FAIL_CLOSED)):
+            doc = dict(canon, authority_effect=value)
+            r = ie.evaluate(question(SPEAKS), [src(CANON, json.dumps(doc, indent=2).encode()), src(SPEAKS)], self.queue)
+            self.assertEqual(r["disposition"], expected, (value, r))
+
     def test_malformed_question_fails_closed(self):
         r = ie.evaluate({"schema": "nope"}, [], self.queue)
         self.assertEqual((r["disposition"], r["failed_predicate"]), (ie.FAIL_CLOSED, "QUESTION_WELL_FORMED"))

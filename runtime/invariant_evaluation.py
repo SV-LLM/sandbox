@@ -230,7 +230,7 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
     if canon is not None:
         if canon.path != CANONICAL_PATH or not isinstance(canon.doc, dict) or canon.doc.get("schema") != CANONICAL_SCHEMA:
             problems.append(f"invariants_source is not {CANONICAL_PATH} with schema {CANONICAL_SCHEMA}")
-        elif canon.doc.get("authority_effect") != "NONE_REGISTRY_INVARIANT_ONLY":
+        elif not str(canon.doc.get("authority_effect", "")).startswith("NONE"):
             problems.append("invariants document claims an authority effect")
     if problems:
         findings.append({"predicate": "CANONICAL_SOURCE_BOUND", "detail": "; ".join(problems)})
