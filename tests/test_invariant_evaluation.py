@@ -8,7 +8,7 @@ labelled synthetic fixture built in the test.
 Run: python -B tests/test_invariant_evaluation.py
 """
 from __future__ import annotations
-import hashlib, json, shutil, sys, tempfile, unittest
+import hashlib, json, re, shutil, sys, tempfile, unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -45,6 +45,13 @@ def question(subject_path: str, iid: str = IID, qid: str = "q-1", *, subject_byt
             "owning_existing_goal": "SDK-GENERIC-MANIFEST-ECOSYSTEM-INVARIANT-005",
             "invariants_source": {"repository": REPO, "path": CANON, "revision": REV, "digest": digest(CANON, canon_bytes)},
             "subject": {"repository": REPO, "path": subject_path, "revision": REV, "digest": digest(subject_path, subject_bytes)}}
+
+
+def _nest(n: int):
+    v: object = 1
+    for _ in range(n):
+        v = [v]
+    return v
 
 
 class InvariantEvaluation(unittest.TestCase):
@@ -139,6 +146,24 @@ class InvariantEvaluation(unittest.TestCase):
         q["invariants_source"]["digest"] = "sha256:" + "0" * 64
         r = ie.evaluate(q, [src(CANON), src(SPEAKS)], self.queue)
         self.assertEqual((r["disposition"], r["failed_predicate"]), (ie.FAIL_CLOSED, "CANONICAL_SOURCE_BOUND"), r)
+
+    def test_refused_sources_are_cited_and_depth_bound_matches_the_spec(self):
+        # B-P7 (Labs#3278 @ d728eb3): parse refusals and digest mismatches carry repo@rev:path:line; max nesting 64.
+        self.assertEqual(ie.MAX_DEPTH, 64)
+        full = (LABS / SPEAKS).read_bytes()
+        r = ie.evaluate(question(SPEAKS), [src(CANON), src(SPEAKS, full[:200])], self.queue)
+        self.assertTrue(any(c == f"{REPO}@{REV}:{SPEAKS}:1" for c in r["citations"]), r["citations"])
+        bad = b'{"schema": "x",\n "a": 1,\n "b": [1, 2\n'
+        r = ie.evaluate(question("fixtures/bad.json", subject_bytes=bad), [src(CANON), src("fixtures/bad.json", bad)], self.queue)
+        self.assertEqual((r["disposition"], r["failed_predicate"]), (ie.FAIL_CLOSED, "SUBJECT_SOURCE_BOUND"), r)
+        self.assertTrue(any(re.fullmatch(rf"{re.escape(REPO)}@{re.escape(REV)}:fixtures/bad.json:[1-4]", c) for c in r["citations"]), r["citations"])
+        self.assertEqual(r["evidence_refs"], r["citations"])
+        deep = json.dumps(_nest(65)).encode()
+        r = ie.evaluate(question("fixtures/d65.json", subject_bytes=deep), [src(CANON), src("fixtures/d65.json", deep)], self.queue)
+        self.assertEqual((r["disposition"], r["failed_predicate"]), (ie.FAIL_CLOSED, "SUBJECT_SOURCE_BOUND"), r)
+        ok = json.dumps({"schema": "x", "external_machine_awaiting_allowed": False, "n": _nest(60)}).encode()
+        r = ie.evaluate(question("fixtures/d60.json", subject_bytes=ok), [src(CANON), src("fixtures/d60.json", ok)], self.queue)
+        self.assertEqual(r["disposition"], ie.ALLOW, r)
 
     def test_digest_is_verified_before_parse_and_required(self):
         # B-P6 row 8: truncated bytes cited with the full file's digest are refused on the digest, never parsed.

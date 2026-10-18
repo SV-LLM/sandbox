@@ -41,7 +41,7 @@ CANONICAL_SCHEMA = "stegverse.task-registry-global-invariants/v1"
 CANONICAL_PATH = "data/task-registry-global-invariants.json"
 COMPONENT_ID = "RT-INVARIANT-EVALUATION-001"
 ALLOW, DENY, FAIL_CLOSED, UNDECIDABLE = "ALLOW", "DENY", "FAIL_CLOSED", "UNDECIDABLE"
-MAX_DEPTH = 256  # bound on JSON nesting; deeper subjects fail closed instead of exhausting the stack
+MAX_DEPTH = 64  # spec max_json_nesting (RT-INVARIANT-EVALUATION-001, Labs#3278 B-P7); deeper sources fail closed
 ANSWER_AUTHORITY_EFFECT = "NONE_ANSWER_ONLY"  # this component answers; it never transitions
 ALLOWED_AUTHORITY_EFFECTS = frozenset({"NONE", "NONE_REGISTRY_INVARIANT_ONLY", "NONE_TEST_FIXTURE", "NONE_ANSWER_ONLY"})
 RETRY_ENTRYPOINT = "python -B runtime/invariant_evaluation.py QUESTION.json QUEUE_DIR REPOSITORY:PATH@REVISION=FILE ..."
@@ -173,7 +173,21 @@ def _str(v: Any) -> bool:
     return isinstance(v, str) and bool(v.strip())
 
 
-def _load_source(ref: Any, sources: list[dict[str, Any]], problems: list[str]) -> _Source | None:
+_OFFSET = re.compile(r"offset (\d+)")
+
+
+def _refusal_cite(ref: dict[str, Any], content: bytes, exc: BaseException | None) -> str:
+    """repo@revision:path:line for a source that was refused: the line of the parse error's offset, else line 1."""
+    line = 1
+    if exc is not None:
+        m = _OFFSET.search(str(exc))
+        if m:
+            line = content[:int(m.group(1))].count(b"\n") + 1
+    return f"{ref['repository']}@{ref['revision']}:{ref['path']}:{line}"
+
+
+def _load_source(ref: Any, sources: list[dict[str, Any]], problems: list[str],
+                 citations: list[str] | None = None) -> _Source | None:
     if not isinstance(ref, dict) or not all(_str(ref.get(k)) for k in ("repository", "path", "revision")):
         problems.append("source ref lacks repository, path or revision")
         return None
@@ -190,11 +204,15 @@ def _load_source(ref: Any, sources: list[dict[str, Any]], problems: list[str]) -
                 return None
             if ref["digest"] != digest:
                 problems.append(f"{ref['repository']}:{ref['path']} digest {ref['digest']} != evaluated {digest}")
+                if citations is not None:
+                    citations.append(_refusal_cite(ref, bytes(content), None))
                 return None
             try:
                 return _Source(ref, bytes(content))
             except (ValueError, IndexError, UnicodeDecodeError, RecursionError) as exc:
                 problems.append(f"{ref['repository']}:{ref['path']} is not parseable JSON: {exc}")
+                if citations is not None:
+                    citations.append(_refusal_cite(ref, bytes(content), exc))
                 return None
     problems.append(f"{ref['repository']}:{ref['path']}@{ref['revision']} was cited but not supplied")
     return None
@@ -251,7 +269,7 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
                       "owning_existing_goal, invariants_source and subject.", "Repair the question and evaluate again.")
 
     # 2. canonical invariants resolved and sound
-    canon = _load_source(question["invariants_source"], sources, problems)
+    canon = _load_source(question["invariants_source"], sources, problems, citations)
     if canon is not None:
         if canon.path != CANONICAL_PATH or not isinstance(canon.doc, dict) or canon.doc.get("schema") != CANONICAL_SCHEMA:
             problems.append(f"invariants_source is not {CANONICAL_PATH} with schema {CANONICAL_SCHEMA}")
@@ -287,7 +305,7 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
                       "Re-ask with the declaring canonical source, or consume the relay-queue entry.")
 
     # 4. subject resolved
-    subject = _load_source(question["subject"], sources, problems)
+    subject = _load_source(question["subject"], sources, problems, citations)
     if subject is None:
         findings.append({"predicate": "SUBJECT_SOURCE_BOUND", "detail": "; ".join(problems)})
         return answer(FAIL_CLOSED, "SUBJECT_SOURCE_BOUND", "Resolve the subject at an exact revision and pass its bytes.",
