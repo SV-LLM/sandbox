@@ -281,6 +281,26 @@ class ConformanceProposal(unittest.TestCase):
         self.assertTrue(detail, r["findings"])
         self.assertIn("data/receiver-policy.json:3", json.dumps(detail))
 
+    def test_deeply_nested_json_change_does_not_crash_the_check(self):
+        p = proposal()
+        # 300 levels: valid for the stdlib parser, deeper than the evaluator's bound -> FAIL_CLOSED per invariant,
+        # recorded as EVALUATOR_ANSWER_UNBOUND with six fields; the proposal keeps its own assessment.
+        p["proposed_changes"].append({"path": "data/deep.json", "action": "add", "content": "[" * 300 + "]" * 300})
+        r = evaluate(p)
+        unbound = [f for f in r["findings"] if f.get("predicate") == "EVALUATOR_ANSWER_UNBOUND"]
+        self.assertTrue(unbound, r["findings"][:3])
+        self.assertEqual(unbound[0]["failed_predicate"], "SUBJECT_SOURCE_BOUND")
+        # 1500 levels: the stdlib parser itself raises RecursionError; the check must not crash.
+        p = proposal()
+        p["proposed_changes"].append({"path": "data/deeper.json", "action": "add", "content": "[" * 1500 + "]" * 1500})
+        self.assertIn(evaluate(p)["disposition"], (cp.ALLOW, cp.DENY, cp.FAIL_CLOSED))
+
+    def test_type_loose_json_change_is_denied(self):
+        p = proposal()
+        p["proposed_changes"].append({"path": "data/loose.json", "action": "add",
+                                      "content": json.dumps({"x": {"external_machine_awaiting_allowed": 0}})})
+        self.assertOutcome(evaluate(p), cp.DENY, "INVARIANT_CONFORMS")
+
     def test_json_change_asserting_the_canonical_value_stays_allowed(self):
         p = proposal()
         p["proposed_changes"].append({"path": "data/receiver-policy.json", "action": "add",

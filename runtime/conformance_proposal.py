@@ -295,7 +295,10 @@ def _evaluator_violations(p: dict, canonical_sources: list[dict], applicable: di
     proposal's own assessment still carries coverage. Keeping both on one evaluator stops the two drifting.
     """
     violated: set[str] = set()
-    canon = next((s for s in canonical_sources if (s.get("repository"), s.get("path")) == MANDATORY_SOURCE), None)
+    canon = None
+    for s in canonical_sources:  # same resolution as _resolve_sources: the last entry per (repository, path) wins
+        if (s.get("repository"), s.get("path")) == MANDATORY_SOURCE:
+            canon = s
     if canon is None or not applicable:
         return violated
     inv_src = {"repository": canon["repository"], "path": canon["path"], "revision": canon["revision"]}
@@ -307,8 +310,8 @@ def _evaluator_violations(p: dict, canonical_sources: list[dict], applicable: di
             continue
         try:
             json.loads(text)
-        except ValueError:
-            continue
+        except (ValueError, RecursionError):
+            continue  # not JSON (or too deep for the stdlib parser): the text checks above already apply
         subject = {"repository": "proposal", "path": ch["path"], "revision": "proposed"}
         sources = [dict(canon), {**subject, "content": text.encode("utf-8")}]
         for iid in sorted(applicable):
@@ -316,6 +319,14 @@ def _evaluator_violations(p: dict, canonical_sources: list[dict], applicable: di
                         "invariant_id": iid, "owning_existing_goal": OWNING_EXISTING_GOAL,
                         "invariants_source": inv_src, "subject": subject}
             answer = invariant_evaluation.evaluate(question, sources, None)
+            if answer["disposition"] == invariant_evaluation.FAIL_CLOSED:
+                # The evaluator could not bind the question (e.g. an invariant that only a secondary source
+                # declares). Not a violation, but never silent: keep its six fields in the findings.
+                r.findings.append({"predicate": "EVALUATOR_ANSWER_UNBOUND", "invariant_id": iid, "path": ch["path"],
+                                   **{k: answer[k] for k in ("failure_code", "failed_predicate",
+                                                             "required_evidence_or_repair", "retry_entrypoint",
+                                                             "owning_existing_goal", "next_attempt")}})
+                continue
             if answer["disposition"] == invariant_evaluation.DENY:
                 violated.add(iid)
                 cites = [c for c in answer["citations"] if c.startswith("proposal@proposed:")]

@@ -132,6 +132,30 @@ class InvariantEvaluation(unittest.TestCase):
             r = ie.evaluate(question(SPEAKS), [src(CANON, json.dumps(doc, indent=2).encode()), src(SPEAKS)], self.queue)
             self.assertEqual(r["disposition"], expected, (value, r))
 
+    def test_deeply_nested_subject_fails_closed_without_recursion_error(self):
+        deep = ("[" * 5000).encode()
+        r = ie.evaluate(question("fixtures/deep.json"), [src(CANON), src("fixtures/deep.json", deep)], self.queue)
+        self.assertEqual((r["disposition"], r["failed_predicate"]), (ie.FAIL_CLOSED, "SUBJECT_SOURCE_BOUND"), r)
+
+    def test_type_loose_assertions_are_not_conformance(self):
+        for v in (0, 1, "false", None, 0.0):
+            synthetic = json.dumps({"runtime": {"external_machine_awaiting_allowed": v}}).encode()
+            r = ie.evaluate(question("fixtures/loose.json"), [src(CANON), src("fixtures/loose.json", synthetic)], self.queue)
+            self.assertEqual(r["disposition"], ie.DENY, (v, r["disposition"]))
+
+    def test_line_numbers_scale_linearly_enough(self):
+        import time
+        big = ("{" + ",".join(f'"k{i}": {i}' for i in range(80000)) + "}").encode()
+        t0 = time.perf_counter()
+        r = ie.evaluate(question("fixtures/big.json"), [src(CANON), src("fixtures/big.json", big)], self.queue)
+        self.assertLess(time.perf_counter() - t0, 5.0)
+        self.assertEqual(r["disposition"], ie.UNDECIDABLE)
+
+    def test_queue_entries_do_not_collide_on_sanitised_ids(self):
+        for qid in ("a/b", "a_b"):
+            ie.evaluate(question(SILENT, qid=qid), [src(CANON), src(SILENT)], self.queue)
+        self.assertEqual(len(list(self.queue.iterdir())), 2)
+
     def test_malformed_question_fails_closed(self):
         r = ie.evaluate({"schema": "nope"}, [], self.queue)
         self.assertEqual((r["disposition"], r["failed_predicate"]), (ie.FAIL_CLOSED, "QUESTION_WELL_FORMED"))

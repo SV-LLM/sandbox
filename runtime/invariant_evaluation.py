@@ -25,6 +25,7 @@ authority_effect is NONE: this answers; it does not transition.
 """
 from __future__ import annotations
 
+import bisect
 import hashlib
 import json
 import re
@@ -39,6 +40,8 @@ CANONICAL_SCHEMA = "stegverse.task-registry-global-invariants/v1"
 CANONICAL_PATH = "data/task-registry-global-invariants.json"
 COMPONENT_ID = "RT-INVARIANT-EVALUATION-001"
 ALLOW, DENY, FAIL_CLOSED, UNDECIDABLE = "ALLOW", "DENY", "FAIL_CLOSED", "UNDECIDABLE"
+MAX_DEPTH = 256  # bound on JSON nesting; deeper subjects fail closed instead of exhausting the stack
+ALLOWED_AUTHORITY_EFFECTS = frozenset({"NONE", "NONE_REGISTRY_INVARIANT_ONLY", "NONE_TEST_FIXTURE", "NONE_ANSWER_ONLY"})
 RETRY_ENTRYPOINT = "python -B runtime/invariant_evaluation.py QUESTION.json QUEUE_DIR REPOSITORY:PATH@REVISION=FILE ..."
 
 # Keys under which a subject may name prohibitions it honours or has violated.
@@ -55,14 +58,17 @@ def _parse_with_lines(text: str) -> tuple[Any, dict[str, int]]:
     from json.decoder import scanstring
 
     lines: dict[str, int] = {}
+    newline_offsets = [i for i, ch in enumerate(text) if ch == "\n"]
 
     def line_at(i: int) -> int:
-        return text.count("\n", 0, i) + 1
+        return bisect.bisect_right(newline_offsets, i - 1) + 1
 
     def skip(i: int) -> int:
         return _WS.match(text, i).end()
 
-    def value(i: int, path: str) -> tuple[Any, int]:
+    def value(i: int, path: str, depth: int = 0) -> tuple[Any, int]:
+        if depth > MAX_DEPTH:
+            raise ValueError(f"nesting deeper than {MAX_DEPTH}")
         i = skip(i)
         c = text[i]
         if c == "{":
@@ -80,7 +86,7 @@ def _parse_with_lines(text: str) -> tuple[Any, dict[str, int]]:
                 i = skip(i)
                 if text[i] != ":":
                     raise ValueError(f"expected ':' at offset {i}")
-                obj[key], i = value(i + 1, sub)
+                obj[key], i = value(i + 1, sub, depth + 1)
                 i = skip(i)
                 if text[i] == ",":
                     i += 1
@@ -97,7 +103,7 @@ def _parse_with_lines(text: str) -> tuple[Any, dict[str, int]]:
             while i < len(text):  # bounded by the input; every element advances i
                 sub = f"{path}[{len(arr)}]"
                 lines[sub] = line_at(skip(i))
-                v, i = value(i, sub)
+                v, i = value(i, sub, depth + 1)
                 arr.append(v)
                 i = skip(i)
                 if text[i] == ",":
@@ -122,6 +128,17 @@ def _parse_with_lines(text: str) -> tuple[Any, dict[str, int]]:
     if text[skip(end):]:
         raise ValueError("trailing data after JSON document")
     return v, lines
+
+
+def _same(a: Any, b: Any) -> bool:
+    """Strict JSON equality: bool is never equal to int, int never to float."""
+    if type(a) is not type(b):
+        return False
+    if isinstance(a, dict):
+        return a.keys() == b.keys() and all(_same(a[k], b[k]) for k in a)
+    if isinstance(a, list):
+        return len(a) == len(b) and all(_same(x, y) for x, y in zip(a, b))
+    return a == b
 
 
 def _walk(value: Any, path: str = ""):
@@ -164,7 +181,7 @@ def _load_source(ref: Any, sources: list[dict[str, Any]], problems: list[str]) -
                 return None
             try:
                 src = _Source(ref, bytes(content))
-            except (ValueError, IndexError, UnicodeDecodeError) as exc:
+            except (ValueError, IndexError, UnicodeDecodeError, RecursionError) as exc:
                 problems.append(f"{ref['repository']}:{ref['path']} is not parseable JSON: {exc}")
                 return None
             if _str(ref.get("digest")) and ref["digest"] != src.digest:
@@ -230,7 +247,7 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
     if canon is not None:
         if canon.path != CANONICAL_PATH or not isinstance(canon.doc, dict) or canon.doc.get("schema") != CANONICAL_SCHEMA:
             problems.append(f"invariants_source is not {CANONICAL_PATH} with schema {CANONICAL_SCHEMA}")
-        elif not str(canon.doc.get("authority_effect", "")).startswith("NONE"):
+        elif canon.doc.get("authority_effect") not in ALLOWED_AUTHORITY_EFFECTS:
             problems.append("invariants document claims an authority effect")
     if problems:
         findings.append({"predicate": "CANONICAL_SOURCE_BOUND", "detail": "; ".join(problems)})
@@ -272,7 +289,7 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
             if key != name:
                 continue
             cite = subject.cite(path)
-            if value == canonical_value:
+            if _same(value, canonical_value):
                 conforming.append(cite)
             else:
                 contradicting.append(cite)
@@ -306,11 +323,14 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
 def _write_queue_entry(queue_dir: Path, question: dict[str, Any], result: dict[str, Any]) -> str:
     """Durable, local, non-GitHub: one file per undecidable question. Idempotent by question_id."""
     queue_dir.mkdir(parents=True, exist_ok=True)
-    safe = re.sub(r"[^A-Za-z0-9._-]", "_", str(question["question_id"]))
-    path = queue_dir / f"{safe}.json"
+    qid = str(question["question_id"])
+    safe = re.sub(r"[^A-Za-z0-9._-]", "_", qid)[:64]
+    path = queue_dir / f"{safe}-{hashlib.sha256(qid.encode('utf-8')).hexdigest()[:16]}.json"
     entry = {"schema": QUEUE_SCHEMA, "question": question, "result": {k: v for k, v in result.items() if k != "relay_queue_entry"},
              "routing": "RELAY_QUEUE_FOR_READER_WITH_MORE_EVIDENCE", "github_call_made": False, "authority_effect": "NONE"}
-    path.write_text(json.dumps(entry, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(json.dumps(entry, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    tmp.replace(path)
     return str(path)
 
 
