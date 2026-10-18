@@ -21,12 +21,13 @@ Every disposition carries citations of the form repo@revision:path:line.
 Every non-ALLOW disposition carries the six fields required by
 docs/ECOSYSTEM_STATE_TRANSITION_DISPOSITION_INVARIANT.md plus evidence_refs,
 so scripts/validate_transition_disposition.non_allow_missing() accepts it.
-authority_effect is NONE: this answers; it does not transition.
+authority_effect is NONE_ANSWER_ONLY: this answers; it does not transition.
 """
 from __future__ import annotations
 
 import bisect
 import hashlib
+import os
 import json
 import re
 import sys
@@ -41,6 +42,7 @@ CANONICAL_PATH = "data/task-registry-global-invariants.json"
 COMPONENT_ID = "RT-INVARIANT-EVALUATION-001"
 ALLOW, DENY, FAIL_CLOSED, UNDECIDABLE = "ALLOW", "DENY", "FAIL_CLOSED", "UNDECIDABLE"
 MAX_DEPTH = 256  # bound on JSON nesting; deeper subjects fail closed instead of exhausting the stack
+ANSWER_AUTHORITY_EFFECT = "NONE_ANSWER_ONLY"  # this component answers; it never transitions
 ALLOWED_AUTHORITY_EFFECTS = frozenset({"NONE", "NONE_REGISTRY_INVARIANT_ONLY", "NONE_TEST_FIXTURE", "NONE_ANSWER_ONLY"})
 RETRY_ENTRYPOINT = "python -B runtime/invariant_evaluation.py QUESTION.json QUEUE_DIR REPOSITORY:PATH@REVISION=FILE ..."
 
@@ -81,6 +83,8 @@ def _parse_with_lines(text: str) -> tuple[Any, dict[str, int]]:
                 if text[i] != '"':
                     raise ValueError(f"expected key at offset {i}")
                 key, i = scanstring(text, i + 1)
+                if key in obj:
+                    raise ValueError(f"duplicate key {key!r} at offset {i}")
                 sub = f"{path}.{key}" if path else key
                 lines[sub] = line_at(i)
                 i = skip(i)
@@ -179,15 +183,19 @@ def _load_source(ref: Any, sources: list[dict[str, Any]], problems: list[str]) -
             if not isinstance(content, (bytes, bytearray)):
                 problems.append(f"{ref['repository']}:{ref['path']} supplied without bytes")
                 return None
+            # Digest first, parse second: bytes that do not match the cited digest are never parsed.
+            digest = "sha256:" + hashlib.sha256(bytes(content)).hexdigest()
+            if not _str(ref.get("digest")):
+                problems.append(f"{ref['repository']}:{ref['path']} cited without a digest")
+                return None
+            if ref["digest"] != digest:
+                problems.append(f"{ref['repository']}:{ref['path']} digest {ref['digest']} != evaluated {digest}")
+                return None
             try:
-                src = _Source(ref, bytes(content))
+                return _Source(ref, bytes(content))
             except (ValueError, IndexError, UnicodeDecodeError, RecursionError) as exc:
                 problems.append(f"{ref['repository']}:{ref['path']} is not parseable JSON: {exc}")
                 return None
-            if _str(ref.get("digest")) and ref["digest"] != src.digest:
-                problems.append(f"{ref['repository']}:{ref['path']} digest {ref['digest']} != evaluated {src.digest}")
-                return None
-            return src
     problems.append(f"{ref['repository']}:{ref['path']}@{ref['revision']} was cited but not supplied")
     return None
 
@@ -210,7 +218,7 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
             "schema": ANSWER_SCHEMA, "component_id": COMPONENT_ID, "question_id": qid,
             "invariant_id": question.get("invariant_id") if isinstance(question, dict) else None,
             "disposition": disposition, "citations": sorted(set(citations)), "findings": findings,
-            "authority_effect": "NONE",
+            "authority_effect": ANSWER_AUTHORITY_EFFECT,
         }
         if disposition != ALLOW:
             out.update({
@@ -223,7 +231,7 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
                 "evidence_refs": sorted(set(citations)) or [f"SOURCE_RECORD_ONLY:{qid}"],
             })
         if disposition == UNDECIDABLE and queue_dir is not None:
-            out["relay_queue_entry"] = _write_queue_entry(Path(queue_dir), question, out)
+            out["relay_queue_entry"] = _write_queue_entry(Path(queue_dir), question, out, sources)
         return out
 
     # 1. question well-formed
@@ -270,10 +278,13 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
         canonical_value = True
         citations.append(canon.cite(f"prohibitions[{prohibitions.index(name)}]"))
     else:
-        findings.append({"predicate": "INVARIANT_ID_CANONICAL", "detail": f"{iid!r} is not in the canonical document"})
-        return answer(FAIL_CLOSED, "INVARIANT_ID_CANONICAL",
-                      "Ask about an id of the form invariant:<key> or prohibition:<NAME> present in the canonical document.",
-                      "Correct invariant_id and evaluate again.")
+        # Not declared in the supplied canonical bytes: undecidable here, not refused. A reader with more
+        # evidence (another revision, a secondary canonical source) answers from the relay queue.
+        findings.append({"predicate": "INVARIANT_ID_CANONICAL", "detail": f"{iid!r} is not declared in the supplied canonical document"})
+        return answer(UNDECIDABLE, "INVARIANT_ID_CANONICAL",
+                      "Ask about an id of the form invariant:<key> or prohibition:<NAME> declared in the canonical document "
+                      "at the cited revision, or supply the canonical source that declares it.",
+                      "Re-ask with the declaring canonical source, or consume the relay-queue entry.")
 
     # 4. subject resolved
     subject = _load_source(question["subject"], sources, problems)
@@ -322,18 +333,38 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
                   "Re-ask with additional evidence refs, or consume the relay-queue entry.")
 
 
-def _write_queue_entry(queue_dir: Path, question: dict[str, Any], result: dict[str, Any]) -> str:
-    """Durable, local, non-GitHub: one file per undecidable question. Idempotent by question_id."""
+def _write_queue_entry(queue_dir: Path, question: dict[str, Any], result: dict[str, Any],
+                       sources: list[dict[str, Any]]) -> dict[str, Any]:
+    """Durable, local, non-GitHub: one write-once file per (question bytes, supplied source bindings).
+
+    The same question over the same bytes is one entry ({"created": False} on repeat); the same question_id
+    over different subject or source bytes is a different entry. An existing entry is never overwritten
+    (DURABLE_QUEUE_OR_EVENT_EPHEMERAL_MATERIALIZATION: the reader with more evidence consumes it).
+    """
     queue_dir.mkdir(parents=True, exist_ok=True)
-    qid = str(question["question_id"])
-    safe = re.sub(r"[^A-Za-z0-9._-]", "_", qid)[:64]
-    path = queue_dir / f"{safe}-{hashlib.sha256(qid.encode('utf-8')).hexdigest()[:16]}.json"
-    entry = {"schema": QUEUE_SCHEMA, "question": question, "result": {k: v for k, v in result.items() if k != "relay_queue_entry"},
-             "routing": "RELAY_QUEUE_FOR_READER_WITH_MORE_EVIDENCE", "github_call_made": False, "authority_effect": "NONE"}
-    tmp = path.with_name(path.name + ".tmp")
+    bindings = sorted(f"{s.get('repository')}:{s.get('path')}@{s.get('revision')}#sha256:"
+                      f"{hashlib.sha256(bytes(s['content'])).hexdigest()}"
+                      for s in sources if isinstance(s, dict) and isinstance(s.get("content"), (bytes, bytearray)))
+    key = hashlib.sha256(json.dumps({"question": question, "source_bindings": bindings},
+                                    sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+    safe = re.sub(r"[^A-Za-z0-9._-]", "_", str(question["question_id"]))[:64]
+    path = queue_dir / f"{safe}-{key[:16]}.json"
+    if path.exists():
+        return {"path": str(path), "created": False, "entry_key": key}
+    entry = {"schema": QUEUE_SCHEMA, "entry_key": key, "question": question, "source_bindings": bindings,
+             "result": {k: v for k, v in result.items() if k != "relay_queue_entry"},
+             "routing": "DURABLE_QUEUE_OR_EVENT_EPHEMERAL_MATERIALIZATION", "github_call_made": False,
+             "authority_effect": ANSWER_AUTHORITY_EFFECT}
+    tmp = path.with_name(path.name + f".{os.getpid()}.tmp")
     tmp.write_text(json.dumps(entry, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    tmp.replace(path)
-    return str(path)
+    try:
+        os.link(tmp, path)  # atomic create-if-absent; a concurrent writer of the same key loses harmlessly
+        created = True
+    except FileExistsError:
+        created = False
+    finally:
+        tmp.unlink(missing_ok=True)
+    return {"path": str(path), "created": created, "entry_key": key}
 
 
 def main(argv: list[str]) -> int:

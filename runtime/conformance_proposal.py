@@ -301,7 +301,8 @@ def _evaluator_violations(p: dict, canonical_sources: list[dict], applicable: di
             canon = s
     if canon is None or not applicable:
         return violated
-    inv_src = {"repository": canon["repository"], "path": canon["path"], "revision": canon["revision"]}
+    inv_src = {"repository": canon["repository"], "path": canon["path"], "revision": canon["revision"],
+               "digest": _sha(canon["content"])}
     for ch in p["proposed_changes"]:
         if not isinstance(ch, dict) or ch.get("action") == "delete" or not _str(ch.get("path")):
             continue
@@ -312,8 +313,9 @@ def _evaluator_violations(p: dict, canonical_sources: list[dict], applicable: di
             json.loads(text)
         except (ValueError, RecursionError):
             continue  # not JSON (or too deep for the stdlib parser): the text checks above already apply
-        subject = {"repository": "proposal", "path": ch["path"], "revision": "proposed"}
-        sources = [dict(canon), {**subject, "content": text.encode("utf-8")}]
+        content = text.encode("utf-8")
+        subject = {"repository": "proposal", "path": ch["path"], "revision": "proposed", "digest": _sha(content)}
+        sources = [dict(canon), {**subject, "content": content}]
         for iid in sorted(applicable):
             question = {"schema": invariant_evaluation.QUESTION_SCHEMA, "question_id": f"{ch['path']}#{iid}",
                         "invariant_id": iid, "owning_existing_goal": OWNING_EXISTING_GOAL,
