@@ -14,7 +14,9 @@ processor there. This module is the Sandbox side of that hand-off:
            org-boundary/runtime/manifest_selection.py). The parent transition is
            the ORGANIZATION_INGRESS_MATERIALIZED receipt pair, read back from the
            organization ledger by exact key. The work is admitted, each declared
-           participant assigned, and its contribution requested.
+           participant assigned, and its contribution requested. When the work
+           names participants = "DERIVE_FROM_DECLARATIONS", runtime/capability_routing.py
+           derives them from the registered entities' declarations alone.
   respond  an entity surface answers each outstanding request with its own
            package (the entity repository's core.py). No SV-LLM code invokes a
            model: until an admitted Sandbox tool does, with credentials held by
@@ -52,6 +54,7 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from ledger import Ledger  # noqa: E402
 from sandbox import Sandbox, ALLOW  # noqa: E402
 import conformance_proposal  # noqa: E402
+import capability_routing  # noqa: E402
 
 SERVICE = json.loads((ROOT / "runtime/contracts/sandbox-service.json").read_text())
 NO_INVOCATION = "NO_ADMITTED_INVOCATION_SURFACE"
@@ -165,7 +168,23 @@ class WorkCycle:
         out = {"admit": admitted, "selection": selected, "assign": [], "request": []}
         if admitted["disposition"] != ALLOW:
             return out
-        for p in spec["participants"]:
+        participants = spec["participants"]
+        if participants == capability_routing.DERIVE:
+            # Participants derived from the registered entities' own declarations, in a fixed order.
+            # No entity availability is consulted; an unroutable request is refused with six fields.
+            routed = capability_routing.derive_participants(
+                work["requested_capabilities"], {n: e.declaration for n, e in self.entities.items()},
+                order=sorted(self.entities))
+            out["routing"] = routed
+            if routed["disposition"] != ALLOW:
+                out["assign"].append(self._refuse(
+                    {"intended_action": "DERIVE_PARTICIPANTS_FROM_DECLARATIONS", "work_id": work["work_id"]},
+                    "PARTICIPANTS_DERIVABLE_FROM_DECLARATIONS",
+                    routing={k: routed[k] for k in ("failure_code", "failed_predicate", "required_evidence_or_repair",
+                                                    "retry_entrypoint", "owning_existing_goal", "next_attempt")}))
+                return out
+            participants = routed["participants"]
+        for p in participants:
             entity, capability = p.get("entity"), p.get("capability")
             surface = self.entities.get(entity)
             assigned = self.sandbox.assign(work["work_id"], entity, capability,

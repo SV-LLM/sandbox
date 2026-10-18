@@ -137,6 +137,40 @@ class WorkCycleEndToEnd(unittest.TestCase):
         self.assertEqual([c.get("egress") for c in again["close"]], [None])
         self.assertEqual(len(chain(self.base / "org-ledger")), len(org))
 
+    def test_participants_derived_from_declarations_route_without_consulting_availability(self):
+        self.send(manifest("work-cycle-derive-001", participants="DERIVE_FROM_DECLARATIONS"))
+        out = self.run_pass()
+        taken, = out["intake"]
+        self.assertEqual(taken["admit"]["disposition"], "ALLOW", taken["admit"])
+        self.assertEqual(taken["routing"]["disposition"], "ALLOW", taken["routing"])
+        # First declaring entity in sorted order carries the request; the other is an alternate.
+        self.assertEqual(taken["routing"]["participants"], [{"entity": "Anthropic", "capability": "adversarial_review"}])
+        self.assertEqual(taken["routing"]["evidence"]["alternates"], {"adversarial_review": ["OpenAI"]})
+        self.assertEqual([a["disposition"] for a in taken["assign"] + taken["request"]], ["ALLOW"] * 2)
+        closed, = out["close"]
+        self.assertEqual(closed["complete"]["disposition"], "ALLOW")
+        self.assertIs(closed["egress"]["awaits_receiver"], False)
+
+    def test_an_underivable_request_is_refused_with_six_fields_and_recorded(self):
+        # Every vendored provider declares the whole vocabulary, so narrow the registered declarations
+        # to one that lacks adversarial_review: routing must then refuse, consulting nothing else.
+        from types import SimpleNamespace
+        narrowed = {"schema": "sv-llm.entity-capability/v0.1", "capabilities": ["reasoning"]}
+        self.cycle.entities = {n: SimpleNamespace(name=n, declaration=json.dumps({**narrowed, "entity": n}).encode())
+                               for n in self.entities}
+        self.send(manifest("work-cycle-derive-002", participants="DERIVE_FROM_DECLARATIONS"))
+        taken, = self.run_pass()["intake"]
+        self.assertEqual(taken["admit"]["disposition"], "ALLOW")
+        self.assertEqual(taken["routing"]["disposition"], "FAIL_CLOSED")
+        refused, = taken["assign"]
+        self.assertEqual((refused["disposition"], refused["failed_predicate"]),
+                         ("DENY", "PARTICIPANTS_DERIVABLE_FROM_DECLARATIONS"))
+        six = refused["routing"]
+        self.assertEqual(six["failed_predicate"], "EVERY_REQUESTED_CAPABILITY_DECLARED_BY_A_REGISTERED_ENTITY")
+        self.assertEqual(sorted(six), ["failed_predicate", "failure_code", "next_attempt", "owning_existing_goal",
+                                       "required_evidence_or_repair", "retry_entrypoint"])
+        self.assertEqual(taken["request"], [])
+
     def test_a_request_without_an_entity_surface_stays_outstanding_and_nothing_waits(self):
         self.send(manifest("work-cycle-002"))
         c = self.cycle
