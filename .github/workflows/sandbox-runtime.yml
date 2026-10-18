@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: SV-LLM/.github
-          ref: f6d7ae27efff576ab4e1d71c68d2898a60698feb
+          ref: 4dcf3cd439378ed53d989cd08cf3255b4e3b5b40  # SV-LLM/.github laneb/g4-ledger-append-epoch-refusal (G4)
           path: sv-llm-dotgithub
       - name: Sandbox runtime
         env:
@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: SV-LLM/.github
-          ref: f6d7ae27efff576ab4e1d71c68d2898a60698feb
+          ref: 4dcf3cd439378ed53d989cd08cf3255b4e3b5b40  # SV-LLM/.github laneb/g4-ledger-append-epoch-refusal (G4)
           path: sv-llm-dotgithub-registered
       - name: Real-entity contract-level regression (order 5)
         env:
@@ -60,6 +60,10 @@ jobs:
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub-registered
         run: python -B tests/test_page_load_tool.py
+      - name: "G4: a Sandbox receipt carries the supplied epoch; missing/invalid is refused six-field (SV_LLM_LEDGER_APPEND_CLOCK_FALLBACK)"
+        env:
+          SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
+        run: python -B tests/test_ledger_supplied_epoch.py
       - name: SV-LLM work cycle end to end (peer manifest in, Sandbox, organization ledger, result out; no network)
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub

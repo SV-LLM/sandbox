@@ -59,6 +59,7 @@ class LaneCase(unittest.TestCase):
 
     def run_lane(self, lane, *, parent=None, argv=(), playwright=None, repository=ORG, sandbox_ledger=True):
         env = {"SV_LLM_DOTGITHUB_ROOT": str(DOTGITHUB), "EVIDENCE_DIR": str(self.evidence), "LIVE_LANE": lane,
+               "HB_EPOCH": "4000",
                "STEGVERSE_ORG_LEDGER_ROOT": self.org_env["STEGVERSE_ORG_LEDGER_ROOT"]}
         with mock.patch.dict(os.environ, env), contextlib.redirect_stdout(io.StringIO()):
             os.environ.pop("GITHUB_REPOSITORY", None)
@@ -81,9 +82,9 @@ class LaneCase(unittest.TestCase):
         """The organization workflow's steps before the lane, in the same ledger root."""
         with mock.patch.dict(os.environ, self.org_env), contextlib.redirect_stdout(io.StringIO()):
             crossing = load_crossing()
-            opened = crossing.open_organization_ledger(DOTGITHUB) if open_ledger else None
+            opened = crossing.open_organization_ledger(DOTGITHUB, hb_epoch=4000) if open_ledger else None
             recorded = crossing.record("ORGANIZATION_INGRESS_MATERIALIZED", subject={"intended_action": "AUTHENTIC_PARENT"},
-                                       outcome=outcome, root=DOTGITHUB) if parent else None
+                                       outcome=outcome, root=DOTGITHUB, hb_epoch=4000) if parent else None
         agg = live.load_dotgithub(DOTGITHUB)
         return agg, live.store_opener(agg)(Path(self.org_env["STEGVERSE_ORG_LEDGER_ROOT"])), opened, recorded
 
@@ -299,7 +300,7 @@ class SingleOrganizationRun(LaneCase):
         self.assertTrue(set(first["repo_receipts"]).isdisjoint(second["repo_receipts"]))
         from ledger import Ledger
         with mock.patch.dict(os.environ, {live.SANDBOX_REPO_LEDGER_ROOT: sandbox_ledger}):
-            chain = Ledger(store=live.sandbox_repository_store(agg)).chain()
+            chain = Ledger(store=live.sandbox_repository_store(agg), hb_epoch=4000).chain()
         digests = [r["receipt_sha256"] for r in chain]
         self.assertEqual(digests, first["repo_receipts"] + second["repo_receipts"])
         # The second run's first receipt links back to the first run's last: one chain, not two.
