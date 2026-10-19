@@ -188,7 +188,8 @@ class InvariantEvaluation(unittest.TestCase):
                              (ie.FAIL_CLOSED, "QUESTION_WELL_FORMED", code), (code, r))
             self.assertEqual(r["owning_existing_goal"], ie.FIXED_OWNER)
             self.assertEqual(r["question_sha256"], hashlib.sha256(raw).hexdigest())
-            self.assertTrue(re.fullmatch(r"question@[0-9a-f]{8}:question:\d+", r["citations"][0]), r["citations"])
+            self.assertTrue(re.fullmatch(r"question@[0-9a-f]{64}:question:\d+", r["citations"][0]), r["citations"])
+            self.assertEqual(r["citations"][0].split(":")[0], f"question@{r['question_sha256']}")  # N1: the full binding
             self.assertSixFields(r)
         ok = ie.evaluate_bytes(good, [src(CANON), src(SPEAKS)], self.queue)
         self.assertEqual(ok["disposition"], ie.ALLOW, ok)
@@ -254,6 +255,7 @@ class InvariantEvaluation(unittest.TestCase):
         r = ie.evaluate(q, [src(CANON), src(SPEAKS)], self.queue)
         self.assertEqual((r["disposition"], r["failed_predicate"], r["owning_existing_goal"]),
                          (ie.FAIL_CLOSED, "QUESTION_WELL_FORMED", ie.FIXED_OWNER), r)
+        self.assertEqual(r["citations"], [f"question@{r['question_sha256']}:question:1"])  # N2: a shape refusal cites the root
         q = question(SPEAKS); q["owning_existing_goal"] = "not a task id"
         r = ie.evaluate(q, [src(CANON), src(SPEAKS)], self.queue)
         self.assertEqual((r["disposition"], r["failed_predicate"], r["owning_existing_goal"]),

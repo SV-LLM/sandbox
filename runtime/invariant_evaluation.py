@@ -295,7 +295,7 @@ def evaluate_bytes(question_bytes: bytes, sources: list[dict[str, Any]],
     except (ParseRefusal, UnicodeDecodeError) as exc:
         code = exc.code if isinstance(exc, ParseRefusal) else "SOURCE_NOT_UTF8"
         line = _line_of(question_bytes, exc.offset) if isinstance(exc, ParseRefusal) else 1
-        cite = f"question@{qsha[:8]}:question:{line}"
+        cite = f"question@{qsha}:question:{line}"
         return _compose(FAIL_CLOSED, "QUESTION_WELL_FORMED",
                         "Supply a well-formed stegverse.invariant-question/v1 object within the parser bounds.",
                         "Repair the question bytes and evaluate again.", code=code, qid=None, iid=None,
@@ -354,6 +354,7 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
         if not isinstance(question.get("subject"), dict):
             problems.append("question lacks subject")
     if problems:
+        citations.append(f"question@{qsha}:question:1")  # the question root: every answer cites a line (SPEC:47)
         findings.append({"predicate": "QUESTION_WELL_FORMED", "detail": "; ".join(problems)})
         return answer(FAIL_CLOSED, "QUESTION_WELL_FORMED", "Supply schema, question_id, invariant_id, "
                       "owning_existing_goal (canonical task id), invariants_source and subject.",
