@@ -165,6 +165,102 @@ class InvariantEvaluation(unittest.TestCase):
         r = ie.evaluate(question("fixtures/d60.json", subject_bytes=ok), [src(CANON), src("fixtures/d60.json", ok)], self.queue)
         self.assertEqual(r["disposition"], ie.ALLOW, r)
 
+    # ---- B-P9 re-run divergences E1-E7 (Labs#3278 6256879581), one test each ----
+    def test_e1_depth_bound_counts_open_containers_with_the_spec_code(self):
+        at_bound = b"[" * 64 + b"]" * 64          # 64 open: within the bound
+        over = b"[" * 65 + b"]" * 65              # the 65th opening bracket is refused, even with an empty innermost
+        r = ie.evaluate(question("fixtures/d64.json", subject_bytes=at_bound), [src(CANON), src("fixtures/d64.json", at_bound)], self.queue)
+        self.assertEqual(r["disposition"], ie.UNDECIDABLE, r)   # silent subject, parsed fine
+        r = ie.evaluate(question("fixtures/d65.json", subject_bytes=over), [src(CANON), src("fixtures/d65.json", over)], self.queue)
+        self.assertEqual((r["disposition"], r["failed_predicate"], r["refusal_code"]),
+                         (ie.FAIL_CLOSED, "SUBJECT_SOURCE_BOUND", "INPUT_DEPTH_EXCEEDED"), r)
+        self.assertEqual(r["failure_code"], "INVARIANT_EVALUATION_FAIL_CLOSED_INPUT_DEPTH_EXCEEDED")
+
+    def test_e2_question_bytes_go_through_the_bounded_parser(self):
+        good = json.dumps(question(SPEAKS)).encode()
+        base = json.loads(good)
+        deep = json.dumps({**base, "extra": _nest(65)}).encode()
+        dup = good[:-1] + b', "invariant_id": "invariant:external_machine_awaiting_allowed"}'
+        truncated = good[:40]
+        for raw, code in ((deep, "INPUT_DEPTH_EXCEEDED"), (dup, "JSON_DUPLICATE_KEY"), (truncated, "JSON_TRUNCATED")):
+            r = ie.evaluate_bytes(raw, [src(CANON), src(SPEAKS)], self.queue)
+            self.assertEqual((r["disposition"], r["failed_predicate"], r["refusal_code"]),
+                             (ie.FAIL_CLOSED, "QUESTION_WELL_FORMED", code), (code, r))
+            self.assertEqual(r["owning_existing_goal"], ie.FIXED_OWNER)
+            self.assertEqual(r["question_sha256"], hashlib.sha256(raw).hexdigest())
+            self.assertTrue(re.fullmatch(r"question@[0-9a-f]{8}:question:\d+", r["citations"][0]), r["citations"])
+            self.assertSixFields(r)
+        ok = ie.evaluate_bytes(good, [src(CANON), src(SPEAKS)], self.queue)
+        self.assertEqual(ok["disposition"], ie.ALLOW, ok)
+        # main() never raises on a truncated question: it answers FAIL_CLOSED and exits 1
+        qpath = self.queue / "q.json"; qpath.write_bytes(truncated)
+        import io, contextlib
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = ie.main([str(qpath), str(self.queue / "relay"), f"{REPO}:{CANON}@{REV}={LABS / CANON}"])
+        self.assertEqual(rc, 1)
+        self.assertEqual(json.loads(buf.getvalue())["refusal_code"], "JSON_TRUNCATED")
+
+    def test_e3_parse_refusal_cites_the_line_it_stopped_on(self):
+        full = (LABS / CANON).read_bytes()
+        cut = full[:full.find(b"\n", len(full) // 2) + 5]      # ends inside a line past the middle
+        expected_line = cut.count(b"\n") + 1
+        r = ie.evaluate(question(SPEAKS, canon_bytes=cut), [src(CANON, cut), src(SPEAKS)], self.queue)
+        self.assertEqual((r["disposition"], r["failed_predicate"]), (ie.FAIL_CLOSED, "CANONICAL_SOURCE_BOUND"), r)
+        self.assertIn(r["refusal_code"], ("JSON_TRUNCATED", "JSON_SYNTAX"))
+        self.assertIn(f"{REPO}@{REV}:{CANON}:{expected_line}", r["citations"], r["citations"])
+
+    def test_e4_authority_refusal_has_the_spec_code_and_cites_the_member(self):
+        canon = json.loads((LABS / CANON).read_text())
+        for value in ({"a": 1}, 0, None, "GRANTS_ALLOW"):
+            doc = json.dumps(dict(canon, authority_effect=value), indent=2).encode()
+            line = next(i for i, l in enumerate(doc.decode().splitlines(), 1) if l.lstrip().startswith('"authority_effect"'))
+            r = ie.evaluate(question(SPEAKS, canon_bytes=doc), [src(CANON, doc), src(SPEAKS)], self.queue)
+            self.assertEqual((r["disposition"], r["refusal_code"]), (ie.FAIL_CLOSED, "SOURCE_AUTHORITY_EFFECT_NOT_ALLOWED"), (value, r))
+            self.assertIn(f"{REPO}@{REV}:{CANON}:{line}", r["citations"], (value, r["citations"]))
+        absent = json.dumps({k: v for k, v in canon.items() if k != "authority_effect"}, indent=2).encode()
+        r = ie.evaluate(question(SPEAKS, canon_bytes=absent), [src(CANON, absent), src(SPEAKS)], self.queue)
+        self.assertEqual(r["refusal_code"], "SOURCE_AUTHORITY_EFFECT_NOT_ALLOWED")
+        self.assertIn(f"{REPO}@{REV}:{CANON}:1", r["citations"])
+
+    def test_e5_undeclared_invariant_cites_the_declaring_container(self):
+        text = (LABS / CANON).read_text().splitlines()
+        inv_line = next(i for i, l in enumerate(text, 1) if l.lstrip().startswith('"invariants"'))
+        pro_line = next(i for i, l in enumerate(text, 1) if l.lstrip().startswith('"prohibitions"'))
+        r = ie.evaluate(question(SPEAKS, iid="invariant:not_a_declared_key"), [src(CANON), src(SPEAKS)], self.queue)
+        self.assertEqual(r["disposition"], ie.UNDECIDABLE)
+        self.assertIn(f"{REPO}@{REV}:{CANON}:{inv_line}", r["citations"], r["citations"])
+        r = ie.evaluate(question(SPEAKS, iid="prohibition:NOT_A_DECLARED_PROHIBITION", qid="q-p"), [src(CANON), src(SPEAKS)], self.queue)
+        self.assertEqual(r["disposition"], ie.UNDECIDABLE)
+        self.assertIn(f"{REPO}@{REV}:{CANON}:{pro_line}", r["citations"], r["citations"])
+
+    def test_e6_question_sha256_and_evaluation_key_bind_the_relay_entry(self):
+        q = question(SILENT, qid="q-bytes")
+        compact = json.dumps(q, separators=(",", ":")).encode()
+        pretty = json.dumps(q, indent=2).encode()
+        a = ie.evaluate_bytes(compact, [src(CANON), src(SILENT)], self.queue)
+        b = ie.evaluate_bytes(pretty, [src(CANON), src(SILENT)], self.queue)
+        self.assertEqual(a["disposition"], ie.UNDECIDABLE)
+        self.assertEqual(a["question_sha256"], hashlib.sha256(compact).hexdigest())
+        self.assertNotEqual(a["evaluation_key"], b["evaluation_key"])
+        self.assertEqual(len(list(self.queue.iterdir())), 2)       # different bytes, different entries
+        again = ie.evaluate_bytes(compact, [src(CANON), src(SILENT)], self.queue)
+        self.assertIs(again["relay_queue_entry"]["created"], False)
+        entry = json.loads(Path(a["relay_queue_entry"]["path"]).read_text())
+        self.assertEqual((entry["evaluation_key"], entry["relay_to"]), (a["evaluation_key"], q["owning_existing_goal"]))
+
+    def test_e7_owner_is_fixed_before_well_formedness_and_form_checked_after(self):
+        q = question(SPEAKS); del q["owning_existing_goal"]
+        r = ie.evaluate(q, [src(CANON), src(SPEAKS)], self.queue)
+        self.assertEqual((r["disposition"], r["failed_predicate"], r["owning_existing_goal"]),
+                         (ie.FAIL_CLOSED, "QUESTION_WELL_FORMED", ie.FIXED_OWNER), r)
+        q = question(SPEAKS); q["owning_existing_goal"] = "not a task id"
+        r = ie.evaluate(q, [src(CANON), src(SPEAKS)], self.queue)
+        self.assertEqual((r["disposition"], r["failed_predicate"], r["owning_existing_goal"]),
+                         (ie.FAIL_CLOSED, "QUESTION_WELL_FORMED", ie.FIXED_OWNER), r)
+        r = ie.evaluate(question(SPEAKS, iid="invariant:not_a_declared_key"), [src(CANON), src(SPEAKS)], self.queue)
+        self.assertEqual(r["owning_existing_goal"], "SDK-GENERIC-MANIFEST-ECOSYSTEM-INVARIANT-005")  # well-formed: the question's owner
+
     def test_digest_is_verified_before_parse_and_required(self):
         # B-P6 row 8: truncated bytes cited with the full file's digest are refused on the digest, never parsed.
         full = (LABS / SPEAKS).read_bytes()

@@ -55,8 +55,21 @@ _NUM = re.compile(r"-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][-+]?\d+)?")
 
 
 # --------------------------------------------------------------------------- position-aware JSON
+class ParseRefusal(ValueError):
+    """A refused parse: code names the spec refusal, offset is where parsing stopped."""
+
+    def __init__(self, code: str, offset: int, detail: str = ""):
+        super().__init__(detail or code)
+        self.code, self.offset = code, offset
+
+
 def _parse_with_lines(text: str) -> tuple[Any, dict[str, int]]:
-    """Parse JSON text; return (value, {json_path: 1-based line of the key or element})."""
+    """Parse JSON text; return (value, {json_path: 1-based line of the key or element}).
+
+    Bounded: at most MAX_DEPTH containers open at once (the next opening bracket is INPUT_DEPTH_EXCEEDED);
+    duplicate object keys are JSON_DUPLICATE_KEY; running out of bytes is JSON_TRUNCATED; anything else
+    malformed is JSON_SYNTAX. Every refusal carries the offset it stopped on.
+    """
     from json.decoder import scanstring
 
     lines: dict[str, int] = {}
@@ -68,11 +81,12 @@ def _parse_with_lines(text: str) -> tuple[Any, dict[str, int]]:
     def skip(i: int) -> int:
         return _WS.match(text, i).end()
 
-    def value(i: int, path: str, depth: int = 0) -> tuple[Any, int]:
-        if depth > MAX_DEPTH:
-            raise ValueError(f"nesting deeper than {MAX_DEPTH}")
+    def value(i: int, path: str, open_containers: int) -> tuple[Any, int]:
         i = skip(i)
         c = text[i]
+        if c in "{[":
+            if open_containers + 1 > MAX_DEPTH:
+                raise ParseRefusal("INPUT_DEPTH_EXCEEDED", i, f"more than {MAX_DEPTH} containers open at offset {i}")
         if c == "{":
             obj: dict[str, Any] = {}
             i = skip(i + 1)
@@ -81,24 +95,25 @@ def _parse_with_lines(text: str) -> tuple[Any, dict[str, int]]:
             while i < len(text):  # bounded by the input; every member advances i
                 i = skip(i)
                 if text[i] != '"':
-                    raise ValueError(f"expected key at offset {i}")
+                    raise ParseRefusal("JSON_SYNTAX", i, f"expected key at offset {i}")
+                key_at = i
                 key, i = scanstring(text, i + 1)
                 if key in obj:
-                    raise ValueError(f"duplicate key {key!r} at offset {i}")
+                    raise ParseRefusal("JSON_DUPLICATE_KEY", key_at, f"duplicate key {key!r} at offset {key_at}")
                 sub = f"{path}.{key}" if path else key
-                lines[sub] = line_at(i)
+                lines[sub] = line_at(key_at)
                 i = skip(i)
                 if text[i] != ":":
-                    raise ValueError(f"expected ':' at offset {i}")
-                obj[key], i = value(i + 1, sub, depth + 1)
+                    raise ParseRefusal("JSON_SYNTAX", i, f"expected ':' at offset {i}")
+                obj[key], i = value(i + 1, sub, open_containers + 1)
                 i = skip(i)
                 if text[i] == ",":
                     i += 1
                     continue
                 if text[i] == "}":
                     return obj, i + 1
-                raise ValueError(f"expected ',' or '}}' at offset {i}")
-            raise ValueError("unterminated object")
+                raise ParseRefusal("JSON_SYNTAX", i, f"expected ',' or '}}' at offset {i}")
+            raise ParseRefusal("JSON_TRUNCATED", len(text), "unterminated object")
         if c == "[":
             arr: list[Any] = []
             i = skip(i + 1)
@@ -107,7 +122,7 @@ def _parse_with_lines(text: str) -> tuple[Any, dict[str, int]]:
             while i < len(text):  # bounded by the input; every element advances i
                 sub = f"{path}[{len(arr)}]"
                 lines[sub] = line_at(skip(i))
-                v, i = value(i, sub, depth + 1)
+                v, i = value(i, sub, open_containers + 1)
                 arr.append(v)
                 i = skip(i)
                 if text[i] == ",":
@@ -115,8 +130,8 @@ def _parse_with_lines(text: str) -> tuple[Any, dict[str, int]]:
                     continue
                 if text[i] == "]":
                     return arr, i + 1
-                raise ValueError(f"expected ',' or ']' at offset {i}")
-            raise ValueError("unterminated array")
+                raise ParseRefusal("JSON_SYNTAX", i, f"expected ',' or ']' at offset {i}")
+            raise ParseRefusal("JSON_TRUNCATED", len(text), "unterminated array")
         if c == '"':
             return scanstring(text, i + 1)
         for lit, val in (("true", True), ("false", False), ("null", None)):
@@ -124,15 +139,25 @@ def _parse_with_lines(text: str) -> tuple[Any, dict[str, int]]:
                 return val, i + len(lit)
         m = _NUM.match(text, i)
         if m:
-            s = m.group()
-            return (float(s) if any(ch in s for ch in ".eE") else int(s)), m.end()
-        raise ValueError(f"unexpected character {c!r} at offset {i}")
+            n = m.group()
+            return (float(n) if any(ch in n for ch in ".eE") else int(n)), m.end()
+        raise ParseRefusal("JSON_SYNTAX", i, f"unexpected character {c!r} at offset {i}")
 
-    v, end = value(0, "")
-    if text[skip(end):]:
-        raise ValueError("trailing data after JSON document")
+    try:
+        v, end = value(0, "", 0)
+        if text[skip(end):]:
+            raise ParseRefusal("JSON_SYNTAX", skip(end), "trailing data after JSON document")
+    except ParseRefusal:
+        raise
+    except IndexError:
+        raise ParseRefusal("JSON_TRUNCATED", len(text), "input ends inside a value") from None
+    except json.JSONDecodeError as exc:
+        if "Unterminated" in str(exc):  # a string that runs off the end of the bytes is truncation, not syntax
+            raise ParseRefusal("JSON_TRUNCATED", len(text), str(exc)) from None
+        raise ParseRefusal("JSON_SYNTAX", exc.pos, str(exc)) from None
+    except RecursionError:
+        raise ParseRefusal("INPUT_DEPTH_EXCEEDED", 0, "recursion limit") from None
     return v, lines
-
 
 def _same(a: Any, b: Any) -> bool:
     """Strict JSON equality: bool is never equal to int, int never to float."""
@@ -173,83 +198,146 @@ def _str(v: Any) -> bool:
     return isinstance(v, str) and bool(v.strip())
 
 
-_OFFSET = re.compile(r"offset (\d+)")
+def _line_of(content: bytes, offset: int) -> int:
+    return content[:max(0, min(offset, len(content)))].count(b"\n") + 1
 
 
 def _refusal_cite(ref: dict[str, Any], content: bytes, exc: BaseException | None) -> str:
-    """repo@revision:path:line for a source that was refused: the line of the parse error's offset, else line 1."""
-    line = 1
-    if exc is not None:
-        m = _OFFSET.search(str(exc))
-        if m:
-            line = content[:int(m.group(1))].count(b"\n") + 1
+    """repo@revision:path:line for a refused source: the line parsing stopped on, else line 1."""
+    line = _line_of(content, exc.offset) if isinstance(exc, ParseRefusal) else 1
     return f"{ref['repository']}@{ref['revision']}:{ref['path']}:{line}"
 
 
 def _load_source(ref: Any, sources: list[dict[str, Any]], problems: list[str],
-                 citations: list[str] | None = None) -> _Source | None:
-    if not isinstance(ref, dict) or not all(_str(ref.get(k)) for k in ("repository", "path", "revision")):
-        problems.append("source ref lacks repository, path or revision")
+                 citations: list[str] | None = None, codes: list[str] | None = None) -> _Source | None:
+    """Resolve one cited source: digest verified before any byte is parsed. codes receives the spec refusal code."""
+    def refuse(code: str, detail: str, cite: str | None = None):
+        problems.append(detail)
+        if codes is not None:
+            codes.append(code)
+        if citations is not None and cite is not None:
+            citations.append(cite)
         return None
-    for s in sources:
-        if (s.get("repository"), s.get("path"), s.get("revision")) == (ref["repository"], ref["path"], ref["revision"]):
-            content = s.get("content")
-            if not isinstance(content, (bytes, bytearray)):
-                problems.append(f"{ref['repository']}:{ref['path']} supplied without bytes")
-                return None
-            # Digest first, parse second: bytes that do not match the cited digest are never parsed.
-            digest = "sha256:" + hashlib.sha256(bytes(content)).hexdigest()
-            if not _str(ref.get("digest")):
-                problems.append(f"{ref['repository']}:{ref['path']} cited without a digest")
-                return None
-            if ref["digest"] != digest:
-                problems.append(f"{ref['repository']}:{ref['path']} digest {ref['digest']} != evaluated {digest}")
-                if citations is not None:
-                    citations.append(_refusal_cite(ref, bytes(content), None))
-                return None
-            try:
-                return _Source(ref, bytes(content))
-            except (ValueError, IndexError, UnicodeDecodeError, RecursionError) as exc:
-                problems.append(f"{ref['repository']}:{ref['path']} is not parseable JSON: {exc}")
-                if citations is not None:
-                    citations.append(_refusal_cite(ref, bytes(content), exc))
-                return None
-    problems.append(f"{ref['repository']}:{ref['path']}@{ref['revision']} was cited but not supplied")
-    return None
 
+    if not isinstance(ref, dict) or not all(_str(ref.get(k)) for k in ("repository", "path", "revision")):
+        return refuse("SOURCE_REF_MALFORMED", "source ref lacks repository, path or revision")
+    for src in sources:
+        if (src.get("repository"), src.get("path"), src.get("revision")) == (ref["repository"], ref["path"], ref["revision"]):
+            content = src.get("content")
+            if not isinstance(content, (bytes, bytearray)):
+                return refuse("SOURCE_BYTES_MISSING", f"{ref['repository']}:{ref['path']} supplied without bytes")
+            content = bytes(content)
+            digest = "sha256:" + hashlib.sha256(content).hexdigest()
+            if not _str(ref.get("digest")):
+                return refuse("SOURCE_DIGEST_MISSING", f"{ref['repository']}:{ref['path']} cited without a digest",
+                              _refusal_cite(ref, content, None))
+            if ref["digest"] != digest:
+                return refuse("SOURCE_DIGEST_MISMATCH",
+                              f"{ref['repository']}:{ref['path']} digest {ref['digest']} != evaluated {digest}",
+                              _refusal_cite(ref, content, None))
+            try:
+                return _Source(ref, content)
+            except ParseRefusal as exc:
+                return refuse(exc.code, f"{ref['repository']}:{ref['path']} is not parseable JSON: {exc}",
+                              _refusal_cite(ref, content, exc))
+            except UnicodeDecodeError as exc:
+                return refuse("SOURCE_NOT_UTF8", f"{ref['repository']}:{ref['path']} is not UTF-8: {exc}",
+                              _refusal_cite(ref, content, None))
+    return refuse("SOURCE_NOT_SUPPLIED", f"{ref['repository']}:{ref['path']}@{ref['revision']} was cited but not supplied")
 
 # --------------------------------------------------------------------------- evaluation
-def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path | None = None) -> dict[str, Any]:
+FIXED_OWNER = "STEGVERSE-CANONICAL-WORK-COORDINATION-001"  # owns the evaluator; carried before a question is well-formed
+_TASK_ID = re.compile(r"[A-Z0-9][A-Z0-9-]{2,127}")
+
+
+def _bindings(sources: list[dict[str, Any]]) -> list[str]:
+    return sorted(f"{s.get('repository')}:{s.get('path')}@{s.get('revision')}#sha256:"
+                  f"{hashlib.sha256(bytes(s['content'])).hexdigest()}"
+                  for s in sources if isinstance(s, dict) and isinstance(s.get("content"), (bytes, bytearray)))
+
+
+def _evaluation_key(question_sha256: str, bindings: list[str]) -> str:
+    return hashlib.sha256(json.dumps({"question_sha256": question_sha256, "source_bindings": bindings},
+                                     sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+
+
+def _compose(disposition: str, failed_predicate: str, repair: str, next_attempt: str, *, code: str | None,
+             qid: Any, iid: Any, owner: str, citations: list[str], findings: list[dict[str, Any]],
+             question_sha256: str, evaluation_key: str) -> dict[str, Any]:
+    out: dict[str, Any] = {
+        "schema": ANSWER_SCHEMA, "component_id": COMPONENT_ID, "question_id": qid, "invariant_id": iid,
+        "question_sha256": question_sha256, "evaluation_key": evaluation_key,
+        "disposition": disposition, "citations": sorted(set(citations)), "findings": findings,
+        "authority_effect": ANSWER_AUTHORITY_EFFECT,
+    }
+    if disposition != ALLOW:
+        refusal_code = code or failed_predicate
+        out.update({
+            "failure_code": f"INVARIANT_EVALUATION_{disposition}_{refusal_code}",
+            "refusal_code": refusal_code,
+            "failed_predicate": failed_predicate,
+            "required_evidence_or_repair": repair,
+            "retry_entrypoint": RETRY_ENTRYPOINT,
+            "owning_existing_goal": owner,
+            "next_attempt": next_attempt,
+            "evidence_refs": sorted(set(citations)) or [f"SOURCE_RECORD_ONLY:{qid}"],
+        })
+    return out
+
+
+def evaluate_bytes(question_bytes: bytes, sources: list[dict[str, Any]],
+                   queue_dir: str | Path | None = None) -> dict[str, Any]:
+    """Answer from the exact question bytes: the same bounded parser as every source (depth, duplicate keys,
+    truncation), question_sha256 over those bytes, and the fixed owner on a refusal before well-formedness."""
+    qsha = hashlib.sha256(question_bytes).hexdigest()
+    try:
+        question, _ = _parse_with_lines(question_bytes.decode("utf-8"))
+    except (ParseRefusal, UnicodeDecodeError) as exc:
+        code = exc.code if isinstance(exc, ParseRefusal) else "SOURCE_NOT_UTF8"
+        line = _line_of(question_bytes, exc.offset) if isinstance(exc, ParseRefusal) else 1
+        cite = f"question@{qsha[:8]}:question:{line}"
+        return _compose(FAIL_CLOSED, "QUESTION_WELL_FORMED",
+                        "Supply a well-formed stegverse.invariant-question/v1 object within the parser bounds.",
+                        "Repair the question bytes and evaluate again.", code=code, qid=None, iid=None,
+                        owner=FIXED_OWNER, citations=[cite],
+                        findings=[{"predicate": "QUESTION_WELL_FORMED", "detail": f"question bytes refused: {code}: {exc}"}],
+                        question_sha256=qsha, evaluation_key=_evaluation_key(qsha, _bindings(sources)))
+    return evaluate(question, sources, queue_dir, question_bytes=question_bytes)
+
+
+def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path | None = None, *,
+             question_bytes: bytes | None = None) -> dict[str, Any]:
     """Answer one invariant question against caller-resolved sources.
 
     sources: [{"repository", "path", "revision", "content": bytes}].
-    queue_dir: where an UNDECIDABLE answer writes its relay-queue entry file.
+    queue_dir: where an UNDECIDABLE answer writes its write-once relay-queue entry.
+    question_bytes: the exact bytes the question came from (evaluate_bytes supplies them); a dict caller's
+    question is bound by its canonical JSON bytes instead.
     """
     problems: list[str] = []
     citations: list[str] = []
     findings: list[dict[str, Any]] = []
+    codes: list[str] = []
+    if question_bytes is None:
+        try:
+            question_bytes = json.dumps(question, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        except (TypeError, ValueError):
+            question_bytes = b""
+    qsha = hashlib.sha256(question_bytes).hexdigest()
+    bindings = _bindings(sources)
+    ekey = _evaluation_key(qsha, bindings)
     qid = question.get("question_id") if isinstance(question, dict) else None
+    iid_value = question.get("invariant_id") if isinstance(question, dict) else None
     owning = question.get("owning_existing_goal") if isinstance(question, dict) else None
+    well_formed = False
 
-    def answer(disposition: str, failed_predicate: str, repair: str, next_attempt: str) -> dict[str, Any]:
-        out: dict[str, Any] = {
-            "schema": ANSWER_SCHEMA, "component_id": COMPONENT_ID, "question_id": qid,
-            "invariant_id": question.get("invariant_id") if isinstance(question, dict) else None,
-            "disposition": disposition, "citations": sorted(set(citations)), "findings": findings,
-            "authority_effect": ANSWER_AUTHORITY_EFFECT,
-        }
-        if disposition != ALLOW:
-            out.update({
-                "failure_code": f"INVARIANT_EVALUATION_{disposition}_{failed_predicate}",
-                "failed_predicate": failed_predicate,
-                "required_evidence_or_repair": repair,
-                "retry_entrypoint": RETRY_ENTRYPOINT,
-                "owning_existing_goal": owning if _str(owning) else "UNRESOLVED_QUESTION_NAMES_NO_OWNER",
-                "next_attempt": next_attempt,
-                "evidence_refs": sorted(set(citations)) or [f"SOURCE_RECORD_ONLY:{qid}"],
-            })
+    def answer(disposition: str, failed_predicate: str, repair: str, next_attempt: str,
+               code: str | None = None) -> dict[str, Any]:
+        owner = owning if well_formed else FIXED_OWNER
+        out = _compose(disposition, failed_predicate, repair, next_attempt, code=code, qid=qid, iid=iid_value,
+                       owner=owner, citations=citations, findings=findings, question_sha256=qsha, evaluation_key=ekey)
         if disposition == UNDECIDABLE and queue_dir is not None:
-            out["relay_queue_entry"] = _write_queue_entry(Path(queue_dir), question, out, sources)
+            out["relay_queue_entry"] = _write_queue_entry(Path(queue_dir), question, out, bindings, owner)
         return out
 
     # 1. question well-formed
@@ -259,6 +347,8 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
         for k in ("question_id", "invariant_id", "owning_existing_goal"):
             if not _str(question.get(k)):
                 problems.append(f"question lacks {k}")
+        if _str(owning) and not _TASK_ID.fullmatch(owning):
+            problems.append("owning_existing_goal is not a canonical task id ([A-Z0-9][A-Z0-9-]{2,127})")
         if not isinstance(question.get("invariants_source"), dict):
             problems.append("question lacks invariants_source")
         if not isinstance(question.get("subject"), dict):
@@ -266,22 +356,28 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
     if problems:
         findings.append({"predicate": "QUESTION_WELL_FORMED", "detail": "; ".join(problems)})
         return answer(FAIL_CLOSED, "QUESTION_WELL_FORMED", "Supply schema, question_id, invariant_id, "
-                      "owning_existing_goal, invariants_source and subject.", "Repair the question and evaluate again.")
+                      "owning_existing_goal (canonical task id), invariants_source and subject.",
+                      "Repair the question and evaluate again.")
+    well_formed = True
 
     # 2. canonical invariants resolved and sound
-    canon = _load_source(question["invariants_source"], sources, problems, citations)
+    canon = _load_source(question["invariants_source"], sources, problems, citations, codes)
     if canon is not None:
         if canon.path != CANONICAL_PATH or not isinstance(canon.doc, dict) or canon.doc.get("schema") != CANONICAL_SCHEMA:
             problems.append(f"invariants_source is not {CANONICAL_PATH} with schema {CANONICAL_SCHEMA}")
+            codes.append("CANONICAL_SCHEMA_MISMATCH")
+            citations.append(canon.cite("schema") if "schema" in canon.lines else canon.cite())
         else:
             effect = canon.doc.get("authority_effect")
             if not isinstance(effect, str) or effect not in ALLOWED_AUTHORITY_EFFECTS:
                 problems.append("invariants document claims an authority effect")
+                codes.append("SOURCE_AUTHORITY_EFFECT_NOT_ALLOWED")
+                citations.append(canon.cite("authority_effect") if "authority_effect" in canon.lines else canon.cite())
     if problems:
         findings.append({"predicate": "CANONICAL_SOURCE_BOUND", "detail": "; ".join(problems)})
         return answer(FAIL_CLOSED, "CANONICAL_SOURCE_BOUND",
                       f"Resolve {CANONICAL_PATH} at an exact revision and pass its bytes.",
-                      "Re-resolve the canonical invariants and evaluate again.")
+                      "Re-resolve the canonical invariants and evaluate again.", codes[0] if codes else None)
     citations.append(canon.cite("schema"))
 
     # 3. invariant_id resolves inside the canonical document
@@ -298,6 +394,8 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
     else:
         # Not declared in the supplied canonical bytes: undecidable here, not refused. A reader with more
         # evidence (another revision, a secondary canonical source) answers from the relay queue.
+        container = "invariants" if kind == "invariant" else "prohibitions"
+        citations.append(canon.cite(container) if container in canon.lines else canon.cite())  # the declaring container
         findings.append({"predicate": "INVARIANT_ID_CANONICAL", "detail": f"{iid!r} is not declared in the supplied canonical document"})
         return answer(UNDECIDABLE, "INVARIANT_ID_CANONICAL",
                       "Ask about an id of the form invariant:<key> or prohibition:<NAME> declared in the canonical document "
@@ -305,11 +403,11 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
                       "Re-ask with the declaring canonical source, or consume the relay-queue entry.")
 
     # 4. subject resolved
-    subject = _load_source(question["subject"], sources, problems, citations)
+    subject = _load_source(question["subject"], sources, problems, citations, codes)
     if subject is None:
         findings.append({"predicate": "SUBJECT_SOURCE_BOUND", "detail": "; ".join(problems)})
         return answer(FAIL_CLOSED, "SUBJECT_SOURCE_BOUND", "Resolve the subject at an exact revision and pass its bytes.",
-                      "Re-resolve the subject and evaluate again.")
+                      "Re-resolve the subject and evaluate again.", codes[0] if codes else None)
     citations.append(subject.cite())
 
     # 5. the predicate: what does the subject assert about this invariant?
@@ -352,24 +450,21 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
 
 
 def _write_queue_entry(queue_dir: Path, question: dict[str, Any], result: dict[str, Any],
-                       sources: list[dict[str, Any]]) -> dict[str, Any]:
-    """Durable, local, non-GitHub: one write-once file per (question bytes, supplied source bindings).
+                       bindings: list[str], relay_to: str) -> dict[str, Any]:
+    """Durable, local, non-GitHub: one write-once file per evaluation_key (question bytes + source bindings).
 
-    The same question over the same bytes is one entry ({"created": False} on repeat); the same question_id
-    over different subject or source bytes is a different entry. An existing entry is never overwritten
+    The same question bytes over the same sources is one entry ({"created": False} on repeat); different
+    bytes or sources are a different entry. An existing entry is never overwritten
     (DURABLE_QUEUE_OR_EVENT_EPHEMERAL_MATERIALIZATION: the reader with more evidence consumes it).
     """
     queue_dir.mkdir(parents=True, exist_ok=True)
-    bindings = sorted(f"{s.get('repository')}:{s.get('path')}@{s.get('revision')}#sha256:"
-                      f"{hashlib.sha256(bytes(s['content'])).hexdigest()}"
-                      for s in sources if isinstance(s, dict) and isinstance(s.get("content"), (bytes, bytearray)))
-    key = hashlib.sha256(json.dumps({"question": question, "source_bindings": bindings},
-                                    sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
-    safe = re.sub(r"[^A-Za-z0-9._-]", "_", str(question["question_id"]))[:64]
+    key = result["evaluation_key"]
+    safe = re.sub(r"[^A-Za-z0-9._-]", "_", str(question.get("question_id")))[:64]
     path = queue_dir / f"{safe}-{key[:16]}.json"
     if path.exists():
-        return {"path": str(path), "created": False, "entry_key": key}
-    entry = {"schema": QUEUE_SCHEMA, "entry_key": key, "question": question, "source_bindings": bindings,
+        return {"path": str(path), "created": False, "evaluation_key": key}
+    entry = {"schema": QUEUE_SCHEMA, "evaluation_key": key, "question_sha256": result["question_sha256"],
+             "question": question, "source_bindings": bindings, "relay_to": relay_to,
              "result": {k: v for k, v in result.items() if k != "relay_queue_entry"},
              "routing": "DURABLE_QUEUE_OR_EVENT_EPHEMERAL_MATERIALIZATION", "github_call_made": False,
              "authority_effect": ANSWER_AUTHORITY_EFFECT}
@@ -382,7 +477,7 @@ def _write_queue_entry(queue_dir: Path, question: dict[str, Any], result: dict[s
         created = False
     finally:
         tmp.unlink(missing_ok=True)
-    return {"path": str(path), "created": created, "entry_key": key}
+    return {"path": str(path), "created": created, "evaluation_key": key}
 
 
 def main(argv: list[str]) -> int:
@@ -390,14 +485,13 @@ def main(argv: list[str]) -> int:
     if len(argv) < 3:
         print(main.__doc__, file=sys.stderr)
         return 2
-    question = json.loads(Path(argv[0]).read_bytes())
     sources = []
     for spec in argv[2:]:
         ref, _, file = spec.rpartition("=")
         repo_path, _, revision = ref.rpartition("@")
         repo, _, path = repo_path.partition(":")
         sources.append({"repository": repo, "path": path, "revision": revision, "content": Path(file).read_bytes()})
-    result = evaluate(question, sources, argv[1])
+    result = evaluate_bytes(Path(argv[0]).read_bytes(), sources, argv[1])  # the question goes through the same bounded parser
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0 if result["disposition"] == ALLOW else 1
 
