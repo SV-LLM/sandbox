@@ -41,7 +41,12 @@ CANONICAL_SCHEMA = "stegverse.task-registry-global-invariants/v1"
 CANONICAL_PATH = "data/task-registry-global-invariants.json"
 COMPONENT_ID = "RT-INVARIANT-EVALUATION-001"
 ALLOW, DENY, FAIL_CLOSED, UNDECIDABLE = "ALLOW", "DENY", "FAIL_CLOSED", "UNDECIDABLE"
-MAX_DEPTH = 64  # spec max_json_nesting (RT-INVARIANT-EVALUATION-001, Labs#3278 B-P7); deeper sources fail closed
+MAX_DEPTH = 64  # spec bounds.max_json_nesting (RT-INVARIANT-EVALUATION-001 @ Labs#3278 ca531c8)
+MAX_INPUT_BYTES = 65536        # spec bounds.max_input_bytes: the question bytes
+MAX_SOURCE_BYTES = 4194304     # spec bounds.max_source_bytes: each supplied source, after its digest matches
+MAX_SOURCES = 16               # spec bounds.max_sources: entries in the supplied sources list
+MAX_CONTAINER_ITEMS = 100000   # spec bounds.max_container_items: members of one object / elements of one array
+MAX_FIELD_CHARS = 512          # spec bounds.max_field_chars: code points of each question / binding string field
 ANSWER_AUTHORITY_EFFECT = "NONE_ANSWER_ONLY"  # this component answers; it never transitions
 ALLOWED_AUTHORITY_EFFECTS = frozenset({"NONE", "NONE_REGISTRY_INVARIANT_ONLY", "NONE_TEST_FIXTURE", "NONE_ANSWER_ONLY"})
 RETRY_ENTRYPOINT = "python -B runtime/invariant_evaluation.py QUESTION.json QUEUE_DIR REPOSITORY:PATH@REVISION=FILE ..."
@@ -100,6 +105,8 @@ def _parse_with_lines(text: str) -> tuple[Any, dict[str, int]]:
                 key, i = scanstring(text, i + 1)
                 if key in obj:
                     raise ParseRefusal("JSON_DUPLICATE_KEY", key_at, f"duplicate key {key!r} at offset {key_at}")
+                if len(obj) >= MAX_CONTAINER_ITEMS:
+                    raise ParseRefusal("INPUT_SIZE_EXCEEDED", key_at, f"JSON_CONTAINER_ITEMS<={MAX_CONTAINER_ITEMS}")
                 sub = f"{path}.{key}" if path else key
                 lines[sub] = line_at(key_at)
                 i = skip(i)
@@ -120,6 +127,8 @@ def _parse_with_lines(text: str) -> tuple[Any, dict[str, int]]:
             if text[i] == "]":
                 return arr, i + 1
             while i < len(text):  # bounded by the input; every element advances i
+                if len(arr) >= MAX_CONTAINER_ITEMS:
+                    raise ParseRefusal("INPUT_SIZE_EXCEEDED", skip(i), f"JSON_CONTAINER_ITEMS<={MAX_CONTAINER_ITEMS}")
                 sub = f"{path}[{len(arr)}]"
                 lines[sub] = line_at(skip(i))
                 v, i = value(i, sub, open_containers + 1)
@@ -235,6 +244,9 @@ def _load_source(ref: Any, sources: list[dict[str, Any]], problems: list[str],
                 return refuse("SOURCE_DIGEST_MISMATCH",
                               f"{ref['repository']}:{ref['path']} digest {ref['digest']} != evaluated {digest}",
                               _refusal_cite(ref, content, None))
+            if len(content) > MAX_SOURCE_BYTES:
+                return refuse("INPUT_SIZE_EXCEEDED", f"{ref['repository']}@{ref['revision']}:{ref['path']} bytes<={MAX_SOURCE_BYTES}",
+                              _refusal_cite(ref, content, None))
             try:
                 return _Source(ref, content)
             except ParseRefusal as exc:
@@ -291,6 +303,12 @@ def evaluate_bytes(question_bytes: bytes, sources: list[dict[str, Any]],
     """Answer from the exact question bytes: the same bounded parser as every source (depth, duplicate keys,
     truncation), question_sha256 over those bytes, and the fixed owner on a refusal before well-formedness."""
     qsha = hashlib.sha256(question_bytes).hexdigest()
+    if len(question_bytes) > MAX_INPUT_BYTES:
+        return _compose(FAIL_CLOSED, "QUESTION_WELL_FORMED", f"question bytes<={MAX_INPUT_BYTES}",
+                        "Supply a question within the byte bound and evaluate again.", code="INPUT_SIZE_EXCEEDED",
+                        qid=None, iid=None, owner=FIXED_OWNER, citations=[f"question@{qsha}:question:1"],
+                        findings=[{"predicate": "QUESTION_WELL_FORMED", "detail": f"question bytes<={MAX_INPUT_BYTES}"}],
+                        question_sha256=qsha, evaluation_key=_evaluation_key(qsha, _bindings(sources)))
     try:
         question, _ = _parse_with_lines(question_bytes.decode("utf-8"))
     except (ParseRefusal, UnicodeDecodeError) as exc:
@@ -352,6 +370,19 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
                 problems.append(f"question lacks {k}")
         if _str(owning) and not _TASK_ID.fullmatch(owning):
             problems.append("owning_existing_goal is not a canonical task id ([A-Z0-9][A-Z0-9-]{2,127})")
+        # bounds.max_field_chars: every string field of the question and of each ref, in code points
+        fields = [(f"question.{k}", question.get(k)) for k in ("question_id", "invariant_id", "owning_existing_goal")]
+        for ref_name in ("invariants_source", "subject"):
+            ref = question.get(ref_name)
+            if isinstance(ref, dict):
+                fields += [(f"question.{ref_name}.{k}", ref.get(k)) for k in ("repository", "path", "revision", "digest")]
+        for label, value in fields:
+            if isinstance(value, str) and len(value) > MAX_FIELD_CHARS:
+                problems.append(f"{label} is a non-empty string of <= {MAX_FIELD_CHARS} chars")
+                codes.append("INPUT_FIELD_INVALID")
+        if len(sources) > MAX_SOURCES:
+            problems.append(f"sources<={MAX_SOURCES}")
+            codes.append("INPUT_SIZE_EXCEEDED")
         if not isinstance(question.get("invariants_source"), dict):
             problems.append("question lacks invariants_source")
         if not isinstance(question.get("subject"), dict):
@@ -361,7 +392,7 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
         findings.append({"predicate": "QUESTION_WELL_FORMED", "detail": "; ".join(problems)})
         return answer(FAIL_CLOSED, "QUESTION_WELL_FORMED", "Supply schema, question_id, invariant_id, "
                       "owning_existing_goal (canonical task id), invariants_source and subject.",
-                      "Repair the question and evaluate again.")
+                      "Repair the question and evaluate again.", codes[0] if codes else None)
     well_formed = True
 
     # 2. canonical invariants resolved and sound
@@ -495,7 +526,9 @@ def main(argv: list[str]) -> int:
         repo_path, _, revision = ref.rpartition("@")
         repo, _, path = repo_path.partition(":")
         sources.append({"repository": repo, "path": path, "revision": revision, "content": Path(file).read_bytes()})
-    result = evaluate_bytes(Path(argv[0]).read_bytes(), sources, argv[1])  # the question goes through the same bounded parser
+    with open(argv[0], "rb") as fh:
+        question_bytes = fh.read(MAX_INPUT_BYTES + 1)  # bounds.byte_bound_measurement: at most value+1 bytes are read
+    result = evaluate_bytes(question_bytes, sources, argv[1])  # the question goes through the same bounded parser
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0 if result["disposition"] == ALLOW else 1
 

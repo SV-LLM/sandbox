@@ -278,6 +278,47 @@ class InvariantEvaluation(unittest.TestCase):
         self.assertTrue(r["citations"], r)
         self.assertEqual(r["evidence_refs"], r["citations"])
 
+    def test_spec_bounds_are_mirrored(self):
+        """bounds.* of RT-INVARIANT-EVALUATION-001 @ Labs#3278 ca531c8 (B-P16), mirrored one for one."""
+        self.assertEqual((ie.MAX_INPUT_BYTES, ie.MAX_SOURCE_BYTES, ie.MAX_SOURCES, ie.MAX_CONTAINER_ITEMS, ie.MAX_FIELD_CHARS),
+                         (65536, 4194304, 16, 100000, 512))
+        # max_input_bytes: over-size question bytes, cited at the question root, fixed owner
+        big = json.dumps({**question(SPEAKS), "pad": "x" * 70000}).encode()
+        r = ie.evaluate_bytes(big, [src(CANON), src(SPEAKS)], self.queue)
+        self.assertEqual((r["disposition"], r["refusal_code"], r["owning_existing_goal"]), (ie.FAIL_CLOSED, "INPUT_SIZE_EXCEEDED", ie.FIXED_OWNER), r)
+        self.assertEqual(r["citations"], [f"question@{hashlib.sha256(big).hexdigest()}:question:1"])
+        # max_source_bytes: checked after the digest matches, before parse, cited at :1
+        huge = b'{"schema": "x", "pad": "' + b"y" * 4194400 + b'"}'
+        r = ie.evaluate(question("fixtures/huge.json", subject_bytes=huge), [src(CANON), src("fixtures/huge.json", huge)], self.queue)
+        self.assertEqual((r["failed_predicate"], r["refusal_code"]), ("SUBJECT_SOURCE_BOUND", "INPUT_SIZE_EXCEEDED"), r)
+        self.assertIn(f"{REPO}@{REV}:fixtures/huge.json:1", r["citations"])
+        # max_sources: 17 supplied entries
+        many = [src(CANON), src(SPEAKS)] + [src(f"fixtures/s{i}.json", b"{}") for i in range(15)]
+        r = ie.evaluate(question(SPEAKS), many, self.queue)
+        self.assertEqual((r["failed_predicate"], r["refusal_code"]), ("QUESTION_WELL_FORMED", "INPUT_SIZE_EXCEEDED"), r)
+        # max_container_items: the 100001st element is refused where parsing reaches it
+        arr = b"[" + b",".join([b"0"] * 100001) + b"]"
+        r = ie.evaluate(question("fixtures/items.json", subject_bytes=arr), [src(CANON), src("fixtures/items.json", arr)], self.queue)
+        self.assertEqual((r["failed_predicate"], r["refusal_code"]), ("SUBJECT_SOURCE_BOUND", "INPUT_SIZE_EXCEEDED"), r)
+        ok = b"[" + b",".join([b"0"] * 100000) + b"]"
+        r = ie.evaluate(question("fixtures/items.json", subject_bytes=ok), [src(CANON), src("fixtures/items.json", ok)], self.queue)
+        self.assertEqual(r["disposition"], ie.UNDECIDABLE, r)   # silent subject, within the bound
+        # max_field_chars: 513 code points in question_id
+        q = question(SPEAKS, qid="q" * 513)
+        r = ie.evaluate(q, [src(CANON), src(SPEAKS)], self.queue)
+        self.assertEqual((r["failed_predicate"], r["refusal_code"], r["owning_existing_goal"]),
+                         ("QUESTION_WELL_FORMED", "INPUT_FIELD_INVALID", ie.FIXED_OWNER), r)
+        self.assertEqual(r["citations"], [f"question@{r['question_sha256']}:question:1"])
+        # CLI reads at most value+1 bytes of an over-size question file and still answers, exit 1
+        qpath = self.queue / "big.json"; qpath.write_bytes(big)
+        import io, contextlib
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = ie.main([str(qpath), str(self.queue / "relay"), f"{REPO}:{CANON}@{REV}={LABS / CANON}"])
+        out = json.loads(buf.getvalue())
+        self.assertEqual((rc, out["refusal_code"]), (1, "INPUT_SIZE_EXCEEDED"))
+        self.assertEqual(out["question_sha256"], hashlib.sha256(big[:ie.MAX_INPUT_BYTES + 1]).hexdigest())
+
     def test_digest_is_verified_before_parse_and_required(self):
         # B-P6 row 8: truncated bytes cited with the full file's digest are refused on the digest, never parsed.
         full = (LABS / SPEAKS).read_bytes()
