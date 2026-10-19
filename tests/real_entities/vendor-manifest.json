@@ -203,6 +203,22 @@
     "Amazon_Web_Services/entity-capability.json": "sha256:dd6a69f1a09ac7665e9b0b59fb591e77fda73d7bd35eaccab69bf8df9eb38af9",
     "Amazon_Web_Services/core.py": "sha256:0279c6591f7bd4cb1718385ed8b5b229ece48ec9c046c35c4fcb39ef0e067381",
     "AI21_Labs/entity-capability.json": "sha256:97e5f1342ac41aa139286ca1f66ee50ddb927a96b0e2f30620541f4b49ab2d58",
-    "AI21_Labs/core.py": "sha256:67780d28da0816c3a74178db7d37720907359e98796887feffb74facc5d48d9a"
+    "AI21_Labs/core.py": "sha256:67780d28da0816c3a74178db7d37720907359e98796887feffb74facc5d48d9a",
+    "Ecosystem_Chat/entity-capability.json": "sha256:4049a4a0b81eccc0a8a16cea01c3a45cbac130773809a65af78a43ea11465a4f",
+    "Ecosystem_Chat/core.py": "sha256:3287a05d06439cde119eb248fc653db9f0a74bf5b846e91b1e21cfeb176db116",
+    "Ecosystem_Chat/classify.py": "sha256:1876ceaf9b70ff42dfb97cee4fcf656a5425bb92e633b036bfe1069ea6ef0d71"
+  },
+  "ecosystem_entities": {
+    "Ecosystem_Chat": {
+      "repository": "SV-LLM/Ecosystem_Chat",
+      "commit": "a728b6a0011fd1d1fa8933eb8f6cdc66ec76c776",
+      "pull_request": "PR #6",
+      "paths": {
+        "entity-capability.json": "contracts/entity-capability.json",
+        "core.py": "src/sv_llm_ecosystem_chat/core.py",
+        "classify.py": "src/sv_llm_ecosystem_chat/classify.py"
+      },
+      "reason": "ECOSYSTEM_ENTITY row of the organization tree (not an INTELLIGENCE_PROVIDER): vendored so the question -> capabilities -> participants path is exercised end to end with the entity's own classifier."
+    }
   }
 }

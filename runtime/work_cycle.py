@@ -16,7 +16,8 @@ processor there. This module is the Sandbox side of that hand-off:
            organization ledger by exact key. The work is admitted, each declared
            participant assigned, and its contribution requested. When the work
            names participants = "DERIVE_FROM_DECLARATIONS", runtime/capability_routing.py
-           derives them from the registered entities' declarations alone.
+           derives them from the registered entities' declarations alone, in the
+           organization tree's row order.
   respond  an entity surface answers each outstanding request with its own
            package (the entity repository's core.py). No SV-LLM code invokes a
            model: until an admitted Sandbox tool does, with credentials held by
@@ -104,6 +105,9 @@ class WorkCycle:
         self.node_state_root = Path(node_state_root)
         self.node_state = self.kernel.addressed_node_state_store(self.node_state_root)
         self.entities = entities or {}
+        # Routing precedence is declared by the canonical organization tree's row order, never by name.
+        tree = json.loads((self.dotgithub / "data/organization-tree.json").read_text(encoding="utf-8"))
+        self.tree_order = [row["name"] for row in tree.get("repositories", []) if isinstance(row, dict) and "name" in row]
         self.sandbox = Sandbox(dotgithub_root=self.dotgithub, ledger=Ledger(Path(sandbox_ledger)),
                                propagate=self._propagate)
 
@@ -172,9 +176,9 @@ class WorkCycle:
         if participants == capability_routing.DERIVE:
             # Participants derived from the registered entities' own declarations, in a fixed order.
             # No entity availability is consulted; an unroutable request is refused with six fields.
+            on_tree = [n for n in self.tree_order if n in self.entities]  # off-tree surfaces are never routed to
             routed = capability_routing.derive_participants(
-                work["requested_capabilities"], {n: e.declaration for n, e in self.entities.items()},
-                order=sorted(self.entities))
+                work["requested_capabilities"], {n: self.entities[n].declaration for n in on_tree}, order=on_tree)
             out["routing"] = routed
             if routed["disposition"] != ALLOW:
                 out["assign"].append(self._refuse(

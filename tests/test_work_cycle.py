@@ -143,10 +143,38 @@ class WorkCycleEndToEnd(unittest.TestCase):
         taken, = out["intake"]
         self.assertEqual(taken["admit"]["disposition"], "ALLOW", taken["admit"])
         self.assertEqual(taken["routing"]["disposition"], "ALLOW", taken["routing"])
-        # First declaring entity in sorted order carries the request; the other is an alternate.
-        self.assertEqual(taken["routing"]["participants"], [{"entity": "Anthropic", "capability": "adversarial_review"}])
-        self.assertEqual(taken["routing"]["evidence"]["alternates"], {"adversarial_review": ["OpenAI"]})
+        # The organization tree's row order decides precedence (OpenAI precedes Anthropic there), never the name.
+        self.assertEqual(taken["routing"]["participants"], [{"entity": "OpenAI", "capability": "adversarial_review"}])
+        self.assertEqual(taken["routing"]["evidence"]["alternates"], {"adversarial_review": ["Anthropic"]})
+        self.assertEqual(taken["routing"]["evidence"]["order"], ["OpenAI", "Anthropic"])
         self.assertEqual([a["disposition"] for a in taken["assign"] + taken["request"]], ["ALLOW"] * 2)
+        closed, = out["close"]
+        self.assertEqual(closed["complete"]["disposition"], "ALLOW")
+        self.assertIs(closed["egress"]["awaits_receiver"], False)
+
+    def test_a_question_drives_the_cycle_from_the_entity_classifier_to_a_result(self):
+        """question text -> Ecosystem_Chat classify.select -> requested capabilities -> participants derived from
+        declarations in tree order -> request -> answer -> result. No model, no network, declarations only."""
+        classify = load("sv_llm_ecosystem_chat_classify", REAL / "Ecosystem_Chat/classify.py")
+        chat = Entity(REAL / "Ecosystem_Chat/core.py", REAL / "Ecosystem_Chat/entity-capability.json")
+        declared = json.loads(chat.declaration)["capabilities"]
+        selection = classify.select({"text": "Do the entity-capability contracts in SV-LLM/.github and "
+                                              "Ecosystem_Chat agree on the binding?"}, declared)
+        self.assertEqual(selection["disposition"], "ALLOW", selection)
+        self.assertEqual(selection["selected"][0], "cross_repository_contract_analysis")
+        self.cycle.entities = {**self.entities, "Ecosystem_Chat": chat}
+        m = manifest("work-cycle-question-001", participants="DERIVE_FROM_DECLARATIONS")
+        m["payload"]["work"]["requested_capabilities"] = selection["selected"][:1]
+        m["payload"]["work"]["permitted_capabilities"] = selection["selected"][:1]
+        self.send(m)
+        out = self.run_pass()
+        taken, = out["intake"]
+        # Ecosystem_Chat precedes every provider on the tree and declares the capability, so it carries the request.
+        self.assertEqual(taken["routing"]["participants"],
+                         [{"entity": "Ecosystem_Chat", "capability": "cross_repository_contract_analysis"}])
+        self.assertEqual(taken["routing"]["evidence"]["order"][0], "Ecosystem_Chat")
+        self.assertEqual([a["disposition"] for a in taken["assign"] + taken["request"]], ["ALLOW", "ALLOW"])
+        self.assertEqual([(r["disposition"], r["status"]) for r in out["respond"]], [("ALLOW", "UNAVAILABLE")])
         closed, = out["close"]
         self.assertEqual(closed["complete"]["disposition"], "ALLOW")
         self.assertIs(closed["egress"]["awaits_receiver"], False)
