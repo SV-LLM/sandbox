@@ -263,6 +263,21 @@ class InvariantEvaluation(unittest.TestCase):
         r = ie.evaluate(question(SPEAKS, iid="invariant:not_a_declared_key"), [src(CANON), src(SPEAKS)], self.queue)
         self.assertEqual(r["owning_existing_goal"], "SDK-GENERIC-MANIFEST-ECOSYSTEM-INVARIANT-005")  # well-formed: the question's owner
 
+    def test_every_refusal_cites_a_line(self):
+        # B-P14 parity: a cited-but-unsupplied source cites its ref at :1; anything else uncited cites the question root.
+        r = ie.evaluate(question(SPEAKS), [src(CANON)], self.queue)   # subject never supplied
+        self.assertEqual((r["disposition"], r["refusal_code"]), (ie.FAIL_CLOSED, "SOURCE_NOT_SUPPLIED"), r)
+        self.assertIn(f"{REPO}@{REV}:{SPEAKS}:1", r["citations"], r["citations"])
+        q = question(SPEAKS); q["subject"] = "not a ref"
+        r = ie.evaluate(q, [src(CANON), src(SPEAKS)], self.queue)
+        self.assertEqual(r["failed_predicate"], "QUESTION_WELL_FORMED")
+        self.assertEqual(r["citations"], [f"question@{r['question_sha256']}:question:1"])
+        q = question(SPEAKS); q["subject"] = {"repository": REPO}   # ref lacks path/revision: refused after well-formedness
+        r = ie.evaluate(q, [src(CANON), src(SPEAKS)], self.queue)
+        self.assertEqual((r["failed_predicate"], r["refusal_code"]), ("SUBJECT_SOURCE_BOUND", "SOURCE_REF_MALFORMED"))
+        self.assertTrue(r["citations"], r)
+        self.assertEqual(r["evidence_refs"], r["citations"])
+
     def test_digest_is_verified_before_parse_and_required(self):
         # B-P6 row 8: truncated bytes cited with the full file's digest are refused on the digest, never parsed.
         full = (LABS / SPEAKS).read_bytes()

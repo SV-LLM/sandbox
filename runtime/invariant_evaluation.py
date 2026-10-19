@@ -243,7 +243,8 @@ def _load_source(ref: Any, sources: list[dict[str, Any]], problems: list[str],
             except UnicodeDecodeError as exc:
                 return refuse("SOURCE_NOT_UTF8", f"{ref['repository']}:{ref['path']} is not UTF-8: {exc}",
                               _refusal_cite(ref, content, None))
-    return refuse("SOURCE_NOT_SUPPLIED", f"{ref['repository']}:{ref['path']}@{ref['revision']} was cited but not supplied")
+    return refuse("SOURCE_NOT_SUPPLIED", f"{ref['repository']}:{ref['path']}@{ref['revision']} was cited but not supplied",
+                  f"{ref['repository']}@{ref['revision']}:{ref['path']}:1")
 
 # --------------------------------------------------------------------------- evaluation
 FIXED_OWNER = "STEGVERSE-CANONICAL-WORK-COORDINATION-001"  # owns the evaluator; carried before a question is well-formed
@@ -334,6 +335,8 @@ def evaluate(question: Any, sources: list[dict[str, Any]], queue_dir: str | Path
     def answer(disposition: str, failed_predicate: str, repair: str, next_attempt: str,
                code: str | None = None) -> dict[str, Any]:
         owner = owning if well_formed else FIXED_OWNER
+        if disposition != ALLOW and not citations:
+            citations.append(f"question@{qsha}:question:1")  # SPEC:47: every answer cites a line
         out = _compose(disposition, failed_predicate, repair, next_attempt, code=code, qid=qid, iid=iid_value,
                        owner=owner, citations=citations, findings=findings, question_sha256=qsha, evaluation_key=ekey)
         if disposition == UNDECIDABLE and queue_dir is not None:
