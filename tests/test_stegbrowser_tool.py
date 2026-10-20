@@ -152,6 +152,9 @@ class Roundtrip(Base):
 
 
 class NonAllow(Base):
+    def setUp(self):
+        super().setUp(invocations=[invocation(invocation_id=f"inv-{n}") for n in (1, 2, 3)])
+
     def test_AT06_expired_lease_fails_before_launch(self):
         pw = factory()
         # issued at epoch 40000, opened an hour of HB32 ticks later (360000 x 10 ms): expired, from supplied epochs only
@@ -166,8 +169,8 @@ class NonAllow(Base):
         cases = [(dict(fail_launch=True), None, "BROWSER_LAUNCH"),
                  (dict(text="no marker here"), None, "RESULT_BINDING"),
                  (dict(status=503), None, "BROWSER_NAVIGATION")]
-        for kwargs, _, stage in cases:
-            e = self.obs(self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=factory(**kwargs)))
+        for n, (kwargs, _, stage) in enumerate(cases, start=1):
+            e = self.obs(self.tool.invoke(WORK, f"inv-{n}", hb_epoch=EPOCH, playwright_factory=factory(**kwargs)))
             self.assertEqual((e["disposition"], e["evaluation_stage"]), ("FAIL_CLOSED", stage), stage)
             self.assertTrue(e["failed_predicate"])
             self.assertEqual(e["retry_entrypoint"], "src.stegbrowser.llm_transition.execute_manifested_llm_browser_transition")
@@ -187,11 +190,24 @@ class SuccessfulInvocationReplay(Base):
         second = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=second_browser)
         evidence = self.obs(second)
         self.assertEqual(evidence["disposition"], "FAIL_CLOSED")
-        self.assertEqual(evidence["failed_predicate"], "INVOCATION_ALREADY_COMPLETED")
+        self.assertEqual(evidence["failed_predicate"], "INVOCATION_RECONCILIATION_REQUIRED")
         self.assertFalse(evidence["stegbrowser_invoked"])
         second_browser.return_value.__enter__.assert_not_called()
         assert_six_fields(self, evidence)
         self.assertEqual(len(self.s.observations(WORK)), 2)
+
+    def test_failed_dispatched_attempt_requires_reconciliation(self):
+        first = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=factory(fail_launch=True))
+        self.assertEqual(self.obs(first)["disposition"], "FAIL_CLOSED")
+        replay_browser = factory()
+        repeated = StegBrowserTool(self.s).invoke(
+            WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=replay_browser)
+        evidence = self.obs(repeated)
+        self.assertEqual(evidence["disposition"], "FAIL_CLOSED")
+        self.assertEqual(evidence["failed_predicate"], "INVOCATION_RECONCILIATION_REQUIRED")
+        self.assertFalse(evidence["stegbrowser_invoked"])
+        replay_browser.return_value.__enter__.assert_not_called()
+        assert_six_fields(self, evidence)
 
 
 
