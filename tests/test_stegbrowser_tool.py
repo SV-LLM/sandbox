@@ -211,6 +211,43 @@ class FinalOriginChecks(Base):
         self.assertEqual(evidence["evaluation_stage"], "BROWSER_ACTION")
         locator.press.assert_not_called()
 
+    def test_redirect_navigation_request_aborted_before_network(self):
+        pw = factory()
+        out = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=pw)
+        self.assertEqual(out["disposition"], ALLOW)
+        context = (pw.return_value.__enter__.return_value.chromium.launch.return_value
+                   .new_context.return_value)
+        context.route.assert_called_once()
+        rule, callback = context.route.call_args.args
+        self.assertEqual(rule, "**/*")
+        request = MagicMock()
+        request.is_navigation_request.return_value = True
+        request.url = "https://unexpected.example.test/redirect"
+        routed = MagicMock()
+        callback(routed, request)
+        routed.abort.assert_called_once()
+        routed.continue_.assert_not_called()
+        request.url = "https://space.example.test/redirect"
+        approved = MagicMock()
+        callback(approved, request)
+        approved.continue_.assert_called_once()
+        approved.abort.assert_not_called()
+
+    def test_non_navigation_resource_retains_browser_control(self):
+        pw = factory()
+        out = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=pw)
+        self.assertEqual(out["disposition"], ALLOW)
+        context = (pw.return_value.__enter__.return_value.chromium.launch.return_value
+                   .new_context.return_value)
+        callback = context.route.call_args.args[1]
+        request = MagicMock()
+        request.is_navigation_request.return_value = False
+        request.url = "https://static.example.test/script.js"
+        routed = MagicMock()
+        callback(routed, request)
+        routed.continue_.assert_called_once()
+        routed.abort.assert_not_called()
+
     def test_redirected_final_page_host_is_retained_when_allowed(self):
         pw = factory()
         out = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=pw)
