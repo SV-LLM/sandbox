@@ -177,6 +177,25 @@ class NonAllow(Base):
         self.assertEqual(stages, [1, 2, 3])
 
 
+
+class SuccessfulInvocationReplay(Base):
+    def test_success_cannot_launch_the_same_invocation_twice(self):
+        first_browser = factory()
+        first = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=first_browser)
+        self.assertEqual(first["disposition"], ALLOW, first)
+        second_browser = factory()
+        second = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=second_browser)
+        evidence = self.obs(second)
+        self.assertEqual(evidence["disposition"], "FAIL_CLOSED")
+        self.assertEqual(evidence["failed_predicate"], "INVOCATION_ALREADY_COMPLETED")
+        self.assertFalse(evidence["stegbrowser_invoked"])
+        second_browser.return_value.__enter__.assert_not_called()
+        assert_six_fields(self, evidence)
+        self.assertEqual(len(self.s.observations(WORK)), 2)
+
+
+
+
 class RuntimeCheck(Base):
     @unittest.skipIf(__import__("importlib.util").util.find_spec("playwright") is not None,
                      "Playwright installed here; the no-runtime path is exercised where it is absent")
