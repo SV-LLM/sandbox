@@ -95,8 +95,11 @@ TOOL_REPAIRS = {
         "Install Python Playwright and its Chromium in this environment (or pass a playwright_factory).",
         "Call invoke again where Playwright and Chromium are available; do not wait on another machine."),
 }
-STEGBROWSER_NEXT_ATTEMPT = ("Repair the named StegBrowser stage, then call " + RETRY_PREFIX
-                            + "invoke again for the same work_id and invocation_id (a new attempt is recorded).")
+STEGBROWSER_NEXT_ATTEMPT = (
+    "Reconcile the original dispatched invocation and retained repository/organization receipts. "
+    "A new provider submission requires a separately admitted invocation_id with current "
+    "manifest authority and fresh atomic reservation; never retry an indeterminate dispatch "
+    "using the original invocation_id.")
 
 
 def _host(url: str) -> str | None:
