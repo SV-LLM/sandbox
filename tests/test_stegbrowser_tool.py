@@ -4,6 +4,7 @@ Run: SV_LLM_DOTGITHUB_ROOT=<SV-LLM/.github checkout> python -B tests/test_stegbr
 """
 from __future__ import annotations
 import copy, hashlib, json, sys, unittest
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from unittest.mock import MagicMock
 EPOCH = "4000"  # the supplied hb_epoch: every lease time is its HB32 instant
@@ -13,6 +14,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 from test_sandbox_runtime import Harness, ALLOW, DENY  # noqa: E402
 from stegbrowser_tool import StegBrowserTool, VENDOR, MANIFEST, TOOL_REPAIRS, STEGBROWSER_NEXT_ATTEMPT  # noqa: E402
 from sandbox import OWNING_EXISTING_GOAL  # noqa: E402
+from ledger import Ledger  # noqa: E402
 
 WORK = "fixture-work-001"
 MARKER = "SVLLM_MARK_7Q"
@@ -299,6 +301,24 @@ class Synthesis(Base):
         self.assertEqual(d["disposition"], DENY)
         self.assertEqual(self.s.synthesize(WORK, [d["observation_id"]], {"summary": "denied"})["disposition"], ALLOW)
 
+class AtomicOriginalInvocationCustody(Base):
+    def test_two_independent_writers_share_one_reservation(self):
+        root = self.s.ledger.root
+        def reserve(_):
+            try:
+                return Ledger(root, hb_epoch=4000).reserve_invocation(WORK, "inv-1")
+            except ValueError as error:
+                return str(error)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(pool.map(reserve, (1, 2)))
+        self.assertEqual(sum(isinstance(row, dict) for row in results), 1)
+        self.assertEqual(results.count("INVOCATION_RECONCILIATION_REQUIRED"), 1)
+        reserved = [r for r in self.s.ledger.chain()
+                    if r["transition_class"] == "SANDBOX_TOOL_INVOCATION_RESERVED"]
+        self.assertEqual(len(reserved), 1)
+
+
+
 
 class PropagationFailure(Base):
     def setUp(self):
@@ -327,8 +347,14 @@ class PropagationFailure(Base):
         self.fail_org = True
         out = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=factory())
         self.assertEqual((out["disposition"], out["failed_predicate"]), ("FAIL_CLOSED", "ORGANIZATION_PROPAGATION_SUCCEEDED"))
-        self.assertEqual(out["recorded_disposition"], ALLOW)
+        self.assertEqual(out["recorded_disposition"], "FAIL_CLOSED")
         self.assertNotIn("org_receipt_sha256", out)
+        # The original-invocation reservation is durable even when organization
+        # propagation is unavailable; no consequential browser action occurred.
+        reserved = [r for r in self.s.ledger.chain()
+                    if r["transition_class"] == "SANDBOX_TOOL_INVOCATION_RESERVED"]
+        self.assertEqual(len(reserved), 1)
+        self.assertIn(reserved[0]["receipt_sha256"], self.s.pending_propagation(WORK))
         self.assertEqual(self.s.repropagate("sha256:" + "0" * 64)["failed_predicate"], "RECEIPT_PROPAGATION_PENDING")
 
 
