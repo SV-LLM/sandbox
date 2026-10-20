@@ -47,10 +47,13 @@ class RealEntityRegression(unittest.TestCase):
         self.assertEqual((swapped["disposition"], swapped["failed_predicate"]), (DENY, "DECLARATION_DIGEST_MATCHES"))
 
     def test_canonical_tree_registers_every_vendored_entity(self):
-        vendored = json.loads((REAL / "vendor-manifest.json").read_text())["sources"]
+        manifest = json.loads((REAL / "vendor-manifest.json").read_text())
+        vendored = manifest["sources"]
         providers = {row["name"] for row in self.tree["repositories"] if row["class"] == "INTELLIGENCE_PROVIDER"}
         self.assertEqual(set(vendored), providers)
-        for e in sorted(vendored):
+        ecosystem = {row["name"] for row in self.tree["repositories"] if row["class"] == "ECOSYSTEM_ENTITY"}
+        self.assertTrue(set(manifest.get("ecosystem_entities", {})) <= ecosystem, manifest.get("ecosystem_entities"))
+        for e in sorted(vendored) + sorted(manifest.get("ecosystem_entities", {})):
             result = self.s.registration.register(e, declaration=(REAL / e / "entity-capability.json").read_bytes())
             self.assertEqual(result["disposition"], ALLOW, (e, result))
             self.assertEqual(entity_core(e).ENTITY, e)

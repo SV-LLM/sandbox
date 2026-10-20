@@ -13,9 +13,9 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
       - name: Check out SV-LLM/.github (re-pinned entity digests; vendored native schema evaluator)
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
         with:
           repository: SV-LLM/.github
           ref: f6d7ae27efff576ab4e1d71c68d2898a60698feb
@@ -25,7 +25,7 @@ jobs:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
         run: python -B tests/test_sandbox_runtime.py
       - name: Check out SV-LLM/.github with all 18 intelligence providers registered (vendored native schema evaluator)
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
         with:
           repository: SV-LLM/.github
           ref: f6d7ae27efff576ab4e1d71c68d2898a60698feb
@@ -56,6 +56,12 @@ jobs:
         run: python -B tests/test_provider_capability.py
       - name: Ecosystem Chat sandbox conformance proposal (stegverse.ai-invariant-conformance-proposal/v1, offline)
         run: python -B tests/test_conformance_proposal.py
+      - name: RT-INVARIANT-EVALUATION-001 invariant question evaluation (offline)
+        run: python -B tests/test_invariant_evaluation.py
+      - name: Declaration-derived capability routing (offline)
+        run: python -B tests/test_capability_routing.py
+      - name: Workflow actions pinned to commit SHAs (offline)
+        run: python -B tests/test_workflow_action_pins.py
       - name: Stage 2 page_load.v1 tool (synthetic browser, no network)
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub-registered

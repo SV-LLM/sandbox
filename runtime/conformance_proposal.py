@@ -42,6 +42,8 @@ import re
 import sys
 from typing import Any
 
+import invariant_evaluation
+
 SCHEMA = "stegverse.ai-invariant-conformance-proposal/v1"
 CANONICAL_SCHEMA = "stegverse.task-registry-global-invariants/v1"
 MANDATORY_SOURCE = ("StegVerse-Labs/.github", "data/task-registry-global-invariants.json")
@@ -285,6 +287,57 @@ def _inspect_changes(p: dict, applicable: dict[str, Any], r: _Result) -> set[str
     return violated
 
 
+def _evaluator_violations(p: dict, canonical_sources: list[dict], applicable: dict[str, Any], r: _Result) -> set[str]:
+    """Ask RT-INVARIANT-EVALUATION-001 the same question per applicable invariant, for every proposed JSON change.
+
+    The evaluator reads what a JSON subject asserts about each invariant and answers DENY only when an
+    assertion contradicts the canonical value; its ALLOW and UNDECIDABLE answers change nothing here, so the
+    proposal's own assessment still carries coverage. Keeping both on one evaluator stops the two drifting.
+    """
+    violated: set[str] = set()
+    canon = None
+    for s in canonical_sources:  # same resolution as _resolve_sources: the last entry per (repository, path) wins
+        if (s.get("repository"), s.get("path")) == MANDATORY_SOURCE:
+            canon = s
+    if canon is None or not applicable:
+        return violated
+    inv_src = {"repository": canon["repository"], "path": canon["path"], "revision": canon["revision"],
+               "digest": _sha(canon["content"])}
+    for ch in p["proposed_changes"]:
+        if not isinstance(ch, dict) or ch.get("action") == "delete" or not _str(ch.get("path")):
+            continue
+        text = ch.get("content", "")
+        if not isinstance(text, str) or not text.lstrip().startswith(("{", "[")):
+            continue
+        try:
+            json.loads(text)
+        except (ValueError, RecursionError):
+            continue  # not JSON (or too deep for the stdlib parser): the text checks above already apply
+        content = text.encode("utf-8")
+        subject = {"repository": "proposal", "path": ch["path"], "revision": "proposed", "digest": _sha(content)}
+        sources = [dict(canon), {**subject, "content": content}]
+        for iid in sorted(applicable):
+            question = {"schema": invariant_evaluation.QUESTION_SCHEMA, "question_id": f"{ch['path']}#{iid}",
+                        "invariant_id": iid, "owning_existing_goal": OWNING_EXISTING_GOAL,
+                        "invariants_source": inv_src, "subject": subject}
+            answer = invariant_evaluation.evaluate(question, sources, None)
+            if answer["disposition"] == invariant_evaluation.FAIL_CLOSED:
+                # The evaluator could not bind the question (e.g. an invariant that only a secondary source
+                # declares). Not a violation, but never silent: keep its six fields in the findings.
+                r.findings.append({"predicate": "EVALUATOR_ANSWER_UNBOUND", "classification": EVIDENCE_INSUFFICIENT,
+                                   "invariant_id": iid, "path": ch["path"],
+                                   **{k: answer[k] for k in ("failure_code", "failed_predicate",
+                                                             "required_evidence_or_repair", "retry_entrypoint",
+                                                             "owning_existing_goal", "next_attempt")}})
+                continue
+            if answer["disposition"] == invariant_evaluation.DENY:
+                violated.add(iid)
+                cites = [c for c in answer["citations"] if c.startswith("proposal@proposed:")]
+                r.refuse("INVARIANT_CONFORMS", f"{ch['path']} contradicts the canonical value of {iid} "
+                         f"(evaluator citation {', '.join(cites) or 'n/a'})", iid)
+    return violated
+
+
 def _routing(p: dict, r: _Result) -> None:
     mb = p["manifest_binding"]
     if not (_str(mb.get("manifest_id")) and isinstance(mb.get("canonical_manifest_sha256"), str)
@@ -326,6 +379,7 @@ def evaluate(proposal: Any, canonical_sources: list[dict]) -> dict[str, Any]:
         _routing(proposal, r)
         applicable, resolved = _resolve_sources(proposal, canonical_sources, r)
         violated = _inspect_changes(proposal, applicable, r)
+        violated |= _evaluator_violations(proposal, canonical_sources, applicable, r)
         coverage = _assessment(proposal, applicable, resolved, violated, r)
     disposition = FAIL_CLOSED if r.fail_closed else DENY if r.deny else ALLOW
     out = {"disposition": disposition,

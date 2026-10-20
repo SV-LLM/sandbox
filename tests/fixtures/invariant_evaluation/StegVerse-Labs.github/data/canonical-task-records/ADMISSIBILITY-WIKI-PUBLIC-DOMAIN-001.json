@@ -1,0 +1,102 @@
+{
+  "schema": "stegverse.canonical-task-record/v1",
+  "task_id": "ADMISSIBILITY-WIKI-PUBLIC-DOMAIN-001",
+  "correlation_id": "ADMISSIBILITY-WIKI-PUBLIC-DOMAIN-001",
+  "root_correlation_id": "ADMISSIBILITY-RECONSTRUCTABLE-SINGULARITY-001",
+  "parent_task_id": "ADMISSIBILITY-RECONSTRUCTABLE-SINGULARITY-001",
+  "goal": "Establish admissibility.stegverse.org as the branded public hostname for the existing Admissibility Wiki without creating a second wiki, publication source, runtime, or authority surface; preserve StegVerse-Labs/admissibility-wiki as canonical source and migrate public links only after HTTPS/public-route verification.",
+  "coordination_state": "PROPOSED",
+  "source_refs": [
+    "StegVerse-Labs/admissibility-wiki:docusaurus.config.js",
+    "StegVerse-Labs/admissibility-wiki:.github/workflows/validate-chain-continuation.yml",
+    "StegVerse-Labs/admissibility-wiki:docs/formalisms/RECONSTRUCTABLE_SINGULARITY_MIRROR_HANDOFF.md",
+    "StegVerse-Labs/Site:Papers.html"
+  ],
+  "targets": {
+    "organizations": [
+      "StegVerse-Labs"
+    ],
+    "repositories": [
+      "StegVerse-Labs/admissibility-wiki",
+      "StegVerse-Labs/Site",
+      "StegVerse-Labs/.github"
+    ],
+    "components": [
+      "admissibility-wiki-public-hostname",
+      "github-pages-custom-domain",
+      "site-public-formalism-links"
+    ]
+  },
+  "dependencies": [
+    {
+      "dependency_id": "GITHUB_PAGES_CUSTOM_DOMAIN_SETTING",
+      "kind": "HUMAN_ACTION",
+      "state": "UNRESOLVED",
+      "ref": "StegVerse-Labs/admissibility-wiki Settings > Pages"
+    },
+    {
+      "dependency_id": "DNS_CNAME_ADMISSIBILITY_STEGVERSE_ORG",
+      "kind": "HUMAN_ACTION",
+      "state": "UNRESOLVED",
+      "ref": "Cloudflare DNS: admissibility CNAME stegverse-labs.github.io"
+    }
+  ],
+  "blockers": [
+    {
+      "blocker_id": "PUBLIC_HOSTNAME_ACCOUNT_SETTINGS_REQUIRED",
+      "dependency_id": "GITHUB_PAGES_CUSTOM_DOMAIN_SETTING",
+      "reason": "GitHub Actions Pages requires the custom domain to be configured in repository Pages settings; connected GitHub tools do not expose that administration mutation."
+    },
+    {
+      "blocker_id": "DNS_WRITE_SURFACE_UNAVAILABLE",
+      "dependency_id": "DNS_CNAME_ADMISSIBILITY_STEGVERSE_ORG",
+      "reason": "No connected DNS/Cloudflare write surface is available in this session."
+    }
+  ],
+  "systemic_incident_ref": null,
+  "adjacent_task_refs": [
+    "ADMISSIBILITY-RECONSTRUCTABLE-SINGULARITY-001"
+  ],
+  "existing_evidence_refs": [
+    "https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site",
+    "https://docusaurus.io/docs/deployment"
+  ],
+  "expected_evidence_predicates": [
+    "CANONICAL_TASK_REGISTRATION_MERGED",
+    "DOCUSAURUS_URL_EQUALS_HTTPS_ADMISSIBILITY_STEGVERSE_ORG",
+    "DOCUSAURUS_BASE_URL_EQUALS_ROOT",
+    "PUBLIC_VALIDATION_USES_BRANDED_HOSTNAME",
+    "GITHUB_PAGES_CUSTOM_DOMAIN_EQUALS_ADMISSIBILITY_STEGVERSE_ORG",
+    "DNS_CNAME_ADMISSIBILITY_POINTS_TO_STEGVERSE_LABS_GITHUB_IO",
+    "HTTPS_CERTIFICATE_VALID",
+    "PUBLIC_ROOT_ROUTE_OBSERVED",
+    "PUBLIC_RECONSTRUCTABLE_SINGULARITY_ROUTE_OBSERVED",
+    "SITE_FORMALISM_LINKS_USE_BRANDED_HOSTNAME"
+  ],
+  "worker_claim": {
+    "authority": "WORKERCOORDINATOR",
+    "claim_ref": null,
+    "fence_ref": null,
+    "projection_only": true
+  },
+  "human_action_ref": "GITHUB_PAGES_CUSTOM_DOMAIN_SETTING + DNS_CNAME_ADMISSIBILITY_STEGVERSE_ORG",
+  "completion": {
+    "claimed": false,
+    "validated": false,
+    "reconciliation_ref": "StegVerse-Labs/admissibility-wiki:docs/ADMISSIBILITY_WIKI_PUBLIC_DOMAIN_MIRROR_HANDOFF.md"
+  },
+  "allowed_next_transitions": [
+    "COMPLETION_CLAIMED",
+    "CLOSED"
+  ],
+  "handoff_projection_refs": [
+    "StegVerse-Labs/admissibility-wiki:docs/ADMISSIBILITY_WIKI_PUBLIC_DOMAIN_MIRROR_HANDOFF.md"
+  ],
+  "authority_model": {
+    "task_registry_mints_execution_authority": false,
+    "source_state_proves_execution": false,
+    "worker_claim_authority": "WORKERCOORDINATOR",
+    "master_records_reality_authority": false,
+    "interlock_intr_required_for_governed_ingress_egress": true
+  }
+}

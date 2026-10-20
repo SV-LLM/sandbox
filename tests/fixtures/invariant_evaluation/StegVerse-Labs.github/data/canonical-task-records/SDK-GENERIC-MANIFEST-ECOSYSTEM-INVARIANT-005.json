@@ -1,0 +1,502 @@
+{
+  "schema": "stegverse.canonical-task-record/v1",
+  "task_id": "SDK-GENERIC-MANIFEST-ECOSYSTEM-INVARIANT-005",
+  "correlation_id": "SDK-GENERIC-MANIFEST-ECOSYSTEM-INVARIANT-005",
+  "root_correlation_id": "SDK-GENERIC-MANIFEST-DOWNSTREAM-PROPAGATION-003",
+  "parent_task_id": "SDK-GENERIC-MANIFEST-DOWNSTREAM-PROPAGATION-003",
+  "goal": "Validate and enforce the StegVerse system-wide manifest-driven processing invariant across SDK, adapters, provider paths, InTr routes, processors, custody and reconstruction surfaces; remediate source/type/provider-driven processor selection and establish an architectural-claim validation gate.",
+  "coordination_state": "RETIRED",
+  "checkout_state": "DECOMPOSED_AT_PROMPT_LIMIT",
+  "cosv_task_vector": "71000000100110",
+  "repository": "StegVerse-Labs/.github",
+  "issue_ref": "StegVerse-Labs/.github#1615",
+  "handoff_projection_refs": [
+    "StegVerse-Labs/.github:docs/SDK_GENERIC_MANIFEST_ECOSYSTEM_INVARIANT_MIRROR_HANDOFF.md",
+    "StegVerse-org/StegVerse-SDK:GENERIC_MANIFEST_PROCESSING_MIRROR_HANDOFF.md",
+    "StegVerse-org/StegVerse-SDK:SDK_GENERIC_MANIFEST_DOWNSTREAM_PROPAGATION_MIRROR_HANDOFF.md"
+  ],
+  "targets": {
+    "repositories": [
+      "StegVerse-org/StegVerse-SDK",
+      "StegVerse-org/LLM-adapter",
+      "StegVerse-Labs/Site",
+      "StegVerse-Labs/TVC",
+      "StegVerse-Labs/StegCore",
+      "StegVerse-Labs/Continuity",
+      "StegVerse-Labs/.github",
+      "master-records"
+    ],
+    "components": [
+      "manifest-ingress",
+      "processor-route-resolution",
+      "llm-adapter-ingress",
+      "mir-return-adapter",
+      "provider-operation-broker",
+      "intr-materialization",
+      "manifested-transaction-processing",
+      "master-records-custody-reconstruction",
+      "architectural-claim-validation-gate"
+    ]
+  },
+  "initial_evidence": {
+    "sdk_manifest_capability_route_binding_enforced": true,
+    "llm_adapter_governance_handler_hardwired_observed": true,
+    "site_mir_return_evaluator_route_hardwired_observed": true,
+    "predecessor_downstream_propagation_complete": false,
+    "system_wide_enforcement_proven": false
+  },
+  "classification": {
+    "sdk_generic_manifest": "PASS",
+    "llm_adapter_governed_ingress": "SOURCE_REPAIR_MERGED_RUNTIME_NOT_PROVEN",
+    "site_mir_return_adapter": "SOURCE_REPAIR_MERGED_RUNTIME_NOT_PROVEN",
+    "tvc_mir_provider_broker": "PARTIAL_MANIFEST_HASH_CAPABILITY_LEASE_SOURCE_PROVEN_FULL_INTR_CHAIN_NOT_PROVEN",
+    "remaining_required_surfaces": "INVENTORIED_CONFORMANCE_REMAINS_PARTIAL",
+    "stegcore_entry": "PARTIAL_MANIFEST_ROUTE_AND_NONALLOW_MUTATION_SOURCE_PROVEN_FULL_INTR_CUSTODY_NOT_PROVEN",
+    "shared_document_external_collaboration": "PARTIAL_MANIFEST_SELECTS_PROCESSING_SOURCE_ARCHITECTURE_RUNTIME_CHAIN_NOT_PROVEN",
+    "stegos_continuity_intr_entry": "SOURCE_REPAIR_MERGED_RECEIVING_OWNER_TRACED_RUNTIME_NOT_PROVEN"
+  },
+  "remaining_predicates": [
+    "TVC_PROVIDER_BOUNDARY_CLASSIFIED_AND_CONFORMANT",
+    "STEGCORE_ENTRY_CONFORMANT",
+    "MASTER_RECORDS_BOUNDARY_CONFORMANT",
+    "SHARED_DOC_EXTERNAL_COLLAB_BOUNDARY_CONFORMANT",
+    "IDENTITY_DRIVEN_PROCESSOR_SELECTION_REGRESSION_GATE_INSTALLED",
+    "MANIFEST_BOUND_INTR_ADMISSION_ATTEMPT_TERMINAL_DISPOSITION_RETAINED",
+    "GOVERNANCE_MANIFEST_ROUTE_ATTEMPT_TERMINAL_DISPOSITION_RETAINED",
+    "NON_GOVERNANCE_MANIFEST_ROUTE_ATTEMPT_TERMINAL_DISPOSITION_RETAINED",
+    "APPLICABLE_ORGANIZATION_STATE_TRANSITION_RECEIPT_RETAINED",
+    "APPLICABLE_POST_ORGANIZATION_RECORD_RECONSTRUCTION_EVIDENCE_RETAINED",
+    "ALL_ACTIONABLE_SURFACES_CLASSIFIED_CONFORMING_OR_REGISTERED_EXEMPTION"
+  ],
+  "authority_model": {
+    "manifest_selects_processing_semantics": true,
+    "source_identity_selects_processing_semantics": false,
+    "adapter_selects_processing_semantics": false,
+    "interlock_intr_processor_selection_authority": false,
+    "credential_authority": "TV/TVC",
+    "heartbeat_execution_authority": false,
+    "github_runtime_authority": "NONE"
+  },
+  "completion": {
+    "claimed": false,
+    "validated": false,
+    "runtime_observed": false,
+    "retired_by_prompt_limit_decomposition": true
+  },
+  "followup_evidence_20261001": {
+    "canonical_audit_merge": {
+      "pr": 2900,
+      "final_head": "3559a1542bedc9aba750e95360eff692504f5c2a",
+      "merge_commit": "cc579a827e98f5b5dea8670a7b4f81d5df85946f",
+      "earlier_head": "ff98d97ab1408eb327b25a75443faa268b071e74",
+      "earlier_head_admissible": false,
+      "reason": "Cross-Task Coordination Validation failed at earlier head; final merged head differed."
+    },
+    "native_repairs": [
+      "StegVerse-org/LLM-adapter#354 -> PR #355",
+      "StegVerse-Labs/Site#1478 -> PR #1479",
+      "StegVerse-Labs/StegOS#418 generic SDK manifest InTr profile"
+    ],
+    "runtime_claim": "NOT_PROVEN"
+  },
+  "followup_evidence_20261002": {
+    "manifest_declared_destination_contract": {
+      "destination_resolution_source": "MANIFEST_COMPLETION_EGRESS",
+      "destination_resolution_environment_inputs": [],
+      "transport": "INTERLOCK_INTR",
+      "receiver_unavailable_disposition": "DURABLE_QUEUE_OR_EVENT_EPHEMERAL_MATERIALIZATION",
+      "historical_exact_run_evidence_preserved": [
+        "EXISTING_MANIFEST_SELECTED_UNIVERSAL_INTR_INGRESS_ATTACHED",
+        "UNIVERSAL_INTR_INGRESS_NOT_CONFIGURED"
+      ],
+      "historical_predicate_current_architecture_status": "SUPERSEDED_AS_CURRENT_ARCHITECTURAL_PREDICATE_ONLY"
+    },
+    "receiving_owner": {
+      "entrypoint": "StegVerse-Labs/.github:workers/universal_intr_profiled_ingress.py POST /intr/materialization",
+      "delegate": "StegVerse-Labs/.github:workers/manifest_state_transition_intr_ingress.py::admit",
+      "authenticated_transport_origins": [
+        "STEGOS_NODE_OUTBOX",
+        "TVC_RELAY_EGRESS"
+      ],
+      "runtime_observation": "AUTHENTIC_MANIFEST_DECLARED_INTERLOCK_INTR_RECEIVING_OPERATION_UNAVAILABLE_IN_CURRENT_EXECUTION_CONTEXT",
+      "authentic_intr_disposition_observed": false,
+      "endpoint_receipt_observed": false,
+      "organization_custody_observed": false,
+      "master_records_reconstruction_observed": false
+    },
+    "merged_native_repairs": {
+      "llm_adapter_pr_355_merge": "53e675f904a041a525a1aaa9578d2013fdbdbf49",
+      "site_pr_1479_merge": "0adcdafe868bd81dbb0dcaa759f5c48a4936e496",
+      "site_pr_1481_merge": "aaa8f0da87d36968f80e46918fc9b1cf1c126f92",
+      "stegos_pr_419_merge": "aa1e1db945a45c89709d720319fb8a9515fc0ae4"
+    },
+    "runtime_claim": "NOT_PROVEN",
+    "node_exchange_gate1": {
+      "source_repair": {
+        "repo": "StegVerse-Labs/StegOS",
+        "pr": 420,
+        "exact_head": "de2bbb44662f3c06a504b058fd6185bad0b0b54f",
+        "merge_commit": "adceffaa6fcdf0e89bff7a091dddf92d790cc439",
+        "operation": "stegos/universal_intr_public_profile.py::observe_reciprocal_node_existence"
+      },
+      "canonical_reconciliation": {
+        "superseded_pr": 2910,
+        "replacement_pr": 2916,
+        "exact_head": "a4dacdf5f82e9083aa9f2c33d12e0b516a142422",
+        "merge_commit": "8d6df90591ac245bbe29187753debd62a784d821"
+      },
+      "operation_surface_owner": {
+        "source": "scripts/list_stegverse_execution_surfaces.py",
+        "current_registered_ephemeral_operations": [
+          "REQUEST_SELF_CHARACTERIZATION",
+          "STEGBROWSER_MANIFEST_DEFINED_INTR_INGRESS"
+        ],
+        "reciprocal_existence_registered": false,
+        "exact_gap": "REGISTERED_NODE_RECIPROCAL_EXISTENCE_OPERATION_NOT_REGISTERED_IN_CANONICAL_EXECUTION_SURFACE_CATALOG"
+      },
+      "runtime_observation": "AUTHENTIC_RECIPROCAL_NODE_EXISTENCE_INTERFACE_UNAVAILABLE_IN_CURRENT_EXECUTION_CONTEXT",
+      "external_endpoint": "UNSPECIFIED",
+      "authentic_gate1_disposition_observed": false
+    },
+    "predicate_reconciliation": {
+      "first_authentic_node_intr_observation_boundary": "StegVerse-Labs/.github:workers/universal_intr_profiled_ingress.py POST /intr/materialization -> workers/manifest_state_transition_intr_ingress.py::admit",
+      "current_execution_context_observation": "AUTHENTIC_MANIFEST_DECLARED_INTERLOCK_INTR_RECEIVING_OPERATION_UNAVAILABLE_IN_CURRENT_EXECUTION_CONTEXT",
+      "runtime_invocation_attempted": false,
+      "source_or_ci_promoted_to_runtime": false,
+      "task_completion_changed": false
+    }
+  },
+  "source_predicates": {
+    "SDK_GENERIC_MANIFEST_CAPABILITY_ROUTE_BINDING": "SATISFIED_MERGED_SOURCE_EVIDENCE",
+    "LLM_ADAPTER_GENERIC_SDK_ROUTE_DELEGATION": "SATISFIED_MERGED_SOURCE_EVIDENCE",
+    "MIR_RETURN_CANONICAL_SDK_MANIFEST_INGRESS": "SATISFIED_MERGED_SOURCE_EVIDENCE",
+    "STEGOS_GENERIC_SDK_MANIFEST_INTR_PROFILE_AND_RECEIVING_OWNER": "SATISFIED_MERGED_SOURCE_EVIDENCE",
+    "TVC_PROVIDER_BOUNDARY": "PARTIAL_TVC_LEASE_PROFILE_CONSTRAINTS_PROVEN_CANONICAL_SDK_PROCESSING_ROUTE_BINDING_NOT_DEMONSTRATED",
+    "STEGCORE_ENTRY": "PARTIAL_MANIFEST_ROUTE_AND_NONALLOW_MUTATION_SOURCE_PROVEN_FULL_INTR_CUSTODY_NOT_PROVEN",
+    "SHARED_DOC_EXTERNAL_COLLAB_BOUNDARY": "PARTIAL_MANIFEST_SELECTS_PROCESSING_SOURCE_ARCHITECTURE_RUNTIME_CHAIN_NOT_PROVEN",
+    "ECOSYSTEM_SURFACE_INVENTORY": "SATISFIED_CENSUS_ONLY_CONFORMANCE_AND_RUNTIME_SEPARATE",
+    "MASTER_RECORDS_BOUNDARY": "SATISFIED_CURRENT_ROLE_ORGANIZATION_RECORDS_AND_RECONSTRUCTION_ONLY_NON_GATING"
+  },
+  "remaining_source_predicates": [
+    "TVC_PROVIDER_BOUNDARY_CLASSIFIED_AND_CONFORMANT",
+    "STEGCORE_ENTRY_CONFORMANT",
+    "SHARED_DOC_EXTERNAL_COLLAB_BOUNDARY_CONFORMANT",
+    "IDENTITY_DRIVEN_PROCESSOR_SELECTION_REGRESSION_GATE_INSTALLED"
+  ],
+  "remaining_runtime_predicates": [
+    "MANIFEST_BOUND_INTR_ADMISSION_ATTEMPT_TERMINAL_DISPOSITION_RETAINED",
+    "GOVERNANCE_MANIFEST_ROUTE_ATTEMPT_TERMINAL_DISPOSITION_RETAINED",
+    "NON_GOVERNANCE_MANIFEST_ROUTE_ATTEMPT_TERMINAL_DISPOSITION_RETAINED",
+    "APPLICABLE_ORGANIZATION_STATE_TRANSITION_RECEIPT_RETAINED",
+    "APPLICABLE_POST_ORGANIZATION_RECORD_RECONSTRUCTION_EVIDENCE_RETAINED",
+    "ALL_ACTIONABLE_SURFACES_CLASSIFIED_CONFORMING_OR_REGISTERED_EXEMPTION"
+  ],
+  "ecosystem_surface_inventory_20261002": {
+    "status": "COMPLETE_AS_CENSUS_ONLY",
+    "conformance_complete": false,
+    "runtime_proven": false,
+    "surfaces": [
+      {
+        "id": "SDK_MANIFEST_INGRESS_PROCESSOR_RESOLUTION",
+        "classification": "PASS",
+        "owner": "StegVerse-org/StegVerse-SDK",
+        "evidence": [
+          "stegverse/manifest_contract.py",
+          "stegverse/route_resolution.py",
+          "stegverse/governance_ingress_runtime.py"
+        ],
+        "boundary": "SOURCE_CONTRACT_ONLY_RUNTIME_WIDE_ENFORCEMENT_NOT_PROVEN"
+      },
+      {
+        "id": "LLM_ADAPTER_MANIFEST_INGRESS_EGRESS",
+        "classification": "PASS",
+        "owner": "StegVerse-org/LLM-adapter",
+        "evidence": [
+          "llm_adapter/governed_manifest_ingress.py",
+          "tests/test_governed_manifest_ingress.py",
+          "PR #355 merge 53e675f904a041a525a1aaa9578d2013fdbdbf49"
+        ],
+        "boundary": "MERGED_SOURCE_REPAIR_RUNTIME_NOT_PROVEN"
+      },
+      {
+        "id": "SITE_EXTERNAL_RETURN_ADAPTERS_MIR",
+        "classification": "PASS",
+        "owner": "StegVerse-Labs/Site",
+        "evidence": [
+          "assets/mir-accounting-return-v1.js",
+          "tests/mir_return_consumer_runtime.mjs",
+          "PR #1479 merge 0adcdafe868bd81dbb0dcaa759f5c48a4936e496",
+          "PR #1481 merge aaa8f0da87d36968f80e46918fc9b1cf1c126f92"
+        ],
+        "boundary": "MERGED_GENERIC_SDK_INGRESS_SOURCE_RUNTIME_NOT_PROVEN"
+      },
+      {
+        "id": "TVC_PROVIDER_OPERATION_BROKER_PROFILES",
+        "classification": "PARTIAL",
+        "owner": "StegVerse-Labs/TVC",
+        "evidence": [
+          "tvc_provider_operation_broker.py",
+          "config/provider_operation_profiles.json",
+          "StegVerse-Labs/.github:workers/mir_tvc_provider_roundtrip_worker.py"
+        ],
+        "boundary": "MANIFEST_HASH_CAPABILITY_LEASE_SOURCE_PROVEN_FULL_NODE_INTR_SDK_CHAIN_NOT_PROVEN"
+      },
+      {
+        "id": "STEGCORE_MANIFESTED_TRANSACTION_GOVERNANCE_ENTRY",
+        "classification": "PARTIAL",
+        "owner": "StegVerse-Labs/StegCore",
+        "evidence": [
+          "docs/MANIFESTED_TRANSACTION_CONTINUITY.md",
+          "src/stegcore/manifest_receipts.py",
+          "src/stegcore/external_governance_adapter.py"
+        ],
+        "boundary": "MANIFEST_AND_NONEXECUTING_REPLAY_SOURCE_EVIDENCE_FULL_NODE_INTR_CUSTODY_CHAIN_NOT_PROVEN"
+      },
+      {
+        "id": "STEGOS_CONTINUITY_RESIDENT_DISPATCH_INTR_MATERIALIZATION",
+        "classification": "PASS",
+        "owner": "StegVerse-Labs/StegOS + StegVerse-Labs/.github receiving owner",
+        "evidence": [
+          "StegVerse-Labs/StegOS:stegos/universal_intr_materialization.py",
+          "StegVerse-Labs/StegOS:specs/universal-intr-connector-profiles.v1.json",
+          "StegVerse-Labs/.github:workers/universal_intr_profiled_ingress.py",
+          "StegVerse-Labs/.github:workers/manifest_state_transition_intr_ingress.py"
+        ],
+        "boundary": "SOURCE_CHAIN_AND_RECEIVING_OWNER_TRACED_AUTHENTIC_RUNTIME_NOT_PROVEN"
+      },
+      {
+        "id": "MASTER_RECORDS_CUSTODY_RECONSTRUCTION",
+        "classification": "PARTIAL",
+        "owner": "ORGANIZATION-BATCH-CUSTODY-REPLAY-001 / canonical Master Records custody owner",
+        "evidence": [
+          "StegVerse-Labs/.github:resident-runtime/organization_custody_readback.py",
+          "StegVerse-Labs/.github:scripts/consume_organization_custody_readback_request.py",
+          "StegVerse-Labs/.github:docs/ORGANIZATION_BATCH_CUSTODY_REPLAY_MIRROR_HANDOFF.md"
+        ],
+        "boundary": "SOURCE_CONTRACT_AND_EXACT_READBACK_VALIDATION_PRESENT_AUTHENTIC_ORGANIZATION_MASTER_RECORDS_CLOSURE_NOT_PROVEN"
+      },
+      {
+        "id": "SHARED_DOCUMENT_EXTERNAL_COLLABORATION_INGESTION",
+        "classification": "PARTIAL",
+        "owner": "existing Ecosystem Chat/shared collaboration manifest path",
+        "evidence": [
+          "StegVerse-Labs/.github:docs/ECOSYSTEM_CHAT_TASK_CENSUS_AND_BUILD_PLAN.md"
+        ],
+        "boundary": "MANIFEST_SELECTS_PROCESSING_SOURCE_ARCHITECTURE_PRESENT_COMPLETE_ACTIONABLE_INGRESS_CHAIN_NOT_PROVEN"
+      },
+      {
+        "id": "PROVIDER_FRAMEWORK_ADAPTERS_ELYRIA_FUTURE",
+        "classification": "PARTIAL",
+        "owner": "RT-EXTERNAL-ADAPTER-ESTABLISH-001 + SDK generalized ingress",
+        "evidence": [
+          "StegVerse-org/StegVerse-SDK:stegverse/elyria_framework_adapter.py",
+          "StegVerse-Labs/.github:data/canonical-task-records/SDK-ELYRIA-INTR-ADAPTER-001.json",
+          "StegVerse-Labs/.github:data/goal-task-component-profiles/SDK-ELYRIA-INTR-ADAPTER-001.json"
+        ],
+        "boundary": "ELYRIA_TRANSLATION_OWNER_AND_GENERIC_COMPONENT_CONTRACT_IDENTIFIED_AUTHENTIC_EXTERNAL_TRANSPORT_AND_FUTURE_INSTANCE_CONFORMANCE_NOT_PROVEN"
+      },
+      {
+        "id": "SESSION_ORIGINATED_EXECUTION_BOUNDARY",
+        "classification": "PARTIAL",
+        "owner": "ECOSYSTEM-INGRESS-AI-BOUNDARIES-001 component-010",
+        "evidence": [
+          "StegVerse-Labs/.github:docs/ECOSYSTEM_INGRESS_AI_BOUNDARIES_MIRROR_HANDOFF.md",
+          "StegVerse-Labs/.github:data/task-registry-ai-entry-surface-inventory.json",
+          "StegVerse-Labs/.github:data/task-registry-general-checkin-caller-inventory.json"
+        ],
+        "boundary": "PROTECTIVE_SOURCE_GATE_MERGED_AUTHENTIC_SESSION_ORIGIN_INTERFACE_UNAVAILABLE_IN_CURRENT_EXECUTION_CONTEXT"
+      }
+    ],
+    "predicate_effect": "ECOSYSTEM_SURFACE_INVENTORY_COMPLETE_SATISFIED_AS_CENSUS_ONLY"
+  },
+  "tvc_provider_boundary_source_conformance_20261002": {
+    "classification": "PARTIAL",
+    "source_only_assessment": true,
+    "runtime_absence_used_as_failure_reason": false,
+    "tvc_owner": "StegVerse-Labs/TVC:tvc_provider_operation_broker.py",
+    "profile_owner": "StegVerse-Labs/TVC:config/provider_operation_profiles.json",
+    "existing_bridge": "StegVerse-Labs/.github:workers/mir_tvc_provider_roundtrip_worker.py",
+    "canonical_sdk_contract": [
+      "StegVerse-org/StegVerse-SDK:stegverse/route_resolution.py",
+      "StegVerse-org/StegVerse-SDK:docs/GENERIC_MANIFEST_PROCESSING_CONTRACT.md"
+    ],
+    "proven": [
+      "TVC broker requires admitted single-use capability lease",
+      "TVC broker constrains provider operation to native provider profile",
+      "TVC rejects protected credential material and authority drift",
+      "MIR bridge uses Universal InTr around TVC broker and identifies StegVerse SDK as consumer"
+    ],
+    "precise_source_gap": [
+      "TVC broker request schema does not bind canonical manifest hash",
+      "TVC broker request schema does not bind processing.capability",
+      "TVC broker request schema does not bind processing.route_id",
+      "MIR TVC bridge constructs provider-specific MIR operation without demonstrating derivation from an admitted SDK processing capability/route",
+      "SDK consumer identity and InTr carriage do not themselves prove manifest-selected provider semantics"
+    ],
+    "predicate_disposition": "REMAINS_PARTIAL_NOT_CONFORMANT_YET",
+    "runtime_claim": "NOT_PROVEN",
+    "preserved_runtime_observation": "AUTHENTIC_MANIFEST_DECLARED_INTERLOCK_INTR_RECEIVING_OPERATION_UNAVAILABLE_IN_CURRENT_EXECUTION_CONTEXT"
+  },
+  "successor_task_ids": [
+    "ELAN-HOLD-INDEPENDENT-SEMANTIC-ANALYSIS-PACKET-001",
+    "SDK-MANIFEST-TVC-LINEAGE-CONFORMANCE-001",
+    "SDK-MANIFEST-STEGCORE-ENTRY-CONFORMANCE-001",
+    "SDK-MANIFEST-COLLAB-INGRESS-CONFORMANCE-001",
+    "SDK-MANIFEST-IDENTITY-ROUTING-REGRESSION-GATE-001",
+    "SDK-MANIFEST-ECOSYSTEM-TRANSITION-DISPOSITION-001"
+  ],
+  "prompt_ceiling_reconciliation_20261002": {
+    "goal_prompt_count": "20/20",
+    "elan_parallel_work_returned_to_parent_evidence": true,
+    "elan_successor_task_id": "ELAN-HOLD-INDEPENDENT-SEMANTIC-ANALYSIS-PACKET-001",
+    "elan_successor_cosv": "71000000100120",
+    "abstract_already_sent": true,
+    "hold_status": "UNDETERMINED",
+    "local_remediation_transferred_to_elan_successor": false
+  },
+  "tvc_provider_boundary_smallest_source_repair_20261002": {
+    "classification": "IDENTIFIED_NOT_YET_IMPLEMENTED",
+    "existing_sdk_binding_source": "StegVerse-org/StegVerse-SDK:stegverse/manifest_state_transition_runtime.py",
+    "existing_receiving_validator": "StegVerse-Labs/.github:workers/manifest_state_transition_intr_ingress.py::validate_request",
+    "existing_tvc_admission": "StegVerse-Labs/TVC:tvc_provider_operation_broker.py::validate_request",
+    "required_binding_fields": [
+      "request_sha256",
+      "canonical_manifest_sha256",
+      "processing_capability",
+      "route_id"
+    ],
+    "repair": [
+      "Do not create a new SDK schema or selector: reuse the already-emitted manifest-state-transition lineage fields.",
+      "At the existing manifest-selected provider-operation owner, construct the TVC provider request from the already-validated receiving-owner request and copy the four lineage fields into an sdk_manifest_binding; do not accept caller-supplied replacement values.",
+      "Mirror the same sdk_manifest_binding into the single-use TVC capability lease so credential admission is bound to the exact SDK-selected processing lineage.",
+      "Extend tvc_provider_operation_broker.py::validate_request to require sdk_manifest_binding for manifest-selected provider operations and fail closed unless request and lease bindings match exactly and contain non-empty/valid request_sha256, canonical_manifest_sha256, processing_capability and route_id.",
+      "TVC must compare/validate the binding only; it must not resolve, substitute or select processing_capability or route_id.",
+      "Add source tests proving missing/mutated manifest hash, SDK request hash, capability or route fail closed before forward_to_local_vault_broker, while exact inherited binding remains admissible under existing provider profile rules."
+    ],
+    "authority_boundaries": {
+      "processing_selection": "SDK_CANONICAL_MANIFEST_ROUTE_RESOLUTION",
+      "credential_authority": "TV/TVC",
+      "transition_transport": "INTERLOCK_INTR",
+      "tvc_binding_effect": "VALIDATION_ONLY_NO_PROCESSOR_SELECTION_AUTHORITY",
+      "new_runtime": false,
+      "new_transport": false,
+      "new_credential_path": false
+    },
+    "source_predicate_effect": "IMPLEMENTATION_AND_TESTS_REQUIRED_BEFORE_TVC_PROVIDER_BOUNDARY_CLASSIFIED_AND_CONFORMANT_CAN_ADVANCE_FROM_PARTIAL",
+    "runtime_claim": "NOT_PROVEN",
+    "preserved_runtime_predicates": [
+      "AUTHENTIC_NODE_INTR_SDK_MANIFEST_INGRESS_OBSERVED",
+      "GOVERNANCE_ROUTE_RUNTIME_EVIDENCE_OBSERVED",
+      "NON_GOVERNANCE_ROUTE_RUNTIME_EVIDENCE_OBSERVED",
+      "ORGANIZATION_RUNTIME_CUSTODY_OBSERVED",
+      "MASTER_RECORDS_RECONSTRUCTION_OBSERVED",
+      "SYSTEM_WIDE_ENFORCEMENT_PROVEN"
+    ],
+    "preserved_runtime_observation": "AUTHENTIC_MANIFEST_DECLARED_INTERLOCK_INTR_RECEIVING_OPERATION_UNAVAILABLE_IN_CURRENT_EXECUTION_CONTEXT"
+  },
+  "runtime_observation_reconciliation_20261007": {
+    "standard": "ORGANIZATION-ROLE-RUNTIME-REALITY-DEPLOYMENT-001",
+    "standard_semantics": {
+      "actions_by_manifest_required": true,
+      "state_transition_dependent": true,
+      "external_machine_awaiting_allowed": false,
+      "destination_liveness_is_transition_predicate": false,
+      "receiver_unavailable_disposition": "DURABLE_QUEUE_OR_EVENT_EPHEMERAL_MATERIALIZATION",
+      "post_closure_authentic_observer_gate_allowed": false
+    },
+    "historical_observation_preservation": "PRESERVE_AS_HISTORICAL_EVIDENCE_ONLY_DO_NOT_USE_AS_PASSIVE_WAIT_OR_COMPLETION_STATE",
+    "passive_waiting_predicates_superseded": [
+      "AUTHENTIC_NODE_INTR_SDK_MANIFEST_INGRESS_OBSERVED",
+      "GOVERNANCE_ROUTE_RUNTIME_EVIDENCE_OBSERVED",
+      "NON_GOVERNANCE_ROUTE_RUNTIME_EVIDENCE_OBSERVED",
+      "ORGANIZATION_RUNTIME_CUSTODY_OBSERVED",
+      "MASTER_RECORDS_RECONSTRUCTION_OBSERVED",
+      "SYSTEM_WIDE_ENFORCEMENT_PROVEN"
+    ],
+    "current_transition_dispositions": [
+      {
+        "surface": "NODE_INTR_SDK_MANIFEST_INGRESS",
+        "disposition": "FAIL_CLOSED",
+        "failed_predicate": "MANIFEST_BOUND_INTR_ADMISSION_ATTEMPT_TERMINAL_DISPOSITION_RETAINED",
+        "failure_code": "MANIFEST_BOUND_TRANSITION_DISPOSITION_NOT_RETAINED",
+        "required_evidence_or_repair": "Invoke the existing manifest-bound Interlock/InTr admission path for the attempted action and retain its ALLOW, DENY, or FAIL_CLOSED disposition; receiver liveness and external-machine reachability are not predicates.",
+        "retry_entrypoint": "EXISTING_MANIFEST_BOUND_INTR_ADMISSION",
+        "next_attempt": "Retry the same manifest-bound attempted transition through the existing owner; if the receiver is unavailable use DURABLE_QUEUE_OR_EVENT_EPHEMERAL_MATERIALIZATION."
+      },
+      {
+        "surface": "GOVERNANCE_ROUTE",
+        "disposition": "FAIL_CLOSED",
+        "failed_predicate": "GOVERNANCE_MANIFEST_ROUTE_ATTEMPT_TERMINAL_DISPOSITION_RETAINED",
+        "failure_code": "MANIFEST_BOUND_TRANSITION_DISPOSITION_NOT_RETAINED",
+        "required_evidence_or_repair": "Evaluate the governance action as its explicit predecessor-to-successor manifest-bound transition and retain terminal disposition and Organization receipt when a state transition occurs.",
+        "retry_entrypoint": "SDK_GOVERNANCE_MANIFEST_ROUTE",
+        "next_attempt": "Attempt the declared governance route without waiting for an external machine, listener, session, or observer."
+      },
+      {
+        "surface": "NON_GOVERNANCE_ROUTE",
+        "disposition": "FAIL_CLOSED",
+        "failed_predicate": "NON_GOVERNANCE_MANIFEST_ROUTE_ATTEMPT_TERMINAL_DISPOSITION_RETAINED",
+        "failure_code": "MANIFEST_BOUND_TRANSITION_DISPOSITION_NOT_RETAINED",
+        "required_evidence_or_repair": "Evaluate the non-governance action through its admitted manifest capability and route and retain terminal disposition.",
+        "retry_entrypoint": "SDK_NON_GOVERNANCE_MANIFEST_ROUTE",
+        "next_attempt": "Attempt the declared non-governance route under the same state-transition-dependent standard."
+      },
+      {
+        "surface": "ORGANIZATION_RUNTIME_CUSTODY",
+        "disposition": "FAIL_CLOSED",
+        "failed_predicate": "APPLICABLE_ORGANIZATION_STATE_TRANSITION_RECEIPT_RETAINED",
+        "failure_code": "ORGANIZATION_TRANSITION_RECEIPT_NOT_RETAINED",
+        "required_evidence_or_repair": "For an action that actually transitions Organization state, append the Organization receipt at the Organization ledger root under the existing manifest-directed append contract. Do not use Master Records or observer reachability as a runtime-reality gate.",
+        "retry_entrypoint": "ORGANIZATION_TRANSITION_LEDGER_APPEND",
+        "next_attempt": "On the next applicable manifest-bound state transition, retain the Organization receipt in the same attempt lineage."
+      },
+      {
+        "surface": "MASTER_RECORDS_RECONSTRUCTION",
+        "disposition": "FAIL_CLOSED",
+        "failed_predicate": "APPLICABLE_POST_ORGANIZATION_RECORD_RECONSTRUCTION_EVIDENCE_RETAINED",
+        "failure_code": "RECONSTRUCTION_EVIDENCE_NOT_RETAINED_WHEN_APPLICABLE",
+        "required_evidence_or_repair": "After verified Organization receipt release, perform or queue bounded Master Records organization-record retention/reconstruction as evidence only; it may not gate Organization runtime reality.",
+        "retry_entrypoint": "MASTER_RECORDS_ORGANIZATION_RECORD_RECONSTRUCTION",
+        "next_attempt": "Consume the verified released Organization receipt chain when reconstruction is applicable; unavailable receivers use durable queue/event-ephemeral materialization."
+      },
+      {
+        "surface": "SYSTEM_WIDE_ENFORCEMENT",
+        "disposition": "FAIL_CLOSED",
+        "failed_predicate": "ALL_ACTIONABLE_SURFACES_CLASSIFIED_CONFORMING_OR_REGISTERED_EXEMPTION",
+        "failure_code": "ECOSYSTEM_MANIFEST_CONFORMANCE_NOT_YET_PROVEN",
+        "required_evidence_or_repair": "Complete source conformance repairs for every actionable surface and require a registered Organization Role exemption for any surface that cannot yet be manifest-bound. Runtime reachability is not an exemption justification.",
+        "retry_entrypoint": "SDK_GENERIC_MANIFEST_ECOSYSTEM_CONFORMANCE_REEVALUATION",
+        "next_attempt": "Re-evaluate the bounded surface inventory after source repairs and exemption-register validation."
+      }
+    ],
+    "exemption_assessment": {
+      "required_now": false,
+      "reason": "NO_SURFACE_HAS_A_VALID_NONCONFORMANCE_JUSTIFICATION_REQUIRING_EXEMPTION_IN_THIS_RECONCILIATION; identified gaps have explicit repair/retry paths.",
+      "register": "data/organization-role-exemption-register.json",
+      "silent_non_conformance_allowed": false
+    },
+    "completion_effect": "NONE_GOAL_REMAINS_ACTIVE_SOURCE_CONFORMANCE_REPAIRS_REMAIN"
+  },
+  "prompt_ceiling_reconciliation_20261007": {
+    "goal_prompt_count": "20/20",
+    "parent_disposition": "RETIRED_DECOMPOSED_AT_PROMPT_LIMIT",
+    "closed_on_current_main": [
+      "SDK_GENERIC_MANIFEST_CAPABILITY_ROUTE_BINDING",
+      "LLM_ADAPTER_GENERIC_SDK_ROUTE_DELEGATION",
+      "MIR_RETURN_CANONICAL_SDK_MANIFEST_INGRESS",
+      "STEGOS_GENERIC_SDK_MANIFEST_INTR_PROFILE_AND_RECEIVING_OWNER",
+      "ECOSYSTEM_SURFACE_INVENTORY_CENSUS",
+      "MASTER_RECORDS_BOUNDARY_CONFORMANT"
+    ],
+    "successor_task_ids": [
+      "SDK-MANIFEST-TVC-LINEAGE-CONFORMANCE-001",
+      "SDK-MANIFEST-STEGCORE-ENTRY-CONFORMANCE-001",
+      "SDK-MANIFEST-COLLAB-INGRESS-CONFORMANCE-001",
+      "SDK-MANIFEST-IDENTITY-ROUTING-REGRESSION-GATE-001",
+      "SDK-MANIFEST-ECOSYSTEM-TRANSITION-DISPOSITION-001"
+    ],
+    "master_records_boundary": "Organization records and reconstruction only; non-gating; no general runtime/admission/closure authority",
+    "runtime_predicates_transferred_to": "SDK-MANIFEST-ECOSYSTEM-TRANSITION-DISPOSITION-001",
+    "completion_claimed": false
+  }
+}
