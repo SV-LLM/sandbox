@@ -58,8 +58,8 @@ TOOL_REPAIRS = {
         "Supply hb_epoch (ASCII digits >= 32; and issued_epoch if given): the lease time is the supplied epoch's "
         "HB32 instant, never a clock (runtime/lease_time.py).",
         "Call invoke again with the supplied epoch; no lease was issued and no browser launched."),
-    "INVOCATION_ALREADY_COMPLETED": (
-        "Reconcile the existing successful tool observation and its organization receipt; "
+    "INVOCATION_RECONCILIATION_REQUIRED": (
+        "Reconcile the prior dispatched tool observation and its organization receipt; "
         "the admitted invocation must not dispatch a second provider action.",
         "Use the retained observation and its original receipt. Admit a separately authorized "
         "invocation_id for a genuinely new provider action."),
@@ -201,16 +201,15 @@ class StegBrowserTool:
         inv, problem = self._invocation(work, invocation_id)
         if problem:
             return deny(problem)
-        # Durable ledger readback, not process-local memory: do not repeat an
-        # already successful consequential invocation. This narrows replay
-        # risk but does not replace atomic native reservation for concurrent
-        # and indeterminate submissions.
+        # Durable ledger readback, not process-local memory: any prior dispatched
+        # invocation might have submitted remotely, including on FAIL_CLOSED.
+        # Never blindly retry it; atomic native reservation is still required
+        # to protect concurrent starts before a first observation is recorded.
         for prior in self.sandbox.observations(work_id):
             evidence = prior.get("evidence", {})
             if (evidence.get("invocation_id") == invocation_id
-                    and evidence.get("disposition") == "ALLOW"
                     and evidence.get("stegbrowser_invoked") is True):
-                return deny("INVOCATION_ALREADY_COMPLETED", disposition="FAIL_CLOSED")
+                return deny("INVOCATION_RECONCILIATION_REQUIRED", disposition="FAIL_CLOSED")
         refused = lease_time.lease_time_refusal(hb_epoch) or (
             lease_time.lease_time_refusal(issued_epoch, field="issued_epoch") if issued_epoch is not None else None)
         if refused is not None:
