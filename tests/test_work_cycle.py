@@ -137,6 +137,68 @@ class WorkCycleEndToEnd(unittest.TestCase):
         self.assertEqual([c.get("egress") for c in again["close"]], [None])
         self.assertEqual(len(chain(self.base / "org-ledger")), len(org))
 
+    def test_participants_derived_from_declarations_route_without_consulting_availability(self):
+        self.send(manifest("work-cycle-derive-001", participants="DERIVE_FROM_DECLARATIONS"))
+        out = self.run_pass()
+        taken, = out["intake"]
+        self.assertEqual(taken["admit"]["disposition"], "ALLOW", taken["admit"])
+        self.assertEqual(taken["routing"]["disposition"], "ALLOW", taken["routing"])
+        # The organization tree's row order decides precedence (OpenAI precedes Anthropic there), never the name.
+        self.assertEqual(taken["routing"]["participants"], [{"entity": "OpenAI", "capability": "adversarial_review"}])
+        self.assertEqual(taken["routing"]["evidence"]["alternates"], {"adversarial_review": ["Anthropic"]})
+        self.assertEqual(taken["routing"]["evidence"]["order"], ["OpenAI", "Anthropic"])
+        self.assertEqual([a["disposition"] for a in taken["assign"] + taken["request"]], ["ALLOW"] * 2)
+        closed, = out["close"]
+        self.assertEqual(closed["complete"]["disposition"], "ALLOW")
+        self.assertIs(closed["egress"]["awaits_receiver"], False)
+
+    def test_a_question_drives_the_cycle_from_the_entity_classifier_to_a_result(self):
+        """question text -> Ecosystem_Chat classify.select -> requested capabilities -> participants derived from
+        declarations in tree order -> request -> answer -> result. No model, no network, declarations only."""
+        classify = load("sv_llm_ecosystem_chat_classify", REAL / "Ecosystem_Chat/classify.py")
+        chat = Entity(REAL / "Ecosystem_Chat/core.py", REAL / "Ecosystem_Chat/entity-capability.json")
+        declared = json.loads(chat.declaration)["capabilities"]
+        selection = classify.select({"text": "Do the entity-capability contracts in SV-LLM/.github and "
+                                              "Ecosystem_Chat agree on the binding?"}, declared)
+        self.assertEqual(selection["disposition"], "ALLOW", selection)
+        self.assertEqual(selection["selected"][0], "cross_repository_contract_analysis")
+        self.cycle.entities = {**self.entities, "Ecosystem_Chat": chat}
+        m = manifest("work-cycle-question-001", participants="DERIVE_FROM_DECLARATIONS")
+        m["payload"]["work"]["requested_capabilities"] = selection["selected"][:1]
+        m["payload"]["work"]["permitted_capabilities"] = selection["selected"][:1]
+        self.send(m)
+        out = self.run_pass()
+        taken, = out["intake"]
+        # Ecosystem_Chat precedes every provider on the tree and declares the capability, so it carries the request.
+        self.assertEqual(taken["routing"]["participants"],
+                         [{"entity": "Ecosystem_Chat", "capability": "cross_repository_contract_analysis"}])
+        self.assertEqual(taken["routing"]["evidence"]["order"][0], "Ecosystem_Chat")
+        self.assertEqual([a["disposition"] for a in taken["assign"] + taken["request"]], ["ALLOW", "ALLOW"])
+        self.assertEqual([(r["disposition"], r["status"]) for r in out["respond"]], [("ALLOW", "UNAVAILABLE")])
+        closed, = out["close"]
+        self.assertEqual(closed["complete"]["disposition"], "ALLOW")
+        self.assertIs(closed["egress"]["awaits_receiver"], False)
+
+    def test_an_underivable_request_is_refused_with_six_fields_and_recorded(self):
+        # Every vendored provider declares the whole vocabulary, so narrow the registered declarations
+        # to one that lacks adversarial_review: routing must then refuse, consulting nothing else.
+        from types import SimpleNamespace
+        narrowed = {"schema": "sv-llm.entity-capability/v0.1", "capabilities": ["reasoning"]}
+        self.cycle.entities = {n: SimpleNamespace(name=n, declaration=json.dumps({**narrowed, "entity": n}).encode())
+                               for n in self.entities}
+        self.send(manifest("work-cycle-derive-002", participants="DERIVE_FROM_DECLARATIONS"))
+        taken, = self.run_pass()["intake"]
+        self.assertEqual(taken["admit"]["disposition"], "ALLOW")
+        self.assertEqual(taken["routing"]["disposition"], "FAIL_CLOSED")
+        refused, = taken["assign"]
+        self.assertEqual((refused["disposition"], refused["failed_predicate"]),
+                         ("DENY", "PARTICIPANTS_DERIVABLE_FROM_DECLARATIONS"))
+        six = refused["routing"]
+        self.assertEqual(six["failed_predicate"], "EVERY_REQUESTED_CAPABILITY_DECLARED_BY_A_REGISTERED_ENTITY")
+        self.assertEqual(sorted(six), ["failed_predicate", "failure_code", "next_attempt", "owning_existing_goal",
+                                       "required_evidence_or_repair", "retry_entrypoint"])
+        self.assertEqual(taken["request"], [])
+
     def test_a_request_without_an_entity_surface_stays_outstanding_and_nothing_waits(self):
         self.send(manifest("work-cycle-002"))
         c = self.cycle

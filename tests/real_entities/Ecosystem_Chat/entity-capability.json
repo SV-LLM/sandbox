@@ -1,0 +1,75 @@
+{
+  "schema": "sv-llm.entity-capability/v0.1",
+  "entity": "Ecosystem_Chat",
+  "repository": "Ecosystem_Chat",
+  "role": "ECOSYSTEM_INTERFACE_INTELLIGENCE",
+  "authority_effect": "NONE",
+  "accepts": {
+    "work_schema": "sv-llm.sandbox-work/v0.1",
+    "canonical_context_by_reference": true
+  },
+  "capabilities": [
+    "reasoning",
+    "synthesis",
+    "document_analysis",
+    "cross_repository_contract_analysis",
+    "forward_disposition_inference"
+  ],
+  "contribution": {
+    "contribution_schema": "sv-llm.contribution/v0.1",
+    "epistemic_states": [
+      "OBSERVED",
+      "DERIVED",
+      "PROJECTED"
+    ],
+    "statuses": [
+      "CONTRIBUTED",
+      "REFUSED",
+      "UNAVAILABLE",
+      "FAILED"
+    ],
+    "preserve_disagreement": true,
+    "preserve_refusal": true,
+    "transitive_provenance": true
+  },
+  "interface_constraints": {
+    "capability_basis": "DECLARED",
+    "coordination_contract": "SV-LLM/.github",
+    "semantic_contracts": [
+      "contracts/ecosystem-interface.json",
+      "contracts/sandbox-participation.json",
+      "contracts/sdk-interaction.json",
+      "contracts/return-path.json"
+    ],
+    "public_implementation": {
+      "repository": "StegVerse-Labs/Site",
+      "surface": "Ecosystem Chat",
+      "runtime_availability_claimed_here": false
+    },
+    "crossing": {
+      "scope": "ACTUAL_INTER_ORGANIZATION_TRANSITIONS_ONLY",
+      "boundary": "organization .github -> Interlock/InTr -> destination organization .github",
+      "transition_authority": "Interlock/InTr",
+      "manifest_determines_destination": true,
+      "transport_in_this_repository": false,
+      "credential_authority": "TV/TVC",
+      "credential_material_in_this_repository": false
+    },
+    "browser_interaction": {
+      "ephemeral_browser_permitted": true,
+      "browser_grants_transition_authority": false,
+      "ordinary_https_is_not_itself_intr": true
+    }
+  },
+  "prohibited": [
+    "GOVERNANCE_DISPOSITION",
+    "TASK_REGISTRY_AUTHORITY",
+    "WORKER_CLAIM_AUTHORITY",
+    "TRANSITION_AUTHORITY",
+    "CREDENTIAL_AUTHORITY",
+    "PUBLISHER_AUTHORITY",
+    "MASTER_RECORDS_ORGANIZATION_RECORD",
+    "DIRECT_CONSEQUENCE_EXECUTION",
+    "MODEL_CONSENSUS_AS_TRUTH"
+  ]
+}
