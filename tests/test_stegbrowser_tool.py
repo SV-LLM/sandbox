@@ -233,20 +233,30 @@ class FinalOriginChecks(Base):
         approved.continue_.assert_called_once()
         approved.abort.assert_not_called()
 
-    def test_non_navigation_resource_retains_browser_control(self):
+    def test_all_outbound_resources_require_manifested_origin(self):
         pw = factory()
         out = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=pw)
         self.assertEqual(out["disposition"], ALLOW)
         context = (pw.return_value.__enter__.return_value.chromium.launch.return_value
                    .new_context.return_value)
         callback = context.route.call_args.args[1]
-        request = MagicMock()
-        request.is_navigation_request.return_value = False
-        request.url = "https://static.example.test/script.js"
-        routed = MagicMock()
-        callback(routed, request)
-        routed.continue_.assert_called_once()
-        routed.abort.assert_not_called()
+        for url, admitted in (
+            ("https://space.example.test/script.js", True),
+            ("https://static.example.test/script.js", False),
+            ("https://outside.example.test/frame", False),
+            ("http://space.example.test/insecure", False),
+        ):
+            with self.subTest(url=url):
+                request, routed = MagicMock(), MagicMock()
+                request.is_navigation_request.return_value = False
+                request.url = url
+                callback(routed, request)
+                if admitted:
+                    routed.continue_.assert_called_once()
+                    routed.abort.assert_not_called()
+                else:
+                    routed.abort.assert_called_once()
+                    routed.continue_.assert_not_called()
 
     def test_redirected_final_page_host_is_retained_when_allowed(self):
         pw = factory()
