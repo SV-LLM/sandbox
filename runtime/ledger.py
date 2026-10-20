@@ -197,6 +197,77 @@ class Ledger:
                 return receipt
         raise ValueError("REPO_LEDGER_APPEND_CONTENTION_EXHAUSTED")
 
+    def reserve_invocation(self, work_id: str, invocation_id: str, *, hb_epoch: Any = None) -> dict[str, Any]:
+        """Atomically reserve an original invocation on the existing repository ledger.
+
+        A retained reservation is never automatically released on an interrupted or
+        indeterminate dispatch. The existing store's HEAD compare-and-swap, or the
+        existing POSIX ledger append lock, serializes the uniqueness check and the
+        receipt append. This is local custody, not WorkerCoordinator authority.
+        """
+        if not all(isinstance(x, str) and x.strip() for x in (work_id, invocation_id)):
+            raise ValueError("INVOCATION_IDENTITY_INVALID")
+        epoch = require_supplied_epoch(self.hb_epoch if hb_epoch is None else hb_epoch)
+        evidence = {"disposition": "ALLOW", "work_id": work_id,
+                    "invocation_id": invocation_id, "authority_effect": "NONE"}
+        transition_class = "SANDBOX_TOOL_INVOCATION_RESERVED"
+        predecessor = sha({"work_id": work_id, "invocation_id": invocation_id, "state": "UNRESERVED"})
+        successor = sha({"work_id": work_id, "invocation_id": invocation_id, "state": "RESERVED"})
+
+        def already_reserved(cursor: str | None) -> bool:
+            visited = set()
+            while cursor is not None:
+                if cursor in visited:
+                    raise ValueError("RECEIPT_CHAIN_CYCLE")
+                visited.add(cursor)
+                receipt = self._read_receipt(cursor)
+                claimed = receipt.get("receipt_sha256")
+                if claimed != cursor or sha({k: v for k, v in receipt.items()
+                                               if k != "receipt_sha256"}) != cursor:
+                    raise ValueError("RECEIPT_HASH_MISMATCH")
+                e = receipt.get("evidence") or {}
+                if (receipt.get("transition_class") == transition_class
+                        and e.get("work_id") == work_id
+                        and e.get("invocation_id") == invocation_id):
+                    return True
+                cursor = receipt.get("previous_receipt_sha256")
+            return False
+
+        if self.store is not None:
+            for _ in range(APPEND_ATTEMPTS):
+                expected_head = self.store.get(HEAD_KEY)
+                prev = (expected_head or {}).get("receipt_sha256")
+                if already_reserved(prev):
+                    raise ValueError("INVOCATION_RECONCILIATION_REQUIRED")
+                body = self._body(transition_class, predecessor, successor, evidence, prev, epoch)
+                digest = sha(body)
+                key = receipt_key(digest)
+                if self.store.get(key) is not None:
+                    raise ValueError("INVOCATION_RECONCILIATION_REQUIRED")
+                receipt = {**body, "receipt_sha256": digest}
+                next_head = {"repository": REPOSITORY, "receipt_sha256": digest,
+                             "receipt_path": self.store.locator(key)}
+                if self.store.append_transaction(key, receipt, expected_head, next_head):
+                    return receipt
+            raise ValueError("REPO_LEDGER_APPEND_CONTENTION_EXHAUSTED")
+
+        self.receipts_dir.mkdir(parents=True, exist_ok=True)
+        with (self.root / ".append.lock").open("a+b") as lock:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            prev = json.loads(self.head.read_text())["receipt_sha256"] if self.head.exists() else None
+            if already_reserved(prev):
+                raise ValueError("INVOCATION_RECONCILIATION_REQUIRED")
+            body = self._body(transition_class, predecessor, successor, evidence, prev, epoch)
+            digest = sha(body)
+            receipt = {**body, "receipt_sha256": digest}
+            path = self.receipts_dir / (digest[7:] + ".json")
+            if path.exists():
+                raise ValueError("INVOCATION_RECONCILIATION_REQUIRED")
+            _atomic_write(path, receipt)
+            _atomic_write(self.head, {"repository": REPOSITORY, "receipt_sha256": digest,
+                                      "receipt_path": str(path)})
+            return receipt
+
     def append(self, transition_class: str, *, predecessor: str, successor: str,
                evidence: dict[str, Any], hb_epoch: Any = None) -> dict[str, Any]:
         """Append one receipt at the supplied epoch (this call's, else the ledger's); refused six-field otherwise."""
