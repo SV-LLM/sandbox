@@ -77,6 +77,11 @@ class AdapterAcceptsDerivedInvocation(unittest.TestCase):
         work = h.work(manifested_request={"manifest_id": "at04", "tool_invocations": [inv]})
         self.assertEqual(h.admit(work)["disposition"], ALLOW)
         pw = factory(text=f"STEGVERSE_CONFORMANCE_V1 {inv['prompt']}")
+        # The browser's final URL must be supplied by the Playwright fixture;
+        # a requested host is no longer accepted as observed redirect evidence.
+        page = (pw.return_value.__enter__.return_value.chromium.launch.return_value
+                .new_context.return_value.new_page.return_value)
+        page.url = inv["secure_url"]
         out = StegBrowserTool(h.sandbox).invoke("fixture-work-001", inv["invocation_id"], hb_epoch=EPOCH, playwright_factory=pw)
         self.assertEqual(out["disposition"], ALLOW, out)
         e = next(r for r in h.sandbox.ledger.chain() if r["receipt_sha256"] == out["repo_receipt_sha256"])["evidence"]
