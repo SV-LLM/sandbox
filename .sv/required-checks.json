@@ -82,6 +82,12 @@
       "expected_outcome": "PASS"
     },
     {
+      "id": "test-lease-time-supplied-epoch",
+      "kind": "python-unittest",
+      "target": "tests/test_lease_time_supplied_epoch.py",
+      "expected_outcome": "PASS"
+    },
+    {
       "id": "test-work-cycle",
       "kind": "python-unittest",
       "target": "tests/test_work_cycle.py",

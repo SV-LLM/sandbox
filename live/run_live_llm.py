@@ -372,7 +372,7 @@ def main(argv=None, *, playwright_factory=None) -> int:
             "participation_policy": {"mode": "SINGLE"},
             "expected_output_or_handoff": {"successor_transition_class": "SANDBOX_SYNTHESIS_RECORDED"}}
     admitted = sb.admit(json.dumps(work).encode(), parent_repo_receipt=parent_repo, parent_org_receipt=parent_org, subject=subject)
-    obs = StegBrowserTool(sb).invoke(work["work_id"], inv["invocation_id"], playwright_factory=playwright_factory)
+    obs = StegBrowserTool(sb).invoke(work["work_id"], inv["invocation_id"], hb_epoch=hb_epoch, playwright_factory=playwright_factory)
     synth = sb.synthesize(work["work_id"], [obs["observation_id"]], {"summary": "AT-04 Stage 1 StegBrowser live-path conformance; no provider attribution"})
     done = sb.complete(work["work_id"])
     readback = [keyed_readback(agg, store, org, source) for org, source in appended]
