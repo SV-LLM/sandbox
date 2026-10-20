@@ -177,7 +177,7 @@ class NonAllow(Base):
             self.assertTrue(e["terminal_receipt"]["session_state_destroyed"])
             assert_six_fields(self, e)
         stages = [r["evidence"]["attempt"] for r in self.s.observations(WORK)]
-        self.assertEqual(stages, [1, 2, 3])
+        self.assertEqual(stages, [1, 1, 1])  # independent admitted invocations
 
 
 
