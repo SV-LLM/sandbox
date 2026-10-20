@@ -73,7 +73,13 @@ class LaneCase(unittest.TestCase):
                 os.environ[live.SANDBOX_REPO_LEDGER_ROOT] = self.sandbox_ledger
             elif sandbox_ledger:
                 os.environ[live.SANDBOX_REPO_LEDGER_ROOT] = sandbox_ledger
-            code = live.main(list(argv), playwright_factory=playwright or factory(text=REPLY))
+            pw = playwright or factory(text=REPLY)
+            # Retain the browser's own observed final page URL in the mock.
+            # The requested endpoint alone must not be accepted as final-origin evidence.
+            page = (pw.return_value.__enter__.return_value.chromium.launch.return_value
+                    .new_context.return_value.new_page.return_value)
+            page.url = TARGET["secure_url"]
+            code = live.main(list(argv), playwright_factory=pw)
         report = json.loads((self.evidence / "report.json").read_text())
         digests = json.loads((self.evidence / "digests.json").read_text())
         return code, report, digests
