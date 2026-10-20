@@ -39,6 +39,7 @@ def factory(*, text=f"{MARKER}: a reply.", fail_launch=False, status=200):
     context = browser.new_context.return_value
     page = context.new_page.return_value
     page.goto.return_value.status = status
+    page.url = "https://space.example.test/chat"
     page.locator.return_value.all_inner_texts.return_value = [text]
     if fail_launch:
         p.chromium.launch.side_effect = RuntimeError("synthetic launch failure")
@@ -181,6 +182,43 @@ class NonAllow(Base):
         stages = [r["evidence"]["attempt"] for r in self.s.observations(WORK)]
         self.assertEqual(stages, [1, 1, 1])  # independent admitted invocations
 
+
+
+class FinalOriginChecks(Base):
+    def test_redirect_to_disallowed_host_refuses_before_dom_action(self):
+        pw = factory()
+        page = (pw.return_value.__enter__.return_value.chromium.launch.return_value
+                .new_context.return_value.new_page.return_value)
+        page.url = "https://unexpected.example.test/chat"
+        out = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=pw)
+        evidence = self.obs(out)
+        self.assertEqual(evidence["disposition"], "FAIL_CLOSED")
+        self.assertEqual(evidence["evaluation_stage"], "BROWSER_NAVIGATION")
+        page.locator.assert_not_called()
+        self.assertIsNone(evidence["observed_origin"])
+
+    def test_redirect_after_fill_refuses_before_press(self):
+        pw = factory()
+        page = (pw.return_value.__enter__.return_value.chromium.launch.return_value
+                .new_context.return_value.new_page.return_value)
+        locator = page.locator.return_value
+        def redirected_fill(_):
+            page.url = "https://unexpected.example.test/chat"
+        locator.fill.side_effect = redirected_fill
+        out = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=pw)
+        evidence = self.obs(out)
+        self.assertEqual(evidence["disposition"], "FAIL_CLOSED")
+        self.assertEqual(evidence["evaluation_stage"], "BROWSER_ACTION")
+        locator.press.assert_not_called()
+
+    def test_redirected_final_page_host_is_retained_when_allowed(self):
+        pw = factory()
+        out = self.tool.invoke(WORK, "inv-1", hb_epoch=EPOCH, playwright_factory=pw)
+        evidence = self.obs(out)
+        self.assertEqual(evidence["disposition"], ALLOW)
+        self.assertEqual(evidence["observed_origin"], "space.example.test")
+        self.assertEqual(evidence["observed_origin_basis"],
+                         "BROWSER_PAGE_URL_CHECKED_AFTER_NAVIGATION_AND_EACH_ACTION")
 
 
 class SuccessfulInvocationReplay(Base):
