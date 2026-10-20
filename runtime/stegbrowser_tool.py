@@ -58,6 +58,11 @@ TOOL_REPAIRS = {
         "Supply hb_epoch (ASCII digits >= 32; and issued_epoch if given): the lease time is the supplied epoch's "
         "HB32 instant, never a clock (runtime/lease_time.py).",
         "Call invoke again with the supplied epoch; no lease was issued and no browser launched."),
+    "INVOCATION_CUSTODY_UNAVAILABLE": (
+        "Restore the existing repository-ledger atomic reservation and sovereign "
+        "propagation path; do not launch Chromium without a durable reservation.",
+        "Reconcile repository/organization ledgers and retry only with an "
+        "authorized fresh invocation identity."),
     "INVOCATION_RECONCILIATION_REQUIRED": (
         "Reconcile the prior dispatched tool observation and its organization receipt; "
         "the admitted invocation must not dispatch a second provider action.",
@@ -243,6 +248,21 @@ class StegBrowserTool:
                    "local_disposition": None, "local_receipt_commitment": None, "terminal_receipt": None,
                    "result_commitment": None, "result": None}
             return self.sandbox.record_tool_observation(obs)
+        # Atomic original-invocation reservation is a distinct, pre-dispatch
+        # repository-ledger transition. Its native propagation must succeed.
+        # A lost response keeps the reservation: never auto-retry a submission.
+        try:
+            reservation = self.sandbox.reserve_tool_invocation(work_id, invocation_id)
+        except ValueError as exc:
+            if str(exc) == "INVOCATION_RECONCILIATION_REQUIRED":
+                return deny("INVOCATION_RECONCILIATION_REQUIRED", disposition="FAIL_CLOSED", **known)
+            return deny("INVOCATION_CUSTODY_UNAVAILABLE", disposition="FAIL_CLOSED", **known)
+        except Exception:
+            return deny("INVOCATION_CUSTODY_UNAVAILABLE", disposition="FAIL_CLOSED", **known)
+        if reservation.get("disposition") != "ALLOW" or (
+                self.sandbox.propagate is not None
+                and not reservation.get("org_receipt_sha256")):
+            return deny("INVOCATION_CUSTODY_UNAVAILABLE", disposition="FAIL_CLOSED", **known)
         with lease_time.supplied(at):
             outcome = self.transition.execute_manifested_llm_browser_transition(
                 req, lease, playwright_factory=playwright_factory)
