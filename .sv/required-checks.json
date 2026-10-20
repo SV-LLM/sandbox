@@ -1,0 +1,97 @@
+{
+  "schema": "stegverse.sv-change.required-checks-declaration/v0-interim",
+  "declaration_basis": "INTERIM until P1's SV-CHANGE-REQUIRED-CHECKS-001 row is published (StegVerse-org/.github#163)",
+  "source_workflow": ".github/workflows/sandbox-runtime.yml (job validate): the same steps, offline",
+  "dependencies": [
+    {
+      "id": "sv-llm-dotgithub",
+      "repository": "SV-LLM/.github",
+      "commit": "06575f0bdb31c362a467cdd1c335ad08b31563b5",
+      "env": "SV_LLM_DOTGITHUB_ROOT"
+    }
+  ],
+  "checks": [
+    {
+      "id": "test-sandbox-runtime",
+      "kind": "python-unittest",
+      "target": "tests/test_sandbox_runtime.py",
+      "expected_outcome": "PASS"
+    },
+    {
+      "id": "test-real-entity-regression",
+      "kind": "python-unittest",
+      "target": "tests/test_real_entity_regression.py",
+      "expected_outcome": "PASS"
+    },
+    {
+      "id": "test-stegbrowser-upstream-runner",
+      "kind": "python-unittest",
+      "target": "tests/test_stegbrowser_upstream_runner.py",
+      "expected_outcome": "PASS"
+    },
+    {
+      "id": "run-stegbrowser-upstream",
+      "kind": "argv",
+      "argv": [
+        "python",
+        "-B",
+        "tests/run_stegbrowser_upstream.py"
+      ],
+      "expected_outcome": "PASS"
+    },
+    {
+      "id": "test-stegbrowser-tool",
+      "kind": "python-unittest",
+      "target": "tests/test_stegbrowser_tool.py",
+      "expected_outcome": "PASS"
+    },
+    {
+      "id": "test-live-target",
+      "kind": "python-unittest",
+      "target": "tests/test_live_target.py",
+      "expected_outcome": "PASS"
+    },
+    {
+      "id": "test-live-lanes",
+      "kind": "python-unittest",
+      "target": "tests/test_live_lanes.py",
+      "expected_outcome": "PASS"
+    },
+    {
+      "id": "test-provider-capability",
+      "kind": "python-unittest",
+      "target": "tests/test_provider_capability.py",
+      "expected_outcome": "PASS"
+    },
+    {
+      "id": "test-conformance-proposal",
+      "kind": "python-unittest",
+      "target": "tests/test_conformance_proposal.py",
+      "expected_outcome": "PASS"
+    },
+    {
+      "id": "test-page-load-tool",
+      "kind": "python-unittest",
+      "target": "tests/test_page_load_tool.py",
+      "expected_outcome": "PASS"
+    },
+    {
+      "id": "test-ledger-supplied-epoch",
+      "kind": "python-unittest",
+      "target": "tests/test_ledger_supplied_epoch.py",
+      "expected_outcome": "PASS"
+    },
+    {
+      "id": "test-lease-time-supplied-epoch",
+      "kind": "python-unittest",
+      "target": "tests/test_lease_time_supplied_epoch.py",
+      "expected_outcome": "PASS"
+    },
+    {
+      "id": "test-work-cycle",
+      "kind": "python-unittest",
+      "target": "tests/test_work_cycle.py",
+      "expected_outcome": "PASS"
+    }
+  ]
+}
