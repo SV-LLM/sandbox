@@ -106,12 +106,14 @@ class _Context:
         # sent. A post-navigation page.url check alone is too late to prevent
         # an out-of-scope redirect from reaching its destination.
         def route_guard(route, request):
-            if request.is_navigation_request():
-                try:
-                    checked_host(request.url, self._origins)
-                except FinalOriginRefused:
-                    route.abort()
-                    return
+            # Every outbound request is a network action, not just top-level
+            # navigation. A third-party script, frame, image or fetch must not
+            # bypass the exact origin set admitted by the original manifest.
+            try:
+                checked_host(request.url, self._origins)
+            except FinalOriginRefused:
+                route.abort()
+                return
             route.continue_()
         self._context.route("**/*", route_guard)
 
