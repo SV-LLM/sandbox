@@ -43,6 +43,7 @@ sys.path.insert(0, str(VENDOR.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sandbox import deny_fields, OWNING_EXISTING_GOAL  # noqa: E402
 import lease_time  # noqa: E402
+from browser_origin_guard import guarded_factory  # noqa: E402
 MANIFEST = json.loads((VENDOR / "vendor-manifest.json").read_text())
 TOOL, PROFILE = "StegBrowser", "llm.v1"
 LEASE_SCHEMA = "stegbrowser.ecosystem-ephemeral-lease.v1"
@@ -263,9 +264,18 @@ class StegBrowserTool:
                 self.sandbox.propagate is not None
                 and not reservation.get("org_receipt_sha256")):
             return deny("INVOCATION_CUSTODY_UNAVAILABLE", disposition="FAIL_CLOSED", **known)
+        # The Playwright page's final URL is checked after navigation and both
+        # before and after every manifested DOM action. This cannot treat the
+        # requested secure_url as evidence of the redirected destination.
+        origin_observations = []
+        if playwright_factory is None:
+            from playwright.sync_api import sync_playwright
+            playwright_factory = sync_playwright
+        def admitted_playwright():
+            return guarded_factory(playwright_factory, inv["allowed_origins"], origin_observations)
         with lease_time.supplied(at):
             outcome = self.transition.execute_manifested_llm_browser_transition(
-                req, lease, playwright_factory=playwright_factory)
+                req, lease, playwright_factory=admitted_playwright)
         receipt, executed = outcome["receipt"], outcome.get("execution_result")
         result = None
         if executed is not None:
@@ -285,8 +295,9 @@ class StegBrowserTool:
                "owning_existing_goal": OWNING_EXISTING_GOAL if outcome["disposition"] != "ALLOW" else None,
                "next_attempt": STEGBROWSER_NEXT_ATTEMPT if outcome["disposition"] != "ALLOW" else None,
                "terminal_receipt": receipt["terminal_receipt"],
-               "observed_origin": host if receipt["evaluation_stage"] in NAVIGATED_STAGES else None,
-               "observed_origin_basis": "REQUESTED_SECURE_URL_HOST_AFTER_SUCCESSFUL_NAVIGATION; final URL after redirects is not reported by StegBrowser",
+               "observed_origin": origin_observations[-1] if origin_observations else None,
+               "observed_origin_basis": ("BROWSER_PAGE_URL_CHECKED_AFTER_NAVIGATION_AND_EACH_ACTION"
+                                         if origin_observations else "FINAL_PAGE_URL_NOT_OBSERVED"),
                "result_commitment": executed["result"]["response_commitment"] if executed else None,
                "result": result}
         return self.sandbox.record_tool_observation(obs)
