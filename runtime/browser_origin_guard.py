@@ -102,6 +102,18 @@ class _Context:
         self._context = context
         self._origins = origins
         self._observations = observations
+        # Playwright navigation routing runs before the redirected request is
+        # sent. A post-navigation page.url check alone is too late to prevent
+        # an out-of-scope redirect from reaching its destination.
+        def route_guard(route, request):
+            if request.is_navigation_request():
+                try:
+                    checked_host(request.url, self._origins)
+                except FinalOriginRefused:
+                    route.abort()
+                    return
+            route.continue_()
+        self._context.route("**/*", route_guard)
 
     def new_page(self):
         return _Page(self._context.new_page(), self._origins, self._observations)
