@@ -283,7 +283,7 @@ class SixFieldDeny(unittest.TestCase):
     def test_every_deny_call_site_is_covered(self):
         tree = ast.parse((ROOT / "runtime/sandbox.py").read_text())
         calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and getattr(n.func, "attr", None) == "_deny"]
-        self.assertEqual(len(calls), 27)
+        self.assertEqual(len(calls), 28)
         for call in calls:
             self.assertIn(call.args[0].value, DENY_ENTRYPOINTS)
             if isinstance(call.args[2], ast.Constant):  # registration/canon predicates use the generic pair

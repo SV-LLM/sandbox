@@ -7,7 +7,8 @@ Derivation is a pure function of (a) the work's requested capabilities and (b) t
 registered entities' own contracts/entity-capability.json declarations, taken in
 a fixed order. No model is called, nothing is fetched, no availability of any
 entity is checked: an entity is routed because it declares the capability, and
-it answers later in the cycle or its request stays outstanding (nothing waits).
+it answers later in the cycle, or its request terminates at E0 as UNAVAILABLE
+ENTITY_SURFACE_NOT_SUPPLIED (runtime/work_cycle.py::respond; nothing waits).
 
 Each requested capability is routed to the first declaring entity in order; every
 other declaring entity is recorded as an alternate in the evidence. A capability
