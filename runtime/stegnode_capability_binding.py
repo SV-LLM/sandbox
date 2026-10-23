@@ -13,7 +13,7 @@ TIERS = {"SECURE": 1, "HIGH": 2, "HIGHEST": 3}
 
 def evaluate_binding(*, public: bool, node: dict | None = None,
                      posture: dict | None = None, manifest: dict | None = None,
-                     required_tier: str = "SECURE") -> dict:
+                     required_tier: str = "SECURE", posture_verifier=None) -> dict:
     base = {"schema": SCHEMA, "authority_effect": "NONE",
             "node_registration_created": False, "credential_material_persisted": False}
     def result(disposition, predicate):
@@ -36,7 +36,7 @@ def evaluate_binding(*, public: bool, node: dict | None = None,
         return result("FAIL_CLOSED", "AUTHENTIC_MANIFEST_ADMISSION_NOT_OBSERVED")
     if instance.get("task_id") != manifest["task_id"]:
         return result("DENY", "POSTURE_INSTANCE_TASK_BINDING_MISMATCH")
-    if posture.get("instance_verified") is not True:
+    if not callable(posture_verifier):\n        return result("FAIL_CLOSED", "AUTHENTIC_INTR_POSTURE_VERIFIER_NOT_BOUND")\n    try:\n        verified = posture_verifier(instance, manifest) is True\n    except Exception:\n        verified = False\n    if not verified:
         return result("FAIL_CLOSED", "POSTURE_INSTANCE_CRYPTOGRAPHIC_VERIFICATION_NOT_OBSERVED")
     return {**result("ALLOW", "EXISTING_NODE_POSTURE_AND_MANIFEST_EVIDENCE_PRESENT"),
             "node_id": node["node_id"], "task_id": manifest["task_id"],
