@@ -42,6 +42,8 @@ VENDOR = Path(__file__).resolve().parent / "vendor" / "stegbrowser_llm"
 sys.path.insert(0, str(VENDOR.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sandbox import deny_fields, OWNING_EXISTING_GOAL  # noqa: E402
+import lease_time  # noqa: E402
+from browser_origin_guard import guarded_factory  # noqa: E402
 MANIFEST = json.loads((VENDOR / "vendor-manifest.json").read_text())
 TOOL, PROFILE = "StegBrowser", "llm.v1"
 LEASE_SCHEMA = "stegbrowser.ecosystem-ephemeral-lease.v1"
@@ -53,6 +55,20 @@ RETRY_PREFIX = "runtime.stegbrowser_tool.StegBrowserTool."
 ENVIRONMENT_PREDICATE = "SANDBOX_ENVIRONMENT_PYTHON_PLAYWRIGHT_CHROMIUM_AVAILABLE"
 # predicate -> (required_evidence_or_repair, next_attempt) for Sandbox-side tool DENY/FAIL_CLOSED.
 TOOL_REPAIRS = {
+    "LEASE_TIME_IS_THE_SUPPLIED_HB_EPOCH": (
+        "Supply hb_epoch (ASCII digits >= 32; and issued_epoch if given): the lease time is the supplied epoch's "
+        "HB32 instant, never a clock (runtime/lease_time.py).",
+        "Call invoke again with the supplied epoch; no lease was issued and no browser launched."),
+    "INVOCATION_CUSTODY_UNAVAILABLE": (
+        "Restore the existing repository-ledger atomic reservation and sovereign "
+        "propagation path; do not launch Chromium without a durable reservation.",
+        "Reconcile repository/organization ledgers and retry only with an "
+        "authorized fresh invocation identity."),
+    "INVOCATION_RECONCILIATION_REQUIRED": (
+        "Reconcile the prior dispatched tool observation and its organization receipt; "
+        "the admitted invocation must not dispatch a second provider action.",
+        "Use the retained observation and its original receipt. Admit a separately authorized "
+        "invocation_id for a genuinely new provider action."),
     "WORK_ID_IS_ADMITTED": (
         "Admit the work item first (a SANDBOX_WORK_ADMITTED receipt for this work_id).",
         "Call Sandbox.admit, then call invoke again for the same work_id."),
@@ -79,8 +95,11 @@ TOOL_REPAIRS = {
         "Install Python Playwright and its Chromium in this environment (or pass a playwright_factory).",
         "Call invoke again where Playwright and Chromium are available; do not wait on another machine."),
 }
-STEGBROWSER_NEXT_ATTEMPT = ("Repair the named StegBrowser stage, then call " + RETRY_PREFIX
-                            + "invoke again for the same work_id and invocation_id (a new attempt is recorded).")
+STEGBROWSER_NEXT_ATTEMPT = (
+    "Reconcile the original dispatched invocation and retained repository/organization receipts. "
+    "A new provider submission requires a separately admitted invocation_id with current "
+    "manifest authority and fresh atomic reservation; never retry an indeterminate dispatch "
+    "using the original invocation_id.")
 
 
 def _host(url: str) -> str | None:
@@ -112,6 +131,8 @@ class StegBrowserTool:
         self.canon = sandbox.canon
         sandbox.registration.verify_vendor(VENDOR)  # AT-01: executed bytes match the manifest
         self.transition = importlib.import_module("stegbrowser_llm.llm_transition")
+        # the vendored lease module's clock fallback reads the supplied epoch's instant instead (runtime/lease_time.py)
+        lease_time.bind(importlib.import_module("stegbrowser_llm.ecosystem_ephemeral"))
 
     # -- admitted data ------------------------------------------------------------
     def _invocation(self, work: Mapping[str, Any], invocation_id: str) -> tuple[dict[str, Any] | None, str | None]:
@@ -165,16 +186,18 @@ class StegBrowserTool:
 
     # -- invocation ---------------------------------------------------------------
     def invoke(self, work_id: str, invocation_id: str, *, proposed: Mapping[str, Any] | None = None,
-               playwright_factory=None, now: datetime | None = None) -> dict[str, Any]:
+               playwright_factory=None, hb_epoch: Any = None, issued_epoch: Any = None) -> dict[str, Any]:
+        """Invoke at the supplied hb_epoch: the lease is issued at issued_epoch (default hb_epoch) and the session
+        opens, authorizes and closes at hb_epoch. Without a supplied epoch: six-field FAIL_CLOSED, no lease."""
         proposed = dict(proposed or {})
         attempt, oid = self._ids(work_id, invocation_id)
         base = {"observation_id": oid, "work_id": work_id, "invocation_id": invocation_id, "attempt": attempt,
                 "tool": TOOL, "tool_profile": PROFILE, "source_commit": MANIFEST["source_commit"],
                 "evidence_refs": []}
 
-        def deny(predicate: str, **known) -> dict[str, Any]:
-            obs = {**base, **deny_fields("invoke", predicate, repairs=TOOL_REPAIRS, retry_prefix=RETRY_PREFIX,
-                                         code_prefix="SANDBOX_TOOL"),
+        def deny(predicate: str, disposition: str = "DENY", **known) -> dict[str, Any]:
+            obs = {**base, **deny_fields("invoke", predicate, disposition=disposition, repairs=TOOL_REPAIRS,
+                                         retry_prefix=RETRY_PREFIX, code_prefix="SANDBOX_TOOL"),
                    "decided_by": "SANDBOX_PRE_INVOCATION", "stegbrowser_invoked": False, "request_commitment": None,
                    "sandbox_request_digest": None, "lease_id": None, "allowed_origins": None,
                    "observed_origin": None, "local_disposition": None, "local_receipt_commitment": None,
@@ -187,7 +210,21 @@ class StegBrowserTool:
         inv, problem = self._invocation(work, invocation_id)
         if problem:
             return deny(problem)
-        issued = now or datetime.now(timezone.utc)
+        # Durable ledger readback, not process-local memory: any prior dispatched
+        # invocation might have submitted remotely, including on FAIL_CLOSED.
+        # Never blindly retry it; atomic native reservation is still required
+        # to protect concurrent starts before a first observation is recorded.
+        for prior in self.sandbox.observations(work_id):
+            evidence = prior.get("evidence", {})
+            if (evidence.get("invocation_id") == invocation_id
+                    and evidence.get("stegbrowser_invoked") is True):
+                return deny("INVOCATION_RECONCILIATION_REQUIRED", disposition="FAIL_CLOSED")
+        refused = lease_time.lease_time_refusal(hb_epoch) or (
+            lease_time.lease_time_refusal(issued_epoch, field="issued_epoch") if issued_epoch is not None else None)
+        if refused is not None:
+            return deny(lease_time.LEASE_TIME_PREDICATE, disposition="FAIL_CLOSED")
+        at = lease_time.instant(hb_epoch)
+        issued = lease_time.instant(issued_epoch) if issued_epoch is not None else at
         journey = self.journey(work_id, inv, attempt, oid)
         req = self.request(inv, journey)
         lease = self.lease(work_id, inv, oid, issued)
@@ -215,8 +252,33 @@ class StegBrowserTool:
                    "local_disposition": None, "local_receipt_commitment": None, "terminal_receipt": None,
                    "result_commitment": None, "result": None}
             return self.sandbox.record_tool_observation(obs)
-        outcome = self.transition.execute_manifested_llm_browser_transition(
-            req, lease, playwright_factory=playwright_factory)
+        # Atomic original-invocation reservation is a distinct, pre-dispatch
+        # repository-ledger transition. Its native propagation must succeed.
+        # A lost response keeps the reservation: never auto-retry a submission.
+        try:
+            reservation = self.sandbox.reserve_tool_invocation(work_id, invocation_id)
+        except ValueError as exc:
+            if str(exc) == "INVOCATION_RECONCILIATION_REQUIRED":
+                return deny("INVOCATION_RECONCILIATION_REQUIRED", disposition="FAIL_CLOSED", **known)
+            return deny("INVOCATION_CUSTODY_UNAVAILABLE", disposition="FAIL_CLOSED", **known)
+        except Exception:
+            return deny("INVOCATION_CUSTODY_UNAVAILABLE", disposition="FAIL_CLOSED", **known)
+        if reservation.get("disposition") != "ALLOW" or (
+                self.sandbox.propagate is not None
+                and not reservation.get("org_receipt_sha256")):
+            return deny("INVOCATION_CUSTODY_UNAVAILABLE", disposition="FAIL_CLOSED", **known)
+        # The Playwright page's final URL is checked after navigation and both
+        # before and after every manifested DOM action. This cannot treat the
+        # requested secure_url as evidence of the redirected destination.
+        origin_observations = []
+        if playwright_factory is None:
+            from playwright.sync_api import sync_playwright
+            playwright_factory = sync_playwright
+        def admitted_playwright():
+            return guarded_factory(playwright_factory, inv["allowed_origins"], origin_observations)
+        with lease_time.supplied(at):
+            outcome = self.transition.execute_manifested_llm_browser_transition(
+                req, lease, playwright_factory=admitted_playwright)
         receipt, executed = outcome["receipt"], outcome.get("execution_result")
         result = None
         if executed is not None:
@@ -236,8 +298,9 @@ class StegBrowserTool:
                "owning_existing_goal": OWNING_EXISTING_GOAL if outcome["disposition"] != "ALLOW" else None,
                "next_attempt": STEGBROWSER_NEXT_ATTEMPT if outcome["disposition"] != "ALLOW" else None,
                "terminal_receipt": receipt["terminal_receipt"],
-               "observed_origin": host if receipt["evaluation_stage"] in NAVIGATED_STAGES else None,
-               "observed_origin_basis": "REQUESTED_SECURE_URL_HOST_AFTER_SUCCESSFUL_NAVIGATION; final URL after redirects is not reported by StegBrowser",
+               "observed_origin": origin_observations[-1] if origin_observations else None,
+               "observed_origin_basis": ("BROWSER_PAGE_URL_CHECKED_AFTER_NAVIGATION_AND_EACH_ACTION"
+                                         if origin_observations else "FINAL_PAGE_URL_NOT_OBSERVED"),
                "result_commitment": executed["result"]["response_commitment"] if executed else None,
                "result": result}
         return self.sandbox.record_tool_observation(obs)

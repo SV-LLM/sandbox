@@ -52,7 +52,7 @@ from typing import Any, Callable
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime"))
-from ledger import Ledger  # noqa: E402
+from ledger import Ledger, epoch_refusal  # noqa: E402
 from sandbox import Sandbox, ALLOW  # noqa: E402
 import conformance_proposal  # noqa: E402
 import capability_routing  # noqa: E402
@@ -96,8 +96,13 @@ class Entity:
 
 class WorkCycle:
     def __init__(self, *, dotgithub: Path, sandbox_ledger: Path, node_state_root: Path,
-                 entities: dict[str, Entity] | None = None):
+                 entities: dict[str, Entity] | None = None, hb_epoch: Any = None):
         self.dotgithub = Path(dotgithub).resolve()
+        # The supplied heartbeat epoch every receipt of this cycle carries, on the
+        # Sandbox ledger, the .github repository ledger and the organization
+        # ledger. Absent or invalid, each append is refused six-field FAIL_CLOSED
+        # (SV_LLM_LEDGER_APPEND_CLOCK_FALLBACK); it is never read from a clock.
+        self.hb_epoch = hb_epoch
         self.crossing = _load("sv_llm_crossing", self.dotgithub / "org-runtime/crossing.py")
         self.kernel = self.crossing.kernel
         self.agg = self.crossing.organization_ledger
@@ -108,13 +113,14 @@ class WorkCycle:
         # Routing precedence is declared by the canonical organization tree's row order, never by name.
         tree = json.loads((self.dotgithub / "data/organization-tree.json").read_text(encoding="utf-8"))
         self.tree_order = [row["name"] for row in tree.get("repositories", []) if isinstance(row, dict) and "name" in row]
-        self.sandbox = Sandbox(dotgithub_root=self.dotgithub, ledger=Ledger(Path(sandbox_ledger)),
+        self.sandbox = Sandbox(dotgithub_root=self.dotgithub, ledger=Ledger(Path(sandbox_ledger), hb_epoch=hb_epoch),
                                propagate=self._propagate)
 
     def _propagate(self, receipt: dict[str, Any], transition_class: str) -> dict[str, Any]:
+        """Propagate a Sandbox receipt to the organization ledger at the supplied epoch (no clock fallback)."""
         return self.agg.aggregate_transition(receipt, org_transition_class=transition_class,
                                              boundary_evidence={"source": "SV-LLM/sandbox"},
-                                             authority_effect="NONE")
+                                             authority_effect="NONE", hb_epoch=self.hb_epoch)
 
     @staticmethod
     def _key(prefix: str, name: str) -> str:
@@ -282,7 +288,8 @@ class WorkCycle:
         declared = (manifest.get("payload") or {}).get("sdk_proposal")
         if declared is not None:
             result["payload"]["sdk_proposal_conformance"] = self._proposal_conformance(declared)
-        emitted = self.crossing.egress(result, standing=standing, mesh_root=mesh_root, root=self.dotgithub)
+        emitted = self.crossing.egress(result, standing=standing, mesh_root=mesh_root, root=self.dotgithub,
+                                     hb_epoch=self.hb_epoch)
         self.node_state.put_once(marker, {"schema": "sv-llm.sandbox-result-marker/v1", "work_id": work["work_id"],
                                           "transition_class": emitted["transition_class"],
                                           "org_receipt_sha256": emitted["org_receipt_sha256"]})
@@ -320,7 +327,8 @@ class WorkCycle:
     # -- one pass -----------------------------------------------------------------------
     def run(self, *, standing: dict[str, Any], mesh_root: Path) -> dict[str, Any]:
         """One pass: boundary ingress, intake, respond, close. Never waits for anything."""
-        ingress = self.crossing.ingress(mesh_root=mesh_root, node_state_root=self.node_state_root, root=self.dotgithub)
+        ingress = self.crossing.ingress(mesh_root=mesh_root, node_state_root=self.node_state_root, root=self.dotgithub,
+                                        hb_epoch=self.hb_epoch)
         return {"ingress": ingress, "intake": self.intake(), "respond": self.respond(),
                 "close": self.close(standing=standing, mesh_root=mesh_root)}
 
@@ -333,10 +341,16 @@ def main() -> int:
     p.add_argument("--sandbox-ledger", type=Path, required=True)
     p.add_argument("--standing", type=Path, required=True)
     p.add_argument("--entity-repo", type=Path, action="append", default=[])
+    p.add_argument("--hb-epoch", type=str, default=None,
+                   help="heartbeat epoch, supplied (ASCII [0-9]+, >= 32); never derived from a clock")
     ns = p.parse_args()
+    refusal = epoch_refusal(ns.hb_epoch)
+    if refusal is not None:
+        print(json.dumps(refusal, sort_keys=True))
+        return 1
     entities = {e.name: e for e in (Entity.from_repo(repo) for repo in ns.entity_repo)}
     cycle = WorkCycle(dotgithub=ns.dotgithub, sandbox_ledger=ns.sandbox_ledger,
-                      node_state_root=ns.node_state_root, entities=entities)
+                      node_state_root=ns.node_state_root, entities=entities, hb_epoch=ns.hb_epoch)
     out = cycle.run(standing=json.loads(ns.standing.read_text()), mesh_root=ns.mesh_root)
     print(json.dumps(out, sort_keys=True))
     return 0

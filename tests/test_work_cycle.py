@@ -74,8 +74,8 @@ class WorkCycleEndToEnd(unittest.TestCase):
         self.entities = {e: Entity(REAL / e / "core.py", REAL / e / "entity-capability.json")
                          for e in ("Anthropic", "OpenAI")}
         self.cycle = WorkCycle(dotgithub=DOTGITHUB, sandbox_ledger=base / "sandbox-ledger",
-                               node_state_root=base / "node-state", entities=self.entities)
-        self.cycle.crossing.open_organization_ledger(root=DOTGITHUB)
+                               node_state_root=base / "node-state", entities=self.entities, hb_epoch=4000)
+        self.cycle.crossing.open_organization_ledger(root=DOTGITHUB, hb_epoch=4000)
         peers = load("peer_organization", DOTGITHUB / "org-runtime/tests/peer_organization.py")
         self.labs = peers.materialize(base / "peers", "StegVerse-Labs",
                                       [{"service_id": "stegverse-labs.org-control", "repository": "StegVerse-Labs/.github",
@@ -89,7 +89,7 @@ class WorkCycleEndToEnd(unittest.TestCase):
         self.labs.publish(k.build_packet(origin_org="StegVerse-Labs", origin_service="stegverse-labs.org-control",
                                          destination_org="SV-LLM", destination_service="sv-llm.org-control",
                                          payload={"manifest": m}, standing=STANDING, packet_id="in-" + m["manifest_id"]),
-                          mesh_root=self.mesh)
+                          mesh_root=self.mesh, epoch=4000)
 
     def run_pass(self):
         return self.cycle.run(standing=STANDING, mesh_root=self.mesh)
@@ -202,7 +202,7 @@ class WorkCycleEndToEnd(unittest.TestCase):
     def test_a_request_without_an_entity_surface_stays_outstanding_and_nothing_waits(self):
         self.send(manifest("work-cycle-002"))
         c = self.cycle
-        c.crossing.ingress(mesh_root=self.mesh, node_state_root=c.node_state_root, root=DOTGITHUB)
+        c.crossing.ingress(mesh_root=self.mesh, node_state_root=c.node_state_root, root=DOTGITHUB, hb_epoch=4000)
         taken, = c.intake()
         self.assertEqual(len(taken["request"]), 2)
         c.entities = {"Anthropic": self.entities["Anthropic"]}   # OpenAI's surface is not present on this pass
