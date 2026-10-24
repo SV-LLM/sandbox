@@ -21,7 +21,8 @@ ROOT = Path(__file__).resolve().parents[1]
 DOTGITHUB = Path(os.environ["SV_LLM_DOTGITHUB_ROOT"]).resolve()
 sys.path.insert(0, str(ROOT / "runtime"))
 sys.path.insert(0, str(ROOT / "tests"))
-from work_cycle import WorkCycle, Entity, SERVICE, NO_INVOCATION  # noqa: E402
+from work_cycle import (WorkCycle, Entity, SERVICE, NO_INVOCATION, SURFACE_NOT_SUPPLIED, entity_set_digest,  # noqa: E402
+                        unsupplied_contribution_id, unsupplied_envelope, unsupplied_terminal)
 
 REAL = ROOT / "tests/real_entities"
 VENDORED = tuple(json.loads((REAL / "vendor-manifest.json").read_text())["sources"])
@@ -137,6 +138,22 @@ class WorkCycleEndToEnd(unittest.TestCase):
         self.assertEqual([c.get("egress") for c in again["close"]], [None])
         self.assertEqual(len(chain(self.base / "org-ledger")), len(org))
 
+    def test_a_later_run_rederives_the_admitted_work_from_node_state_and_no_ledger_holds_it(self):
+        # Rigel 2026-10-24T17:25Z: "The ecosystem holds zero sensitive user data." The
+        # Sandbox admission receipt carries the canonical work digest only.
+        self.send(manifest("work-cycle-digest-001"))
+        out = self.run_pass()
+        self.assertEqual(out["intake"][0]["admit"]["disposition"], "ALLOW")
+        admitted, = [r for r in self.cycle.sandbox.ledger.chain() if r["transition_class"] == "SANDBOX_WORK_ADMITTED"]
+        self.assertNotIn("work", admitted["evidence"])
+        self.assertNotIn("manifested_request", json.dumps(self.cycle.sandbox.ledger.chain()))
+        work = self.cycle.sandbox._work("work-cycle-digest-001")
+        self.assertEqual(admitted["evidence"]["work_sha256"], self.cycle.sandbox.canon.digest(work))
+        later = WorkCycle(dotgithub=DOTGITHUB, sandbox_ledger=self.base / "sandbox-ledger",
+                          node_state_root=self.base / "node-state", entities=self.entities)
+        self.assertEqual(later.sandbox._work("work-cycle-digest-001"), work)
+        self.assertIsNone(later.sandbox._work("not-admitted"))
+
     def test_participants_derived_from_declarations_route_without_consulting_availability(self):
         self.send(manifest("work-cycle-derive-001", participants="DERIVE_FROM_DECLARATIONS"))
         out = self.run_pass()
@@ -199,20 +216,81 @@ class WorkCycleEndToEnd(unittest.TestCase):
                                        "required_evidence_or_repair", "retry_entrypoint"])
         self.assertEqual(taken["request"], [])
 
-    def test_a_request_without_an_entity_surface_stays_outstanding_and_nothing_waits(self):
+    def test_a_request_without_an_entity_surface_terminates_at_e0_in_the_same_pass(self):
         self.send(manifest("work-cycle-002"))
         c = self.cycle
         c.crossing.ingress(mesh_root=self.mesh, node_state_root=c.node_state_root, root=DOTGITHUB, hb_epoch=4000)
         taken, = c.intake()
         self.assertEqual(len(taken["request"]), 2)
         c.entities = {"Anthropic": self.entities["Anthropic"]}   # OpenAI's surface is not present on this pass
-        self.assertEqual(len(c.respond()), 1)
-        self.assertEqual(c.close(standing=STANDING, mesh_root=self.mesh), [])   # not closed; the pass returned
-        self.assertEqual(c._outstanding("work-cycle-002"), [("OpenAI", "adversarial_review")])
-        c.entities = self.entities                                 # a later pass with OpenAI's surface
-        later = self.run_pass()
-        self.assertEqual(len(later["respond"]), 1)
-        self.assertEqual(later["close"][0]["complete"]["disposition"], "ALLOW")
+        answered = c.respond()
+        self.assertEqual([(r["entity"], r["disposition"], r["status"]) for r in answered],
+                         [("Anthropic", "ALLOW", "UNAVAILABLE"), ("OpenAI", "ALLOW", "UNAVAILABLE")])
+        self.assertNotIn("e0_terminal", answered[0])                 # a supplied surface answers for itself
+        unsupplied = answered[1]
+        self.assertEqual(unsupplied["envelope"]["non_success_status_record"]["reason_or_failed_predicate"],
+                         SURFACE_NOT_SUPPLIED)
+        t = unsupplied["e0_terminal"]
+        self.assertEqual((t["disposition"], t["failure_code"], t["mode"]), ("FAIL_CLOSED", SURFACE_NOT_SUPPLIED, "E0"))
+        self.assertEqual(sorted(k for k in t if k not in ("disposition", "mode")),
+                         sorted(["failure_code", "failed_predicate", "required_evidence_or_repair", "retry_entrypoint",
+                                 "owning_existing_goal", "next_attempt"]))
+        self.assertTrue(all(isinstance(t[k], str) and t[k] for k in t))
+        digest = entity_set_digest(["Anthropic"])
+        self.assertEqual(unsupplied["envelope"]["evidence_refs"], ["entity-set:" + digest])
+        self.assertEqual(unsupplied["contribution_id"],
+                         unsupplied_contribution_id("work-cycle-002", "OpenAI", "adversarial_review", digest))
+        self.assertEqual(c._outstanding("work-cycle-002"), [])     # nothing is left outstanding
+        closed, = c.close(standing=STANDING, mesh_root=self.mesh)    # the same pass completes the work
+        self.assertEqual(closed["complete"]["disposition"], "ALLOW")
+        self.assertEqual(closed["egress"]["transition_class"], "ORGANIZATION_EGRESS_EMITTED")
+        self.assertEqual((closed["synthesize"]["synthesis"]["contributed"], closed["synthesize"]["synthesis"]["non_success"]),
+                         (0, 2))
+        rebuilt = c.sandbox.reconstruct("work-cycle-002")
+        self.assertIsNotNone(rebuilt)
+        org = [r["org_transition_class"] for r in chain(self.base / "org-ledger")]
+        self.assertEqual(org.count("ENTITY_CONTRIBUTION_RECORDED"), 2)
+        self.assertIn("SANDBOX_WORK_COMPLETED", org)
+        self.assertEqual(c.sandbox.pending_propagation(), [])
+        again = self.run_pass()                                     # idempotent: a later pass records nothing new
+        self.assertEqual(again["respond"], [])
+        self.assertEqual(again["close"], [{"work_id": "work-cycle-002", "egress": None}])
+
+    def test_a_pass_with_no_entity_surfaces_still_completes_every_admitted_work_item(self):
+        self.send(manifest("work-cycle-003"))
+        c = self.cycle
+        c.crossing.ingress(mesh_root=self.mesh, node_state_root=c.node_state_root, root=DOTGITHUB, hb_epoch=4000)
+        taken, = c.intake()                                         # assigned against the surfaces' declarations
+        self.assertEqual(len(taken["request"]), 2)
+        c.entities = {}                                             # the responding pass supplies no surface at all
+        responded = c.respond()
+        self.assertEqual([(r["entity"], r["e0_terminal"]["failure_code"]) for r in responded],
+                         [("Anthropic", SURFACE_NOT_SUPPLIED), ("OpenAI", SURFACE_NOT_SUPPLIED)])
+        closed, = c.close(standing=STANDING, mesh_root=self.mesh)
+        self.assertEqual(closed["complete"]["disposition"], "ALLOW")
+        statuses = {v["status"] for v in closed["synthesize"]["synthesis"]["inputs"].values()}
+        self.assertEqual(statuses, {"UNAVAILABLE"})
+
+    def test_the_unsupplied_terminal_is_deterministic_and_entity_set_bound(self):
+        d1, d2 = entity_set_digest(["Anthropic", "OpenAI"]), entity_set_digest(["OpenAI", "Anthropic"])
+        self.assertEqual(d1, d2)
+        self.assertNotEqual(entity_set_digest([]), entity_set_digest(["Anthropic"]))
+        a = unsupplied_contribution_id("w", "OpenAI", "adversarial_review", d1)
+        self.assertEqual(a, unsupplied_contribution_id("w", "OpenAI", "adversarial_review", d2))
+        self.assertNotEqual(a, unsupplied_contribution_id("w", "OpenAI", "adversarial_review", entity_set_digest([])))
+
+    def test_a_terminal_is_never_recorded_with_a_contributed_envelope_or_without_six_fields(self):
+        self.send(manifest("work-cycle-004"))
+        c = self.cycle
+        c.crossing.ingress(mesh_root=self.mesh, node_state_root=c.node_state_root, root=DOTGITHUB, hb_epoch=4000)
+        c.intake()
+        work = c.sandbox._work("work-cycle-004")
+        env = unsupplied_envelope(work, "OpenAI", "adversarial_review", entity_set_digest([]), c.sandbox.canon.digest)
+        bad = dict(unsupplied_terminal("OpenAI", "adversarial_review"))
+        del bad["next_attempt"]
+        refused = c.sandbox.record(c.sandbox.canon.canonical(env), terminal=bad)
+        self.assertEqual((refused["disposition"], refused["failed_predicate"]), ("DENY", "TERMINAL_IS_SIX_FIELD_NON_SUCCESS"))
+        self.assertEqual(c._outstanding("work-cycle-004"), [("Anthropic", "adversarial_review"), ("OpenAI", "adversarial_review")])
 
     def test_processing_is_selected_only_by_an_admitted_manifest_declaration(self):
         cases = {"no-processing": manifest("no-processing", processing=None),
