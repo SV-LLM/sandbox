@@ -62,6 +62,10 @@ DENY_ENTRYPOINTS = {
 # predicate -> (required_evidence_or_repair, next_attempt). Predicates raised by sandbox_registration or
 # SV_LLM_CANONICAL_JSON_V1 that are not listed get a generic pair naming the predicate and the refusing method.
 DENY_REPAIRS = {
+    "TERMINAL_IS_SIX_FIELD_NON_SUCCESS": (
+        "Record a request's terminal only with a non-success (UNAVAILABLE, FAILED or REFUSED) envelope and a DENY or "
+        "FAIL_CLOSED outcome carrying all six conformance fields.",
+        "Call record again with the non-success envelope and a complete six-field terminal."),
     "WORK_IS_CANONICAL_JSON": (
         "Re-encode the work item as SV_LLM_CANONICAL_JSON_V1 (the detail names the canonical-form violation).",
         "Call admit again with the canonical work bytes and the same parent receipts and subject."),
@@ -392,7 +396,10 @@ class Sandbox:
                              "work_sha256": self.canon.digest(work), "authority_effect": "NONE"})
 
     # -- contribution recording -----------------------------------------------------
-    def record(self, envelope_bytes: bytes, *, retained: bytes | None = None) -> dict[str, Any]:
+    def record(self, envelope_bytes: bytes, *, retained: bytes | None = None,
+               terminal: dict[str, Any] | None = None) -> dict[str, Any]:
+        """`terminal`: the six-field non-ALLOW outcome a non-success contribution terminates its request with (the
+        work cycle's E0 terminal for an unsupplied entity surface); recorded with the contribution, never for CONTRIBUTED."""
         attempt = {"intended_action": "RECORD_ENTITY_CONTRIBUTION", "envelope_sha256": sha(envelope_bytes)}
         envelope, failed = self._parse(envelope_bytes)
         if failed:
@@ -422,6 +429,14 @@ class Sandbox:
                    "envelope": envelope, "authority_effect": "NONE"}
         if retained is not None:
             outcome["retained_content_sha256"] = sha(retained)
+        if terminal is not None:
+            six = ("failure_code", "failed_predicate", "required_evidence_or_repair", "retry_entrypoint",
+                   "owning_existing_goal", "next_attempt")
+            if envelope["status"] == "CONTRIBUTED" or not isinstance(terminal, dict) \
+                    or terminal.get("disposition") not in ("DENY", "FAIL_CLOSED") \
+                    or not all(isinstance(terminal.get(k), str) and terminal[k] for k in six):
+                return self._deny("ENTITY_CONTRIBUTION_DENIED", attempt, "TERMINAL_IS_SIX_FIELD_NON_SUCCESS", **ids)
+            outcome["e0_terminal"] = dict(terminal)
         cls = "ENTITY_CONTRIBUTION_REFUSED" if envelope["status"] == "REFUSED" else "ENTITY_CONTRIBUTION_RECORDED"
         return self._record(cls, attempt, outcome)
 

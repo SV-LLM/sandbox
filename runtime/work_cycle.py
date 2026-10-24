@@ -22,7 +22,14 @@ processor there. This module is the Sandbox side of that hand-off:
            package (the entity repository's core.py). No SV-LLM code invokes a
            model: until an admitted Sandbox tool does, with credentials held by
            TV/TVC, an entity answers UNAVAILABLE NO_ADMITTED_INVOCATION_SURFACE.
-           A request with no entity surface stays outstanding; nothing waits.
+           A request whose entity surface the pass does not supply reaches its E0
+           terminal in the same pass (StegVerse-org/.github#163, operating-mode
+           ladder): the Sandbox records the entity-neutral UNAVAILABLE
+           ENTITY_SURFACE_NOT_SUPPLIED contribution, bound to the digest of the
+           pass's supplied entity set and carrying a six-field FAIL_CLOSED
+           (e0_terminal), so close() synthesizes and completes. No request stays
+           outstanding, nothing waits and nothing polls; supplying the surface is
+           a new manifest (a new work item), never a wait on this one.
   close    work whose every requested contribution is recorded is synthesized
            and completed, and the result is egressed to the organization the
            manifest's `return_to` names (crossing.py::egress). The mesh is the
@@ -59,6 +66,10 @@ import capability_routing  # noqa: E402
 
 SERVICE = json.loads((ROOT / "runtime/contracts/sandbox-service.json").read_text())
 NO_INVOCATION = "NO_ADMITTED_INVOCATION_SURFACE"
+SURFACE_NOT_SUPPLIED = "ENTITY_SURFACE_NOT_SUPPLIED"
+RESPOND_ENTRYPOINT = "SV-LLM/sandbox runtime/work_cycle.py::respond"
+OWNING_EXISTING_GOAL = "SVORG-LLM-ORG-FOUNDATION-001"
+CONTRIBUTION_SCHEMA = "sv-llm.contribution/v0.1"
 RESULT_SCHEMA = "sv-llm.sandbox-work-result/v1"
 SYNTHESIS_SCHEMA = "sv-llm.sandbox-work-cycle-synthesis/v1"
 WORK_FIELDS = ("requested_capabilities", "permitted_capabilities", "participation_policy",
@@ -92,6 +103,43 @@ class Entity:
         return self.core.non_success(work=work, capability=capability, status="UNAVAILABLE",
                                      reason_or_failed_predicate=NO_INVOCATION,
                                      provenance=["SV-LLM/sandbox runtime/work_cycle.py::respond"])
+
+
+def entity_set_digest(names) -> str:
+    """sha256 over the canonical JSON of the pass's supplied entity names, sorted (SV_LLM_CANONICAL_JSON_V1)."""
+    return "sha256:" + hashlib.sha256(json.dumps(sorted(names), sort_keys=True, separators=(",", ":"),
+                                                 ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
+def unsupplied_contribution_id(work_id: str, entity: str, capability: str, set_digest: str) -> str:
+    """Deterministic: the same request in a pass with the same supplied entity set always yields the same id."""
+    return "surface-not-supplied:" + hashlib.sha256("\0".join((work_id, entity, capability, set_digest)).encode("utf-8")).hexdigest()
+
+
+def unsupplied_terminal(entity: str, capability: str) -> dict[str, Any]:
+    """The six-field FAIL_CLOSED that a request with no supplied entity surface terminates with at E0."""
+    return {"disposition": "FAIL_CLOSED", "failure_code": SURFACE_NOT_SUPPLIED,
+            "failed_predicate": "ENTITY_SURFACE_SUPPLIED_FOR_REQUESTED_CONTRIBUTION",
+            "required_evidence_or_repair": "supply the entity's surface (entity repository core.py and "
+                                           "contracts/entity-capability.json) to the pass that takes the work in",
+            "retry_entrypoint": RESPOND_ENTRYPOINT, "owning_existing_goal": OWNING_EXISTING_GOAL,
+            "next_attempt": "a new manifest for the same work, taken in by a pass that supplies the " + entity
+                            + " surface for " + capability + "; this work is complete and nothing waits on it",
+            "mode": "E0"}
+
+
+def unsupplied_envelope(work: dict[str, Any], entity: str, capability: str, set_digest: str, digest) -> dict[str, Any]:
+    """The entity-neutral UNAVAILABLE envelope the Sandbox records for an unsupplied surface: the same shape an entity's
+    core.non_success emits, attributed to the requested entity, with the Sandbox as its provenance."""
+    refs = ["entity-set:" + set_digest]
+    provenance = [RESPOND_ENTRYPOINT + " (entity surface not supplied)"]
+    record = {"status": "UNAVAILABLE", "reason_or_failed_predicate": SURFACE_NOT_SUPPLIED, "evidence_refs": refs,
+              "provenance": provenance, "uncertainty": None}
+    return {"schema": CONTRIBUTION_SCHEMA,
+            "contribution_id": unsupplied_contribution_id(work["work_id"], entity, capability, set_digest),
+            "work_id": work["work_id"], "entity": entity, "capability": capability, "epistemic_state": "OBSERVED",
+            "evidence_refs": list(refs), "provenance": list(provenance), "uncertainty": None, "status": "UNAVAILABLE",
+            "authority_effect": "NONE", "non_success_status_record": record, "content_digest": digest(record)}
 
 
 class WorkCycle:
@@ -251,13 +299,19 @@ class WorkCycle:
                 if (r["evidence"]["entity"], r["evidence"]["capability"]) not in answered]
 
     def respond(self) -> list[dict[str, Any]]:
+        """Answer every outstanding request in this pass. A supplied surface answers with its own package; an
+        unsupplied one terminates at E0 as UNAVAILABLE ENTITY_SURFACE_NOT_SUPPLIED with a six-field FAIL_CLOSED."""
         results = []
+        set_digest = entity_set_digest(self.entities)
         for work_id in self._admitted():
             work = self.sandbox._work(work_id)
             for entity, capability in self._outstanding(work_id):
                 surface = self.entities.get(entity)
                 if surface is None:
-                    continue  # stays outstanding: a later pass with the entity's surface answers it
+                    envelope = unsupplied_envelope(work, entity, capability, set_digest, self.sandbox.canon.digest)
+                    results.append(self.sandbox.record(self.sandbox.canon.canonical(envelope),
+                                                       terminal=unsupplied_terminal(entity, capability)))
+                    continue
                 envelope = surface.answer(work, capability)
                 results.append(self.sandbox.record(self.sandbox.canon.canonical(envelope)))
         return results
