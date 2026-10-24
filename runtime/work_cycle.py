@@ -108,8 +108,10 @@ class WorkCycle:
         # Routing precedence is declared by the canonical organization tree's row order, never by name.
         tree = json.loads((self.dotgithub / "data/organization-tree.json").read_text(encoding="utf-8"))
         self.tree_order = [row["name"] for row in tree.get("repositories", []) if isinstance(row, dict) and "name" in row]
+        # The Sandbox ledger records only the admitted work's digest; a later run
+        # re-derives the body from the materialized manifest in node state.
         self.sandbox = Sandbox(dotgithub_root=self.dotgithub, ledger=Ledger(Path(sandbox_ledger)),
-                               propagate=self._propagate)
+                               propagate=self._propagate, work_source=self._work_source)
 
     def _propagate(self, receipt: dict[str, Any], transition_class: str) -> dict[str, Any]:
         return self.agg.aggregate_transition(receipt, org_transition_class=transition_class,
@@ -159,14 +161,7 @@ class WorkCycle:
         if not isinstance(spec, dict) or any(f not in spec for f in WORK_FIELDS):
             return {"admit": self._refuse(attempt, "WORK_DECLARED_BY_MANIFEST")}
         subject = source["evidence"]
-        work = {"schema": "sv-llm.sandbox-work/v0.1", "work_id": manifest["manifest_id"],
-                "manifested_request": manifest,
-                "parent_transition": {"transition_class": source["transition_class"],
-                                      "repo_receipt_sha256": source["receipt_sha256"],
-                                      "org_receipt_sha256": org["receipt_sha256"],
-                                      "subject_or_artifact_digest": source["successor_state_sha256"]},
-                "canonical_context_refs": spec.get("canonical_context_refs", []),
-                **{f: spec[f] for f in WORK_FIELDS if f != "participants"}}
+        work = self._work_object(manifest, org, source, spec)
         admitted = self.sandbox.admit(self.sandbox.canon.canonical(work), parent_repo_receipt=source,
                                       parent_org_receipt=org, subject=subject)
         out = {"admit": admitted, "selection": selected, "assign": [], "request": []}
@@ -197,6 +192,38 @@ class WorkCycle:
             if assigned["disposition"] == ALLOW:
                 out["request"].append(self.sandbox.request(work["work_id"], entity, capability))
         return out
+
+    @staticmethod
+    def _work_object(manifest: dict[str, Any], org: dict[str, Any], source: dict[str, Any],
+                     spec: dict[str, Any]) -> dict[str, Any]:
+        return {"schema": "sv-llm.sandbox-work/v0.1", "work_id": manifest["manifest_id"],
+                "manifested_request": manifest,
+                "parent_transition": {"transition_class": source["transition_class"],
+                                      "repo_receipt_sha256": source["receipt_sha256"],
+                                      "org_receipt_sha256": org["receipt_sha256"],
+                                      "subject_or_artifact_digest": source["successor_state_sha256"]},
+                "canonical_context_refs": spec.get("canonical_context_refs", []),
+                **{f: spec[f] for f in WORK_FIELDS if f != "participants"}}
+
+    def _work_source(self, work_id: str, work_sha256: str) -> bytes | None:
+        """Re-derive an admitted work object from its materialized manifest in node state.
+
+        Returns canonical bytes only when they digest to the admission receipt's
+        work_sha256 (Sandbox._work checks it again); otherwise None, and the work
+        is treated as not admitted."""
+        for key in self.node_state.list_prefix(SERVICE["materialization_prefix"]):
+            record = self.node_state.get(key)
+            manifest = ((record or {}).get("packet", {}).get("payload") or {}).get("manifest") or {}
+            if manifest.get("manifest_id") != work_id:
+                continue
+            spec = (manifest.get("payload") or {}).get("work")
+            parent = self._parent(self.kernel.sha(record))
+            if not isinstance(spec, dict) or any(f not in spec for f in WORK_FIELDS) or parent is None:
+                continue
+            data = self.sandbox.canon.canonical(self._work_object(manifest, *parent, spec))
+            if self.sandbox.canon.digest(self.sandbox.canon.parse(data)) == work_sha256:
+                return data
+        return None
 
     def intake(self) -> list[dict[str, Any]]:
         results = []
