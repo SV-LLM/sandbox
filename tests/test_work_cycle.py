@@ -137,6 +137,22 @@ class WorkCycleEndToEnd(unittest.TestCase):
         self.assertEqual([c.get("egress") for c in again["close"]], [None])
         self.assertEqual(len(chain(self.base / "org-ledger")), len(org))
 
+    def test_a_later_run_rederives_the_admitted_work_from_node_state_and_no_ledger_holds_it(self):
+        # Rigel 2026-10-24T17:25Z: "The ecosystem holds zero sensitive user data." The
+        # Sandbox admission receipt carries the canonical work digest only.
+        self.send(manifest("work-cycle-digest-001"))
+        out = self.run_pass()
+        self.assertEqual(out["intake"][0]["admit"]["disposition"], "ALLOW")
+        admitted, = [r for r in self.cycle.sandbox.ledger.chain() if r["transition_class"] == "SANDBOX_WORK_ADMITTED"]
+        self.assertNotIn("work", admitted["evidence"])
+        self.assertNotIn("manifested_request", json.dumps(self.cycle.sandbox.ledger.chain()))
+        work = self.cycle.sandbox._work("work-cycle-digest-001")
+        self.assertEqual(admitted["evidence"]["work_sha256"], self.cycle.sandbox.canon.digest(work))
+        later = WorkCycle(dotgithub=DOTGITHUB, sandbox_ledger=self.base / "sandbox-ledger",
+                          node_state_root=self.base / "node-state", entities=self.entities)
+        self.assertEqual(later.sandbox._work("work-cycle-digest-001"), work)
+        self.assertIsNone(later.sandbox._work("not-admitted"))
+
     def test_participants_derived_from_declarations_route_without_consulting_availability(self):
         self.send(manifest("work-cycle-derive-001", participants="DERIVE_FROM_DECLARATIONS"))
         out = self.run_pass()
