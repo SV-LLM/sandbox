@@ -35,6 +35,30 @@ class NodeCapabilityBindingTests(unittest.TestCase):
     def test_caller_flag_cannot_authenticate_posture(self):
         r = evaluate(public=False, node=NODE, posture=POSTURE, manifest=MANIFEST)
         self.assertEqual(r["predicate"], "AUTHENTIC_INTR_POSTURE_VERIFIER_NOT_BOUND")
+    def test_verifier_exception_fails_closed(self):
+        def broken_verifier(instance, manifest):
+            raise RuntimeError("authentic verifier unavailable")
+        result = evaluate(public=False, node=NODE, posture=POSTURE,
+                          manifest=MANIFEST, posture_verifier=broken_verifier)
+        self.assertEqual(result["disposition"], "FAIL_CLOSED")
+        self.assertEqual(result["predicate"], "POSTURE_INSTANCE_CRYPTOGRAPHIC_VERIFICATION_NOT_OBSERVED")
+
+    def test_verifier_false_fails_closed(self):
+        result = evaluate(public=False, node=NODE, posture=POSTURE,
+                          manifest=MANIFEST, posture_verifier=lambda *_: False)
+        self.assertEqual(result["disposition"], "FAIL_CLOSED")
+
+    def test_unrecognized_security_tier_fails_closed(self):
+        result = evaluate(public=True, required_tier="UNDEFINED")
+        self.assertEqual(result["disposition"], "FAIL_CLOSED")
+
+    def test_protected_binding_never_persists_credentials(self):
+        result = evaluate(public=False, node=NODE, posture=POSTURE,
+                          manifest=MANIFEST, posture_verifier=VERIFIER)
+        self.assertFalse(result["credential_material_persisted"])
+        self.assertFalse(result["node_registration_created"])
+        self.assertFalse(result["execution_authorized_by_binding"])
+
     def test_no_secret_or_registration_side_effect(self):
         r = evaluate(public=False, node=NODE, posture=POSTURE, manifest=MANIFEST)
         self.assertFalse(r["credential_material_persisted"])
