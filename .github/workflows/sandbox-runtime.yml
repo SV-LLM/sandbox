@@ -67,7 +67,7 @@ jobs:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub-registered
         run: python -B tests/test_page_load_tool.py
       - name: StegNode binding fail-closed regression (offline)
-        run: python -B tests/test_stegnode_capability_binding.py
+        run: python -B -m unittest tests.test_stegnode_capability_binding
       - name: SV-LLM work cycle end to end (peer manifest in, Sandbox, organization ledger, result out; no network)
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
