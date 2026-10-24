@@ -36,7 +36,13 @@ def evaluate_binding(*, public: bool, node: dict | None = None,
         return result("FAIL_CLOSED", "AUTHENTIC_MANIFEST_ADMISSION_NOT_OBSERVED")
     if instance.get("task_id") != manifest["task_id"]:
         return result("DENY", "POSTURE_INSTANCE_TASK_BINDING_MISMATCH")
-    if not callable(posture_verifier):\n        return result("FAIL_CLOSED", "AUTHENTIC_INTR_POSTURE_VERIFIER_NOT_BOUND")\n    try:\n        verified = posture_verifier(instance, manifest) is True\n    except Exception:\n        verified = False\n    if not verified:
+    if not callable(posture_verifier):
+        return result("FAIL_CLOSED", "AUTHENTIC_INTR_POSTURE_VERIFIER_NOT_BOUND")
+    try:
+        verified = posture_verifier(instance, manifest) is True
+    except Exception:
+        verified = False
+    if not verified:
         return result("FAIL_CLOSED", "POSTURE_INSTANCE_CRYPTOGRAPHIC_VERIFICATION_NOT_OBSERVED")
     return {**result("ALLOW", "EXISTING_NODE_POSTURE_AND_MANIFEST_EVIDENCE_PRESENT"),
             "node_id": node["node_id"], "task_id": manifest["task_id"],
