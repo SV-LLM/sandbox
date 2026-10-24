@@ -7,7 +7,8 @@ POSTURE = {"schema": "stegos.intr-security-posture-resolution.v1",
            "posture_instance": {"task_id": "task-1", "resolution_authority": "INTERLOCK_INTR",
                                 "credential_authority": "TV/TVC", "transferable": False,
                                 "reusable_across_tasks": False}}
-MANIFEST = {"task_id": "task-1", "disposition": "ALLOW", "authenticated": True}\nVERIFIER = lambda instance, manifest: instance["task_id"] == manifest["task_id"]
+MANIFEST = {"task_id": "task-1", "disposition": "ALLOW", "authenticated": True}
+VERIFIER = lambda instance, manifest: instance["task_id"] == manifest["task_id"]
 
 class NodeCapabilityBindingTests(unittest.TestCase):
     def test_public_no_node_required(self):
@@ -31,7 +32,10 @@ class NodeCapabilityBindingTests(unittest.TestCase):
         self.assertEqual(evaluate(public=False, node=NODE, posture=POSTURE, manifest=m, posture_verifier=VERIFIER)["disposition"], "DENY")
     def test_no_manifest_not_authorized(self):
         self.assertEqual(evaluate(public=False, node=NODE, posture=POSTURE)["disposition"], "FAIL_CLOSED")
-    def test_caller_flag_cannot_authenticate_posture(self):\n        r = evaluate(public=False, node=NODE, posture=POSTURE, manifest=MANIFEST)\n        self.assertEqual(r["predicate"], "AUTHENTIC_INTR_POSTURE_VERIFIER_NOT_BOUND")\n    def test_no_secret_or_registration_side_effect(self):
+    def test_caller_flag_cannot_authenticate_posture(self):
+        r = evaluate(public=False, node=NODE, posture=POSTURE, manifest=MANIFEST)
+        self.assertEqual(r["predicate"], "AUTHENTIC_INTR_POSTURE_VERIFIER_NOT_BOUND")
+    def test_no_secret_or_registration_side_effect(self):
         r = evaluate(public=False, node=NODE, posture=POSTURE, manifest=MANIFEST)
         self.assertFalse(r["credential_material_persisted"])
         self.assertFalse(r["node_registration_created"])
