@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib, json, os, sys, tempfile, unittest
 from pathlib import Path
 from unittest.mock import MagicMock
+EPOCH = "4000"  # the supplied hb_epoch: every lease time is its HB32 instant
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tests"))
@@ -74,7 +75,7 @@ class Base(unittest.TestCase):
 class Allowed(Base):
     def test_page_load_is_recorded_with_screenshot_and_lease_receipt(self):
         pw = factory(status=403, title="Just a moment...")
-        e = self.obs(self.tool.invoke(WORK, "load-1", playwright_factory=pw))
+        e = self.obs(self.tool.invoke(WORK, "load-1", hb_epoch=EPOCH, playwright_factory=pw))
         self.assertEqual((e["disposition"], e["decided_by"], e["tool_profile"]),
                          (ALLOW, "STEGBROWSER_EPHEMERAL_SESSION", "page_load.v1"))
         self.assertEqual((e["http_status"], e["title"]), (403, "Just a moment..."))  # observed, not judged
@@ -90,7 +91,7 @@ class Allowed(Base):
 
     def test_no_typing_clicking_or_credentials_reach_the_browser(self):
         pw = factory()
-        self.tool.invoke(WORK, "load-1", playwright_factory=pw)
+        self.tool.invoke(WORK, "load-1", hb_epoch=EPOCH, playwright_factory=pw)
         page = page_of(pw)
         for method in ("fill", "type", "click", "press", "locator", "keyboard", "mouse"):
             self.assertFalse(getattr(page, method).called, method)
@@ -100,7 +101,7 @@ class Allowed(Base):
 
     def test_nothing_waits_on_the_provider_after_delivery(self):
         pw = factory()
-        e = self.obs(self.tool.invoke(WORK, "load-1", playwright_factory=pw))
+        e = self.obs(self.tool.invoke(WORK, "load-1", hb_epoch=EPOCH, playwright_factory=pw))
         self.assertEqual(e["disposition"], ALLOW)
         page = page_of(pw)
         for method in ("wait_for_timeout", "wait_for_load_state", "wait_for_event", "wait_for_function"):
@@ -123,7 +124,7 @@ class Allowed(Base):
                 routes[target] = route
             return MagicMock(status=200)
         page.goto.side_effect = goto
-        e = self.obs(self.tool.invoke(WORK, "load-1", playwright_factory=pw))
+        e = self.obs(self.tool.invoke(WORK, "load-1", hb_epoch=EPOCH, playwright_factory=pw))
         self.assertEqual(e["disposition"], ALLOW)
         self.assertTrue(routes["https://chat.fixture.test/next"].continue_.called)
         self.assertTrue(routes["https://evil.example/"].abort.called)
@@ -152,27 +153,27 @@ class Refused(Base):
                                      (WORK, "typing", "PAGE_LOAD_HAS_NO_INTERACTION"),
                                      (WORK, "creds", "PAGE_LOAD_HAS_NO_INTERACTION"),
                                      (WORK, "off", "SECURE_URL_ORIGIN_ALLOWED_BY_LEASE")):
-            e = self.denied(self.tool.invoke(work, inv, playwright_factory=pw), predicate)
+            e = self.denied(self.tool.invoke(work, inv, hb_epoch=EPOCH, playwright_factory=pw), predicate)
             self.assertFalse(e["stegbrowser_invoked"])
         pw.return_value.__enter__.assert_not_called()
         self.assertIn("prompt", INTERACTION_FIELDS)
 
     def test_final_host_outside_lease_fails_closed(self):
-        e = self.denied(self.tool.invoke(WORK, "load-1", playwright_factory=factory(final_url="https://evil.example/")),
+        e = self.denied(self.tool.invoke(WORK, "load-1", hb_epoch=EPOCH, playwright_factory=factory(final_url="https://evil.example/")),
                         "FINAL_ORIGIN_WITHIN_LEASE", "FAIL_CLOSED")
         self.assertTrue(e["stegbrowser_invoked"])
         self.assertTrue(e["terminal_receipt"]["session_state_destroyed"])
 
     def test_navigation_and_launch_failures_fail_closed(self):
-        e = self.denied(self.tool.invoke(WORK, "load-1", playwright_factory=factory(fail_goto=True)),
+        e = self.denied(self.tool.invoke(WORK, "load-1", hb_epoch=EPOCH, playwright_factory=factory(fail_goto=True)),
                         "PAGE_NAVIGATION_COMPLETED", "FAIL_CLOSED")
         self.assertIn("TimeoutError", e["detail"])
-        e = self.denied(self.tool.invoke(WORK, "load-1", playwright_factory=factory(fail_launch=True)),
+        e = self.denied(self.tool.invoke(WORK, "load-1", hb_epoch=EPOCH, playwright_factory=factory(fail_launch=True)),
                         "PAGE_NAVIGATION_COMPLETED", "FAIL_CLOSED")
         self.assertIsNone(e["screenshot_sha256"])
 
     def test_every_attempt_is_a_synthesis_input(self):
-        ids = [self.tool.invoke(WORK, i, playwright_factory=factory())["observation_id"] for i in ("load-1", "off")]
+        ids = [self.tool.invoke(WORK, i, hb_epoch=EPOCH, playwright_factory=factory())["observation_id"] for i in ("load-1", "off")]
         self.assertEqual(self.s.synthesize(WORK, ids[:1], {"s": "drops one"})["failed_predicate"],
                          "SYNTHESIS_BINDS_EVERY_RECORDED_INPUT")
         self.assertEqual(self.s.synthesize(WORK, ids, {"s": "both"})["disposition"], ALLOW)

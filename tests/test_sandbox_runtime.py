@@ -46,11 +46,11 @@ class Harness:
         def propagate(receipt, transition_class):
             org = self.aggregate.aggregate_transition(receipt, org_transition_class=transition_class,
                                                       boundary_evidence={"source": "SV-LLM/sandbox"},
-                                                      authority_effect="NONE")
+                                                      authority_effect="NONE", hb_epoch=4000)
             self.org_receipts.append(org)
             return org
 
-        self.sandbox = Sandbox(dotgithub_root=DOTGITHUB, ledger=Ledger(base / "sandbox-ledger"), propagate=propagate)
+        self.sandbox = Sandbox(dotgithub_root=DOTGITHUB, ledger=Ledger(base / "sandbox-ledger", hb_epoch=4000), propagate=propagate)
         self.canon = self.sandbox.canon
         # Parent: a real SV-LLM/.github repository transition, aggregated into the org ledger.
         self.subject = {"intended_action": "CONTINUE_INTO_SANDBOX", "manifest_id": "fixture-manifest-001"}
@@ -60,12 +60,12 @@ class Harness:
                               "--transition-class", "ORGANIZATION_INGRESS_MATERIALIZED",
                               "--predecessor-state-sha256", sha({"fixture": "predecessor"}),
                               "--successor-state-sha256", sha(self.subject),
-                              "--evidence-json", json.dumps({"disposition": "ALLOW"})],
+                              "--evidence-json", json.dumps({"disposition": "ALLOW"}), "--hb-epoch", "4000"],
                              capture_output=True, text=True, env=env, check=True)
         self.parent_repo = json.loads(run.stdout)
         # The parent is the first organization append on this fresh ledger, so it declares genesis.
         self.parent_org = self.aggregate.aggregate_transition(self.parent_repo, org_transition_class="ORGANIZATION_INGRESS_MATERIALIZED",
-                                                              authority_effect="NONE", genesis=True)
+                                                              authority_effect="NONE", genesis=True, hb_epoch=4000)
         self.tree = json.loads((FIX / "organization-tree.json").read_text())
 
     def declaration(self, entity):
@@ -435,23 +435,23 @@ class WorkDigestOnly(unittest.TestCase):
     def test_a_later_process_needs_the_body_resupplied_and_it_must_match_the_digest(self):
         h, work = self.admitted()
         base = Path(h.tmp.name)
-        fresh = Sandbox(dotgithub_root=DOTGITHUB, ledger=Ledger(base / "sandbox-ledger"))
+        fresh = Sandbox(dotgithub_root=DOTGITHUB, ledger=Ledger(base / "sandbox-ledger", hb_epoch=4000))
         self.assertIsNone(fresh._work("fixture-work-001"))
         refused = fresh.assign("fixture-work-001", A, "adversarial_review", declaration=h.declaration(A), tree=h.tree)
         self.assertEqual((refused["disposition"], refused["failed_predicate"]), (DENY, "WORK_IS_ADMITTED"))
 
         tampered = dict(work, manifested_request={"manifest_id": "fixture-manifest-001", "request": "other text"})
-        wrong = Sandbox(dotgithub_root=DOTGITHUB, ledger=Ledger(base / "sandbox-ledger"),
+        wrong = Sandbox(dotgithub_root=DOTGITHUB, ledger=Ledger(base / "sandbox-ledger", hb_epoch=4000),
                         work_source=lambda work_id, digest: h.canon.canonical(tampered))
         self.assertIsNone(wrong._work("fixture-work-001"))
-        self.assertIsNone(Sandbox(dotgithub_root=DOTGITHUB, ledger=Ledger(base / "sandbox-ledger"),
+        self.assertIsNone(Sandbox(dotgithub_root=DOTGITHUB, ledger=Ledger(base / "sandbox-ledger", hb_epoch=4000),
                                   work_source=lambda work_id, digest: b"not json")._work("fixture-work-001"))
 
         seen = []
         def source(work_id, digest):
             seen.append((work_id, digest))
             return h.canon.canonical(work)
-        good = Sandbox(dotgithub_root=DOTGITHUB, ledger=Ledger(base / "sandbox-ledger"), work_source=source)
+        good = Sandbox(dotgithub_root=DOTGITHUB, ledger=Ledger(base / "sandbox-ledger", hb_epoch=4000), work_source=source)
         self.assertEqual(good._work("fixture-work-001"), work)
         self.assertEqual(seen, [("fixture-work-001", h.canon.digest(work))])
         allowed = good.assign("fixture-work-001", A, "adversarial_review", declaration=h.declaration(A), tree=h.tree)

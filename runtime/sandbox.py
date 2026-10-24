@@ -449,6 +449,26 @@ class Sandbox:
         return [r for r in self.ledger.chain() if r["transition_class"] == "SANDBOX_TOOL_OBSERVATION_RECORDED"
                 and r["evidence"].get("work_id") == work_id]
 
+    def reserve_tool_invocation(self, work_id: str, invocation_id: str) -> dict[str, Any]:
+        """Unique durable original-invocation custody before consequential browser actions.
+
+        The existing repository ledger serializes reservation across independent
+        workers. Its receipt is propagated through the same organization ledger
+        path as other Sandbox transitions. A propagation failure retains the
+        reservation for reconciliation and refuses dispatch.
+        """
+        receipt = self.ledger.reserve_invocation(work_id, invocation_id)
+        result = {"disposition": ALLOW, "work_id": work_id,
+                  "invocation_id": invocation_id, "authority_effect": "NONE",
+                  "repo_receipt_sha256": receipt["receipt_sha256"]}
+        if self.propagate is not None:
+            try:
+                org = self.propagate(receipt, receipt["transition_class"])
+            except Exception as exc:
+                return self._propagation_failed(receipt, exc, result)
+            result["org_receipt_sha256"] = org["receipt_sha256"]
+        return result
+
     def record_tool_observation(self, observation: dict[str, Any]) -> dict[str, Any]:
         """Append SANDBOX_TOOL_OBSERVATION_RECORDED. Called by tool adapters (runtime/stegbrowser_tool.py)."""
         self.canon.check_value(observation)
