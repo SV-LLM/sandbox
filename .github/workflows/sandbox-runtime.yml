@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
         with:
           repository: SV-LLM/.github
-          ref: f6d7ae27efff576ab4e1d71c68d2898a60698feb
+          ref: a00a72ec54055e11b23841e3718cfd7352ad8a8c  # SV-LLM/.github main (G4 #47 + B-P31 #49 merged)
           path: sv-llm-dotgithub
       - name: Sandbox runtime
         env:
@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
         with:
           repository: SV-LLM/.github
-          ref: f6d7ae27efff576ab4e1d71c68d2898a60698feb
+          ref: a00a72ec54055e11b23841e3718cfd7352ad8a8c  # SV-LLM/.github main (G4 #47 + B-P31 #49 merged)
           path: sv-llm-dotgithub-registered
       - name: Real-entity contract-level regression (order 5)
         env:
@@ -67,6 +67,16 @@ jobs:
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub-registered
         run: python -B tests/test_page_load_tool.py
+      - name: "G4: a Sandbox receipt carries the supplied epoch; missing/invalid is refused six-field (SV_LLM_LEDGER_APPEND_CLOCK_FALLBACK)"
+        env:
+          SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
+        run: python -B tests/test_ledger_supplied_epoch.py
+      - name: "G4: the browser lease time is the supplied epoch; no clock read; missing is refused six-field"
+        env:
+          SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
+        run: python -B tests/test_lease_time_supplied_epoch.py
+      - name: "One browser-lease contract (I7): contracts/browser-lease/v1 and runtime/lease_time.py agree"
+        run: python -B tests/test_browser_lease_contract.py
       - name: SV-LLM work cycle end to end (peer manifest in, Sandbox, organization ledger, result out; no network)
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
