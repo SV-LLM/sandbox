@@ -104,7 +104,7 @@ class WorkCycleCarriesTheEpoch(unittest.TestCase):
             cycle = self.cycle(tmp, None)
             receipt = ledger.Ledger(Path(tmp) / "source", hb_epoch=4000).append(
                 "SANDBOX_WORK_ADMITTED", predecessor=PREDECESSOR, successor=SUCCESSOR, evidence={})
-            with self.assertRaises(cycle.agg.OrgLedgerEpochRefused) as caught:
+            with self.assertRaises(cycle.agg.kernel.SuppliedEpochRefused) as caught:
                 cycle._propagate(receipt, "SANDBOX_WORK_ADMITTED")
             self.assertEqual(caught.exception.refusal["failure_code"], "HB_EPOCH_NOT_SUPPLIED")
             self.assertEqual(files(Path(tmp) / "org"), [])
