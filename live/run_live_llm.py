@@ -300,6 +300,15 @@ def main(argv=None, *, playwright_factory=None) -> int:
     if lane not in EVIDENCE_CLASS:
         refuse(report, Refused("LIVE_LANE_DECLARED"))
         return finish(EVIDENCE, report, 1)
+    # G4 (SV_LLM_LEDGER_APPEND_CLOCK_FALLBACK): every receipt this run appends
+    # carries the supplied HB_EPOCH; absent or invalid, the run is refused
+    # six-field FAIL_CLOSED before any ledger is written. No clock is read.
+    from ledger import epoch_refusal
+    hb_epoch = os.environ.get("HB_EPOCH")
+    epoch_refused = epoch_refusal(hb_epoch)
+    if epoch_refused is not None:
+        report.update(epoch_refused)
+        return finish(EVIDENCE, report, 1)
     if lane == AUTHENTIC:
         try:
             agg, store, parent_org, parent_repo, subject, repo_store = preflight(DOTGITHUB, claimed_parent, target)
@@ -328,23 +337,27 @@ def main(argv=None, *, playwright_factory=None) -> int:
                               "--transition-id", "LIVE_FIXTURE_PARENT:" + sha(subject)[7:31],
                               "--transition-class", "ORGANIZATION_INGRESS_MATERIALIZED",
                               "--predecessor-state-sha256", sha({"live": "predecessor"}),
-                              "--successor-state-sha256", sha(subject), "--evidence-json", json.dumps({"disposition": "ALLOW"})],
+                              "--successor-state-sha256", sha(subject), "--evidence-json", json.dumps({"disposition": "ALLOW"}),
+                              "--hb-epoch", str(hb_epoch)],
                              capture_output=True, text=True, check=True,
                              env=dict(os.environ, STEGVERSE_REPO_LEDGER_ROOT=str(EVIDENCE / "dotgithub-fixture-ledger")))
         parent_repo = json.loads(run.stdout)
         # First append on this run's fresh workflow-local ledger: genesis is declared, never defaulted.
         parent_org = agg.aggregate_transition(parent_repo, org_transition_class="ORGANIZATION_INGRESS_MATERIALIZED",
-                                              authority_effect="NONE", genesis=True, store=store)
+                                              authority_effect="NONE", genesis=True, store=store,
+                                              hb_epoch=hb_epoch)
         appended.append((parent_org, parent_repo))
 
     def propagate(receipt, transition_class):
         # FROM_HEAD only; GENESIS is never passed here.
         org = agg.aggregate_transition(receipt, org_transition_class=transition_class,
-                                       boundary_evidence={"source": "SV-LLM/sandbox"}, authority_effect="NONE", store=store)
+                                       boundary_evidence={"source": "SV-LLM/sandbox"}, authority_effect="NONE", store=store,
+                                       hb_epoch=hb_epoch)
         appended.append((org, receipt))
         return org
 
-    ledger = Ledger(store=repo_store) if lane == AUTHENTIC else Ledger(EVIDENCE / "sandbox-repo-ledger")
+    ledger = (Ledger(store=repo_store, hb_epoch=hb_epoch) if lane == AUTHENTIC
+              else Ledger(EVIDENCE / "sandbox-repo-ledger", hb_epoch=hb_epoch))
     sb = Sandbox(dotgithub_root=DOTGITHUB, ledger=ledger, propagate=propagate)
     prior = {r["receipt_sha256"] for r in ledger.chain()}
     # One work item per authentic parent: a continued chain already holds earlier runs' work.
@@ -359,7 +372,7 @@ def main(argv=None, *, playwright_factory=None) -> int:
             "participation_policy": {"mode": "SINGLE"},
             "expected_output_or_handoff": {"successor_transition_class": "SANDBOX_SYNTHESIS_RECORDED"}}
     admitted = sb.admit(json.dumps(work).encode(), parent_repo_receipt=parent_repo, parent_org_receipt=parent_org, subject=subject)
-    obs = StegBrowserTool(sb).invoke(work["work_id"], inv["invocation_id"], playwright_factory=playwright_factory)
+    obs = StegBrowserTool(sb).invoke(work["work_id"], inv["invocation_id"], hb_epoch=hb_epoch, playwright_factory=playwright_factory)
     synth = sb.synthesize(work["work_id"], [obs["observation_id"]], {"summary": "AT-04 Stage 1 StegBrowser live-path conformance; no provider attribution"})
     done = sb.complete(work["work_id"])
     readback = [keyed_readback(agg, store, org, source) for org, source in appended]

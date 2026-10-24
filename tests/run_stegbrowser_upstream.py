@@ -68,7 +68,29 @@ def suite() -> tuple[unittest.TestSuite, int]:
     return collected, expected
 
 
-if __name__ == "__main__":
+# The supplied epoch the upstream tests run at (NWI-S1). Upstream llm_browser_execution opens, authorizes and
+# closes its lease with no `now`, so the vendored ecosystem_ephemeral would read the clock; bound by
+# runtime/lease_time.py it reads this epoch's HB32 instant instead (2026-08-23T07:00:39.68Z), and the
+# vendored and upstream bytes stay as pinned. Tests that pass `now=` themselves are unaffected.
+SUPPLIED_HB_EPOCH = "4000"
+
+
+def run() -> bool:
     tests, _ = suite()
-    result = unittest.TextTestRunner(verbosity=2).run(tests)
-    raise SystemExit(0 if result.wasSuccessful() else 1)
+    sys.path.insert(0, str(ROOT / "runtime"))
+    import lease_time
+    lease_time.bind(sys.modules["stegbrowser_llm.ecosystem_ephemeral"])
+    # No run timing in the output (TextTestRunner prints "Ran N tests in Xs"): the output is a function of the head.
+    stream = unittest.runner._WritelnDecorator(sys.stderr)
+    result = unittest.TextTestResult(stream, True, 2)
+    with lease_time.supplied(lease_time.instant(SUPPLIED_HB_EPOCH)):
+        tests.run(result)
+    result.printErrors()
+    stream.writeln(f"Ran {result.testsRun} tests")
+    stream.writeln("OK" if result.wasSuccessful() else
+                   f"FAILED (failures={len(result.failures)}, errors={len(result.errors)})")
+    return result.wasSuccessful()
+
+
+if __name__ == "__main__":
+    raise SystemExit(0 if run() else 1)

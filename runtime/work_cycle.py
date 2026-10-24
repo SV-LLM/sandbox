@@ -22,7 +22,14 @@ processor there. This module is the Sandbox side of that hand-off:
            package (the entity repository's core.py). No SV-LLM code invokes a
            model: until an admitted Sandbox tool does, with credentials held by
            TV/TVC, an entity answers UNAVAILABLE NO_ADMITTED_INVOCATION_SURFACE.
-           A request with no entity surface stays outstanding; nothing waits.
+           A request whose entity surface the pass does not supply reaches its E0
+           terminal in the same pass (StegVerse-org/.github#163, operating-mode
+           ladder): the Sandbox records the entity-neutral UNAVAILABLE
+           ENTITY_SURFACE_NOT_SUPPLIED contribution, bound to the digest of the
+           pass's supplied entity set and carrying a six-field FAIL_CLOSED
+           (e0_terminal), so close() synthesizes and completes. No request stays
+           outstanding, nothing waits and nothing polls; supplying the surface is
+           a new manifest (a new work item), never a wait on this one.
   close    work whose every requested contribution is recorded is synthesized
            and completed, and the result is egressed to the organization the
            manifest's `return_to` names (crossing.py::egress). The mesh is the
@@ -52,13 +59,17 @@ from typing import Any, Callable
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime"))
-from ledger import Ledger  # noqa: E402
+from ledger import Ledger, epoch_refusal  # noqa: E402
 from sandbox import Sandbox, ALLOW  # noqa: E402
 import conformance_proposal  # noqa: E402
 import capability_routing  # noqa: E402
 
 SERVICE = json.loads((ROOT / "runtime/contracts/sandbox-service.json").read_text())
 NO_INVOCATION = "NO_ADMITTED_INVOCATION_SURFACE"
+SURFACE_NOT_SUPPLIED = "ENTITY_SURFACE_NOT_SUPPLIED"
+RESPOND_ENTRYPOINT = "SV-LLM/sandbox runtime/work_cycle.py::respond"
+OWNING_EXISTING_GOAL = "SVORG-LLM-ORG-FOUNDATION-001"
+CONTRIBUTION_SCHEMA = "sv-llm.contribution/v0.1"
 RESULT_SCHEMA = "sv-llm.sandbox-work-result/v1"
 SYNTHESIS_SCHEMA = "sv-llm.sandbox-work-cycle-synthesis/v1"
 WORK_FIELDS = ("requested_capabilities", "permitted_capabilities", "participation_policy",
@@ -94,10 +105,52 @@ class Entity:
                                      provenance=["SV-LLM/sandbox runtime/work_cycle.py::respond"])
 
 
+def entity_set_digest(names) -> str:
+    """sha256 over the canonical JSON of the pass's supplied entity names, sorted (SV_LLM_CANONICAL_JSON_V1)."""
+    return "sha256:" + hashlib.sha256(json.dumps(sorted(names), sort_keys=True, separators=(",", ":"),
+                                                 ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
+def unsupplied_contribution_id(work_id: str, entity: str, capability: str, set_digest: str) -> str:
+    """Deterministic: the same request in a pass with the same supplied entity set always yields the same id."""
+    return "surface-not-supplied:" + hashlib.sha256("\0".join((work_id, entity, capability, set_digest)).encode("utf-8")).hexdigest()
+
+
+def unsupplied_terminal(entity: str, capability: str) -> dict[str, Any]:
+    """The six-field FAIL_CLOSED that a request with no supplied entity surface terminates with at E0."""
+    return {"disposition": "FAIL_CLOSED", "failure_code": SURFACE_NOT_SUPPLIED,
+            "failed_predicate": "ENTITY_SURFACE_SUPPLIED_FOR_REQUESTED_CONTRIBUTION",
+            "required_evidence_or_repair": "supply the entity's surface (entity repository core.py and "
+                                           "contracts/entity-capability.json) to the pass that takes the work in",
+            "retry_entrypoint": RESPOND_ENTRYPOINT, "owning_existing_goal": OWNING_EXISTING_GOAL,
+            "next_attempt": "a new manifest for the same work, taken in by a pass that supplies the " + entity
+                            + " surface for " + capability + "; this work is complete and nothing waits on it",
+            "mode": "E0"}
+
+
+def unsupplied_envelope(work: dict[str, Any], entity: str, capability: str, set_digest: str, digest) -> dict[str, Any]:
+    """The entity-neutral UNAVAILABLE envelope the Sandbox records for an unsupplied surface: the same shape an entity's
+    core.non_success emits, attributed to the requested entity, with the Sandbox as its provenance."""
+    refs = ["entity-set:" + set_digest]
+    provenance = [RESPOND_ENTRYPOINT + " (entity surface not supplied)"]
+    record = {"status": "UNAVAILABLE", "reason_or_failed_predicate": SURFACE_NOT_SUPPLIED, "evidence_refs": refs,
+              "provenance": provenance, "uncertainty": None}
+    return {"schema": CONTRIBUTION_SCHEMA,
+            "contribution_id": unsupplied_contribution_id(work["work_id"], entity, capability, set_digest),
+            "work_id": work["work_id"], "entity": entity, "capability": capability, "epistemic_state": "OBSERVED",
+            "evidence_refs": list(refs), "provenance": list(provenance), "uncertainty": None, "status": "UNAVAILABLE",
+            "authority_effect": "NONE", "non_success_status_record": record, "content_digest": digest(record)}
+
+
 class WorkCycle:
     def __init__(self, *, dotgithub: Path, sandbox_ledger: Path, node_state_root: Path,
-                 entities: dict[str, Entity] | None = None):
+                 entities: dict[str, Entity] | None = None, hb_epoch: Any = None):
         self.dotgithub = Path(dotgithub).resolve()
+        # The supplied heartbeat epoch every receipt of this cycle carries, on the
+        # Sandbox ledger, the .github repository ledger and the organization
+        # ledger. Absent or invalid, each append is refused six-field FAIL_CLOSED
+        # (SV_LLM_LEDGER_APPEND_CLOCK_FALLBACK); it is never read from a clock.
+        self.hb_epoch = hb_epoch
         self.crossing = _load("sv_llm_crossing", self.dotgithub / "org-runtime/crossing.py")
         self.kernel = self.crossing.kernel
         self.agg = self.crossing.organization_ledger
@@ -108,13 +161,16 @@ class WorkCycle:
         # Routing precedence is declared by the canonical organization tree's row order, never by name.
         tree = json.loads((self.dotgithub / "data/organization-tree.json").read_text(encoding="utf-8"))
         self.tree_order = [row["name"] for row in tree.get("repositories", []) if isinstance(row, dict) and "name" in row]
-        self.sandbox = Sandbox(dotgithub_root=self.dotgithub, ledger=Ledger(Path(sandbox_ledger)),
-                               propagate=self._propagate)
+        # The Sandbox ledger records only the admitted work's digest; a later run
+        # re-derives the body from the materialized manifest in node state.
+        self.sandbox = Sandbox(dotgithub_root=self.dotgithub, ledger=Ledger(Path(sandbox_ledger), hb_epoch=hb_epoch),
+                               propagate=self._propagate, work_source=self._work_source)
 
     def _propagate(self, receipt: dict[str, Any], transition_class: str) -> dict[str, Any]:
+        """Propagate a Sandbox receipt to the organization ledger at the supplied epoch (no clock fallback)."""
         return self.agg.aggregate_transition(receipt, org_transition_class=transition_class,
                                              boundary_evidence={"source": "SV-LLM/sandbox"},
-                                             authority_effect="NONE")
+                                             authority_effect="NONE", hb_epoch=self.hb_epoch)
 
     @staticmethod
     def _key(prefix: str, name: str) -> str:
@@ -159,14 +215,7 @@ class WorkCycle:
         if not isinstance(spec, dict) or any(f not in spec for f in WORK_FIELDS):
             return {"admit": self._refuse(attempt, "WORK_DECLARED_BY_MANIFEST")}
         subject = source["evidence"]
-        work = {"schema": "sv-llm.sandbox-work/v0.1", "work_id": manifest["manifest_id"],
-                "manifested_request": manifest,
-                "parent_transition": {"transition_class": source["transition_class"],
-                                      "repo_receipt_sha256": source["receipt_sha256"],
-                                      "org_receipt_sha256": org["receipt_sha256"],
-                                      "subject_or_artifact_digest": source["successor_state_sha256"]},
-                "canonical_context_refs": spec.get("canonical_context_refs", []),
-                **{f: spec[f] for f in WORK_FIELDS if f != "participants"}}
+        work = self._work_object(manifest, org, source, spec)
         admitted = self.sandbox.admit(self.sandbox.canon.canonical(work), parent_repo_receipt=source,
                                       parent_org_receipt=org, subject=subject)
         out = {"admit": admitted, "selection": selected, "assign": [], "request": []}
@@ -198,6 +247,38 @@ class WorkCycle:
                 out["request"].append(self.sandbox.request(work["work_id"], entity, capability))
         return out
 
+    @staticmethod
+    def _work_object(manifest: dict[str, Any], org: dict[str, Any], source: dict[str, Any],
+                     spec: dict[str, Any]) -> dict[str, Any]:
+        return {"schema": "sv-llm.sandbox-work/v0.1", "work_id": manifest["manifest_id"],
+                "manifested_request": manifest,
+                "parent_transition": {"transition_class": source["transition_class"],
+                                      "repo_receipt_sha256": source["receipt_sha256"],
+                                      "org_receipt_sha256": org["receipt_sha256"],
+                                      "subject_or_artifact_digest": source["successor_state_sha256"]},
+                "canonical_context_refs": spec.get("canonical_context_refs", []),
+                **{f: spec[f] for f in WORK_FIELDS if f != "participants"}}
+
+    def _work_source(self, work_id: str, work_sha256: str) -> bytes | None:
+        """Re-derive an admitted work object from its materialized manifest in node state.
+
+        Returns canonical bytes only when they digest to the admission receipt's
+        work_sha256 (Sandbox._work checks it again); otherwise None, and the work
+        is treated as not admitted."""
+        for key in self.node_state.list_prefix(SERVICE["materialization_prefix"]):
+            record = self.node_state.get(key)
+            manifest = ((record or {}).get("packet", {}).get("payload") or {}).get("manifest") or {}
+            if manifest.get("manifest_id") != work_id:
+                continue
+            spec = (manifest.get("payload") or {}).get("work")
+            parent = self._parent(self.kernel.sha(record))
+            if not isinstance(spec, dict) or any(f not in spec for f in WORK_FIELDS) or parent is None:
+                continue
+            data = self.sandbox.canon.canonical(self._work_object(manifest, *parent, spec))
+            if self.sandbox.canon.digest(self.sandbox.canon.parse(data)) == work_sha256:
+                return data
+        return None
+
     def intake(self) -> list[dict[str, Any]]:
         results = []
         for key in self.node_state.list_prefix(SERVICE["materialization_prefix"]):
@@ -224,13 +305,19 @@ class WorkCycle:
                 if (r["evidence"]["entity"], r["evidence"]["capability"]) not in answered]
 
     def respond(self) -> list[dict[str, Any]]:
+        """Answer every outstanding request in this pass. A supplied surface answers with its own package; an
+        unsupplied one terminates at E0 as UNAVAILABLE ENTITY_SURFACE_NOT_SUPPLIED with a six-field FAIL_CLOSED."""
         results = []
+        set_digest = entity_set_digest(self.entities)
         for work_id in self._admitted():
             work = self.sandbox._work(work_id)
             for entity, capability in self._outstanding(work_id):
                 surface = self.entities.get(entity)
                 if surface is None:
-                    continue  # stays outstanding: a later pass with the entity's surface answers it
+                    envelope = unsupplied_envelope(work, entity, capability, set_digest, self.sandbox.canon.digest)
+                    results.append(self.sandbox.record(self.sandbox.canon.canonical(envelope),
+                                                       terminal=unsupplied_terminal(entity, capability)))
+                    continue
                 envelope = surface.answer(work, capability)
                 results.append(self.sandbox.record(self.sandbox.canon.canonical(envelope)))
         return results
@@ -282,7 +369,8 @@ class WorkCycle:
         declared = (manifest.get("payload") or {}).get("sdk_proposal")
         if declared is not None:
             result["payload"]["sdk_proposal_conformance"] = self._proposal_conformance(declared)
-        emitted = self.crossing.egress(result, standing=standing, mesh_root=mesh_root, root=self.dotgithub)
+        emitted = self.crossing.egress(result, standing=standing, mesh_root=mesh_root, root=self.dotgithub,
+                                     hb_epoch=self.hb_epoch)
         self.node_state.put_once(marker, {"schema": "sv-llm.sandbox-result-marker/v1", "work_id": work["work_id"],
                                           "transition_class": emitted["transition_class"],
                                           "org_receipt_sha256": emitted["org_receipt_sha256"]})
@@ -320,7 +408,8 @@ class WorkCycle:
     # -- one pass -----------------------------------------------------------------------
     def run(self, *, standing: dict[str, Any], mesh_root: Path) -> dict[str, Any]:
         """One pass: boundary ingress, intake, respond, close. Never waits for anything."""
-        ingress = self.crossing.ingress(mesh_root=mesh_root, node_state_root=self.node_state_root, root=self.dotgithub)
+        ingress = self.crossing.ingress(mesh_root=mesh_root, node_state_root=self.node_state_root, root=self.dotgithub,
+                                        hb_epoch=self.hb_epoch)
         return {"ingress": ingress, "intake": self.intake(), "respond": self.respond(),
                 "close": self.close(standing=standing, mesh_root=mesh_root)}
 
@@ -333,10 +422,16 @@ def main() -> int:
     p.add_argument("--sandbox-ledger", type=Path, required=True)
     p.add_argument("--standing", type=Path, required=True)
     p.add_argument("--entity-repo", type=Path, action="append", default=[])
+    p.add_argument("--hb-epoch", type=str, default=None,
+                   help="heartbeat epoch, supplied (ASCII [0-9]+, >= 32); never derived from a clock")
     ns = p.parse_args()
+    refusal = epoch_refusal(ns.hb_epoch)
+    if refusal is not None:
+        print(json.dumps(refusal, sort_keys=True))
+        return 1
     entities = {e.name: e for e in (Entity.from_repo(repo) for repo in ns.entity_repo)}
     cycle = WorkCycle(dotgithub=ns.dotgithub, sandbox_ledger=ns.sandbox_ledger,
-                      node_state_root=ns.node_state_root, entities=entities)
+                      node_state_root=ns.node_state_root, entities=entities, hb_epoch=ns.hb_epoch)
     out = cycle.run(standing=json.loads(ns.standing.read_text()), mesh_root=ns.mesh_root)
     print(json.dumps(out, sort_keys=True))
     return 0
