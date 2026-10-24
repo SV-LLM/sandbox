@@ -190,7 +190,13 @@ def _load(name: str, path: Path):
 
 class Sandbox:
     def __init__(self, *, dotgithub_root: Path, ledger: Ledger | None = None,
-                 propagate: Callable[[dict[str, Any], str], Any] | None = None):
+                 propagate: Callable[[dict[str, Any], str], Any] | None = None,
+                 work_source: Callable[[str, str], bytes | None] | None = None):
+        """`work_source(work_id, work_sha256)` re-supplies an admitted work object's
+        canonical bytes when this process did not admit it. The ledger records only
+        the digest (Rigel 2026-10-24T17:25Z: "The ecosystem holds zero sensitive user
+        data."), so the body comes from the caller and is accepted only if its
+        SV_LLM_CANONICAL_JSON_V1 digest equals the admission receipt's `work_sha256`."""
         root = Path(dotgithub_root)
         sys.path.insert(0, str(root / "org-runtime"))
         self.registration = _load("sandbox_registration", root / "org-runtime/sandbox_registration.py")
@@ -209,6 +215,8 @@ class Sandbox:
         self.contribution_validator = by_id["sv-llm.contribution/v0.1"]
         self.ledger = ledger or Ledger()
         self.propagate = propagate
+        self.work_source = work_source
+        self._admitted_work: dict[str, dict[str, Any]] = {}  # this process only; never ledgered
 
     # -- recording ---------------------------------------------------------------
     def _record(self, transition_class: str, subject: Any, outcome: dict[str, Any]) -> dict[str, Any]:
@@ -277,8 +285,29 @@ class Sandbox:
                 and (transition_class is None or r["transition_class"] == transition_class)]
 
     def _work(self, work_id: str) -> dict[str, Any] | None:
+        """The admitted work object, or None.
+
+        The admission receipt carries `work_sha256`, the SV_LLM_CANONICAL_JSON_V1
+        digest of the work object, never the body. The body is the one this
+        process admitted, or the bytes `work_source` re-supplies; either is used
+        only when its digest equals the receipt's. Otherwise the work is treated
+        as not admitted and every later step refuses (fail closed)."""
         rows = self._receipts(work_id, "SANDBOX_WORK_ADMITTED")
-        return rows[0]["evidence"]["work"] if rows else None
+        if not rows:
+            return None
+        evidence = rows[0]["evidence"]
+        recorded = evidence.get("work_sha256")
+        if recorded is None:
+            return None
+        work = self._admitted_work.get(work_id)
+        if work is None and self.work_source is not None:
+            data = self.work_source(work_id, recorded)
+            parsed, failed = self._parse(data) if data is not None else (None, "WORK_NOT_SUPPLIED")
+            work = None if failed else parsed
+        if not isinstance(work, dict) or work.get("work_id") != work_id or self.canon.digest(work) != recorded:
+            return None
+        self._admitted_work[work_id] = work
+        return work
 
     # -- S1: admission -----------------------------------------------------------
     def admit(self, work_bytes: bytes, *, parent_repo_receipt: dict[str, Any],
@@ -313,8 +342,13 @@ class Sandbox:
         if sha(subject) != parent["subject_or_artifact_digest"] \
                 or parent_repo_receipt.get("successor_state_sha256") != parent["subject_or_artifact_digest"]:
             return self._deny("SANDBOX_WORK_DENIED", attempt, "SUBJECT_IS_PARENT_SUCCESSOR_STATE", work_id=work_id)
+        # The receipt (and the organization receipt it propagates into) carries the
+        # digest of the canonical work object, not the work object: the manifested
+        # request is not persisted in any ledger (Rigel 2026-10-24T17:25Z: "The
+        # ecosystem holds zero sensitive user data.").
+        self._admitted_work[work_id] = work
         return self._record("SANDBOX_WORK_ADMITTED", attempt,
-                            {"disposition": ALLOW, "work_id": work_id, "work": work,
+                            {"disposition": ALLOW, "work_id": work_id, "work_sha256": self.canon.digest(work),
                              "parent_transition": parent, "authority_effect": "NONE"})
 
     # -- capability assignment -----------------------------------------------------

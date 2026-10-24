@@ -401,6 +401,63 @@ class MasterRecordsProhibitionName(unittest.TestCase):
         self.assertEqual(result["disposition"], ALLOW, result)
 
 
+class WorkDigestOnly(unittest.TestCase):
+    """The admission receipt records the digest of the canonical work object, never the body.
+
+    Rigel 2026-10-24T17:25Z: "The ecosystem holds zero sensitive user data." The
+    manifested request inside the work object is not persisted in the Sandbox
+    ledger or in the organization receipt it propagates into."""
+
+    SENTINEL = "sentinel-manifested-request-text-7f3a"
+
+    def admitted(self):
+        h = Harness()
+        work = h.work(manifested_request={"manifest_id": "fixture-manifest-001", "request": self.SENTINEL})
+        self.assertEqual(h.admit(work)["disposition"], ALLOW)
+        return h, work
+
+    def test_the_admission_receipt_carries_the_canonical_work_digest_and_no_body(self):
+        h, work = self.admitted()
+        receipt, = [r for r in h.sandbox.ledger.chain() if r["transition_class"] == "SANDBOX_WORK_ADMITTED"]
+        self.assertEqual(receipt["evidence"]["work_sha256"], h.canon.digest(work))
+        self.assertNotIn("work", receipt["evidence"])
+        self.assertEqual(receipt["evidence"]["parent_transition"], work["parent_transition"])
+        base = Path(h.tmp.name)
+        for ledger in ("sandbox-ledger", "org-ledger"):
+            files = [f for f in (base / ledger).rglob("*") if f.is_file()]
+            self.assertTrue(files, ledger)
+            for f in files:
+                self.assertNotIn(self.SENTINEL.encode(), f.read_bytes(), f)
+        self.assertNotIn(self.SENTINEL, json.dumps(h.org_receipts))
+        # The admitting process still has the body it admitted.
+        self.assertEqual(h.sandbox._work("fixture-work-001"), work)
+
+    def test_a_later_process_needs_the_body_resupplied_and_it_must_match_the_digest(self):
+        h, work = self.admitted()
+        base = Path(h.tmp.name)
+        fresh = Sandbox(dotgithub_root=DOTGITHUB, ledger=Ledger(base / "sandbox-ledger"))
+        self.assertIsNone(fresh._work("fixture-work-001"))
+        refused = fresh.assign("fixture-work-001", A, "adversarial_review", declaration=h.declaration(A), tree=h.tree)
+        self.assertEqual((refused["disposition"], refused["failed_predicate"]), (DENY, "WORK_IS_ADMITTED"))
+
+        tampered = dict(work, manifested_request={"manifest_id": "fixture-manifest-001", "request": "other text"})
+        wrong = Sandbox(dotgithub_root=DOTGITHUB, ledger=Ledger(base / "sandbox-ledger"),
+                        work_source=lambda work_id, digest: h.canon.canonical(tampered))
+        self.assertIsNone(wrong._work("fixture-work-001"))
+        self.assertIsNone(Sandbox(dotgithub_root=DOTGITHUB, ledger=Ledger(base / "sandbox-ledger"),
+                                  work_source=lambda work_id, digest: b"not json")._work("fixture-work-001"))
+
+        seen = []
+        def source(work_id, digest):
+            seen.append((work_id, digest))
+            return h.canon.canonical(work)
+        good = Sandbox(dotgithub_root=DOTGITHUB, ledger=Ledger(base / "sandbox-ledger"), work_source=source)
+        self.assertEqual(good._work("fixture-work-001"), work)
+        self.assertEqual(seen, [("fixture-work-001", h.canon.digest(work))])
+        allowed = good.assign("fixture-work-001", A, "adversarial_review", declaration=h.declaration(A), tree=h.tree)
+        self.assertEqual(allowed["disposition"], ALLOW, allowed)
+
+
 class Vendor(unittest.TestCase):
     def test_vendored_contracts_verified(self):
         h = Harness()
