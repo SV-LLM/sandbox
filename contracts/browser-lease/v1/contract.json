@@ -1,0 +1,33 @@
+{
+  "schema": "stegverse.browser-lease-contract/v1",
+  "contract_id": "BROWSER-LEASE-V1",
+  "owner": "Lane B (91117956), StegVerse-org/.github#162 (I7 in #160 issuecomment-6353130407)",
+  "owning_existing_goal": "INTERLOCK-INTR-RUNTIME-INDEPENDENT-PROTOCOL-001 (NWI-S1)",
+  "lowest_supported_mode": "E0",
+  "lease_schema": "stegbrowser.ecosystem-ephemeral-lease.v1",
+  "time_source": {
+    "rule": "the lease is issued, opened, authorized, checked and closed at the instant of the supplied hb_epoch on the HB32 lattice; nothing reads a clock",
+    "epoch_rule": "org-kernel/kernel.py::supplied_epoch_failure (ASCII [0-9]+, value >= 32; derived_from_clock must be exactly false)",
+    "hb_anchor_epoch": 32,
+    "hb_anchor_unix_ns": 1787511600000000000,
+    "hb_period_ns": 10000000,
+    "instant_unix_ns": "hb_anchor_unix_ns + (hb_epoch - hb_anchor_epoch) * hb_period_ns",
+    "instant_unix_seconds": "instant_unix_ns / 1e9 (float), for consumers whose lease expiry is unix seconds",
+    "expires_at": "the issuing instant plus lease_seconds (1..900), on the same lattice"
+  },
+  "predicate": "LEASE_TIME_IS_THE_SUPPLIED_HB_EPOCH",
+  "refusals": {
+    "HB_EPOCH_NOT_SUPPLIED": "FAIL_CLOSED",
+    "HB_EPOCH_INVALID": "FAIL_CLOSED"
+  },
+  "non_allow_fields": ["failure_code", "failed_predicate", "required_evidence_or_repair", "retry_entrypoint", "owning_existing_goal", "next_attempt"],
+  "implementations": {
+    "SV-LLM/sandbox": "runtime/lease_time.py (instant, instant_unix_seconds, supplied_clock, bind, supplied)",
+    "StegVerse-Labs/StegApp": "consumer: stegapp/eia_runtime.invoke(clock=...) receives a supplied-epoch clock built to this contract; a wall clock is not a conforming clock"
+  },
+  "invariants": [
+    "no clock read in the lease path; a process that bound lease_time cannot reach the vendored datetime.now fallback",
+    "one lease contract: any other browser lease in the ecosystem binds this file by sha256 rather than restating the rule",
+    "every refusal terminates FAIL_CLOSED with the six fields; no step waits on an LLM or a person"
+  ]
+}

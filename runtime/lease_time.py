@@ -68,6 +68,23 @@ def instant(hb_epoch: Any, *, field: str = "hb_epoch") -> _dt.datetime:
     return _UNIX_EPOCH + _dt.timedelta(microseconds=ns // 1000)
 
 
+def instant_unix_seconds(hb_epoch: Any, *, field: str = "hb_epoch") -> float:
+    """The supplied epoch's HB32 instant as unix seconds (contracts/browser-lease/v1); refuses otherwise."""
+    refusal = lease_time_refusal(hb_epoch, field=field)
+    if refusal is not None:
+        raise LeaseTimeRefused(refusal)
+    return (HB_ANCHOR_UNIX_NS + (int(str(hb_epoch)) - HB_ANCHOR_EPOCH) * HB_PERIOD_NS) / 1e9
+
+
+def supplied_clock(hb_epoch: Any, *, field: str = "hb_epoch"):
+    """A zero-argument clock that answers the supplied epoch's instant (unix seconds) and never reads a clock.
+
+    For consumers that take a clock callable, such as StegApp's eia_runtime.invoke(clock=...).
+    """
+    at = instant_unix_seconds(hb_epoch, field=field)
+    return lambda: at
+
+
 def _current() -> _dt.datetime:
     current = _CURRENT.get()
     if current is None:

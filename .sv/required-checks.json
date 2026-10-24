@@ -88,6 +88,12 @@
       "expected_outcome": "PASS"
     },
     {
+      "id": "test-browser-lease-contract",
+      "kind": "python-unittest",
+      "target": "tests/test_browser_lease_contract.py",
+      "expected_outcome": "PASS"
+    },
+    {
       "id": "test-work-cycle",
       "kind": "python-unittest",
       "target": "tests/test_work_cycle.py",
