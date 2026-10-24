@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
         with:
           repository: SV-LLM/.github
-          ref: 06575f0bdb31c362a467cdd1c335ad08b31563b5  # SV-LLM/.github laneb/g4-ledger-append-epoch-refusal (G4)
+          ref: a00a72ec54055e11b23841e3718cfd7352ad8a8c  # SV-LLM/.github main (G4 #47 + B-P31 #49 merged)
           path: sv-llm-dotgithub
       - name: Sandbox runtime
         env:
@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
         with:
           repository: SV-LLM/.github
-          ref: 06575f0bdb31c362a467cdd1c335ad08b31563b5  # SV-LLM/.github laneb/g4-ledger-append-epoch-refusal (G4)
+          ref: a00a72ec54055e11b23841e3718cfd7352ad8a8c  # SV-LLM/.github main (G4 #47 + B-P31 #49 merged)
           path: sv-llm-dotgithub-registered
       - name: Real-entity contract-level regression (order 5)
         env:

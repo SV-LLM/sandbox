@@ -6,7 +6,7 @@
     {
       "id": "sv-llm-dotgithub",
       "repository": "SV-LLM/.github",
-      "commit": "06575f0bdb31c362a467cdd1c335ad08b31563b5",
+      "commit": "a00a72ec54055e11b23841e3718cfd7352ad8a8c",
       "env": "SV_LLM_DOTGITHUB_ROOT"
     }
   ],
