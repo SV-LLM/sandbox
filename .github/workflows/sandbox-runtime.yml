@@ -77,6 +77,8 @@ jobs:
         run: python -B tests/test_lease_time_supplied_epoch.py
       - name: "One browser-lease contract (I7): contracts/browser-lease/v1 and runtime/lease_time.py agree"
         run: python -B tests/test_browser_lease_contract.py
+      - name: StegNode binding fail-closed regression (offline)
+        run: python -B -m unittest tests.test_stegnode_capability_binding
       - name: SV-LLM work cycle end to end (peer manifest in, Sandbox, organization ledger, result out; no network)
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
