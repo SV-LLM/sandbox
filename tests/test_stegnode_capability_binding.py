@@ -2,11 +2,15 @@ import unittest
 from runtime.stegnode_capability_binding import evaluate_binding as evaluate
 
 NODE = {"node_id": "stegnode-existing", "continuity_established": True, "class_established": True}
-POSTURE = {"schema": "stegos.intr-security-posture-resolution.v1",
-           "effective_posture": {"tier": "HIGHEST"}, "instance_verified": True,
-           "posture_instance": {"task_id": "task-1", "resolution_authority": "INTERLOCK_INTR",
-                                "credential_authority": "TV/TVC", "transferable": False,
-                                "reusable_across_tasks": False}}
+def posture(effective="HIGHEST", automatic="SECURE"):
+    return {"schema": "stegos.intr-security-posture-resolution.v1", "task_id": "task-1",
+            "automatic_posture": {"tier": automatic}, "selected_posture": {"tier": effective},
+            "effective_posture": {"tier": effective}, "instance_verified": True,
+            "posture_instance": {"task_id": "task-1", "resolution_authority": "INTERLOCK_INTR",
+                                 "credential_authority": "TV/TVC", "transferable": False,
+                                 "reusable_across_tasks": False, "automatic_tier": automatic,
+                                 "selected_tier": effective, "effective_tier": effective}}
+POSTURE = posture()
 MANIFEST = {"task_id": "task-1", "disposition": "ALLOW", "authenticated": True}
 VERIFIER = lambda instance, manifest: instance["task_id"] == manifest["task_id"]
 
@@ -22,8 +26,18 @@ class NodeCapabilityBindingTests(unittest.TestCase):
         self.assertEqual(result["disposition"], "ALLOW")
         self.assertFalse(result["execution_authorized_by_binding"])
     def test_posture_cannot_downgrade(self):
-        p = {**POSTURE, "effective_posture": {"tier": "SECURE"}}
-        self.assertEqual(evaluate(public=False, node=NODE, posture=p, manifest=MANIFEST, required_tier="HIGHEST", posture_verifier=VERIFIER)["disposition"], "DENY")
+        r = evaluate(public=False, node=NODE, posture=posture("SECURE"), manifest=MANIFEST, required_tier="HIGHEST", posture_verifier=VERIFIER)
+        self.assertEqual((r["disposition"], r["predicate"]), ("DENY", "EFFECTIVE_POSTURE_BELOW_CAPABILITY_FLOOR"))
+    def test_undigested_wrapper_tier_cannot_raise_the_verified_instance_tier(self):
+        p = posture("SECURE")
+        p["effective_posture"] = {"tier": "HIGHEST"}                       # the instance still says SECURE
+        r = evaluate(public=False, node=NODE, posture=p, manifest=MANIFEST, required_tier="HIGHEST", posture_verifier=VERIFIER)
+        self.assertEqual((r["disposition"], r["predicate"]), ("DENY", "POSTURE_RESOLUTION_WRAPPER_MATCHES_VERIFIED_INSTANCE"))
+    def test_the_instance_automatic_tier_is_a_floor(self):
+        p = posture("HIGH")
+        p["automatic_posture"]["tier"] = p["posture_instance"]["automatic_tier"] = "HIGHEST"  # effective HIGH is below it
+        r = evaluate(public=False, node=NODE, posture=p, manifest=MANIFEST, posture_verifier=VERIFIER)
+        self.assertEqual((r["disposition"], r["predicate"]), ("DENY", "EFFECTIVE_POSTURE_BELOW_CAPABILITY_FLOOR"))
     def test_missing_verification_fails_closed(self):
         p = {**POSTURE, "instance_verified": False}
         self.assertEqual(evaluate(public=False, node=NODE, posture=p, manifest=MANIFEST)["disposition"], "FAIL_CLOSED")

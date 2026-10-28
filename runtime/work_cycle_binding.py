@@ -15,9 +15,18 @@ Protected work requires, in order:
      runtime/vendor/stegos_intr and digest-checked against its vendor-manifest.json.
      It is resolved here, never injected: a caller-supplied callable is not native
      authentication. Absent or digest-mismatched, protected work FAILS CLOSED;
-  3. non-replay: the posture instance's digest was never bound before on this
-     Sandbox ledger chain (the self-digest alone proves neither issuance nor non-replay);
-  4. a task-bound WorkerCoordinator claim/fence (worker_claim.authority = WORKERCOORDINATOR).
+  3. a capability floor the caller does not control: the max of the service's declared
+     minimum_security_tier (runtime/contracts/sandbox-service.json), the verified instance's
+     automatic_tier, and the native data-class/channel minimums for the instance's digested
+     data_class/channel. A manifest's binding.required_tier may only RAISE that floor. The
+     effective tier compared against it is the verified instance's digested effective_tier;
+     an undigested resolution wrapper that disagrees with the instance is refused;
+  4. non-replay: the posture instance's digest was never bound before on this
+     Sandbox ledger chain (the self-digest alone proves neither issuance nor non-replay).
+     This guard is scoped to this one ledger chain: a second Sandbox instance or a reset
+     ledger would accept the same instance and claim again. Cross-instance non-replay is
+     the WorkerCoordinator fence's job, which is why step 5 is mandatory;
+  5. a task-bound WorkerCoordinator claim/fence (worker_claim.authority = WORKERCOORDINATOR).
      The admitted claim set is not yet supplied by any Registry/WorkerCoordinator
      surface, so main() supplies none and every protected take FAILS CLOSED with
      AUTHENTIC_WORKERCOORDINATOR_CLAIM_FENCE_NOT_OBSERVED. It never ALLOWs without one.
@@ -34,7 +43,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 from ledger import sha
-from stegnode_capability_binding import evaluate_binding
+from stegnode_capability_binding import TIERS, evaluate_binding
 
 SCHEMA = "sv-llm.sandbox-work-cycle-binding/v1"
 OWNING_EXISTING_GOAL = "StegVerse-org/.github#163"
@@ -46,6 +55,7 @@ NO_CLAIM_FENCE = "AUTHENTIC_WORKERCOORDINATOR_CLAIM_FENCE_NOT_OBSERVED"
 # The only public-read surface the Sandbox carries is page_load.v1 (navigate + read_public).
 PUBLIC_RETRIEVAL_CAPABILITIES = frozenset({"page_load.v1"})
 VENDOR = Path(__file__).resolve().parent / "vendor/stegos_intr"
+SERVICE_CONTRACT = Path(__file__).resolve().parent / "contracts/sandbox-service.json"
 NATIVE_MODULE = "intr_security_posture_resolution.py"
 NATIVE_FUNCTION = "verify_task_security_posture_instance"
 
@@ -75,8 +85,8 @@ def _file_sha256(path: Path) -> str:
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def native_posture_verifier() -> Callable[..., Any] | None:
-    """The vendored StegOS verifier, or None when it is absent or its bytes do not match the pinned digest."""
+def _native_module():
+    """The vendored StegOS module, or None when it is absent or its bytes do not match the pinned digest."""
     manifest_path, module_path = VENDOR / "vendor-manifest.json", VENDOR / NATIVE_MODULE
     if not (manifest_path.is_file() and module_path.is_file()):
         return None
@@ -89,8 +99,38 @@ def native_posture_verifier() -> Callable[..., Any] | None:
     spec = importlib.util.spec_from_file_location("sv_llm_vendored_stegos_intr_posture", module_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    fn = getattr(module, NATIVE_FUNCTION, None)
+    return module
+
+
+def native_posture_verifier() -> Callable[..., Any] | None:
+    """The vendored StegOS verifier, or None when it is absent or its bytes do not match the pinned digest."""
+    fn = getattr(_native_module(), NATIVE_FUNCTION, None)
     return fn if callable(fn) else None
+
+
+def capability_floor(binding: dict[str, Any], instance: Any) -> tuple[str | None, str | None]:
+    """(floor tier, None) or (None, refusing predicate). The floor is never lowered by the manifest being gated:
+    it is the service's declared minimum raised by the instance's automatic/data-class/channel floors, and the
+    manifest's binding.required_tier only counts when it is higher."""
+    try:
+        service = json.loads(SERVICE_CONTRACT.read_text(encoding="utf-8")).get("minimum_security_tier")
+    except (OSError, ValueError, AttributeError):
+        service = None
+    if service not in TIERS:
+        return None, "SERVICE_MINIMUM_SECURITY_TIER_DECLARED"
+    candidates = [service]
+    requested = binding.get("required_tier")
+    if requested is not None:
+        if requested not in TIERS:
+            return None, "UNRECOGNIZED_REQUIRED_SECURITY_TIER"
+        candidates.append(requested)
+    if isinstance(instance, dict):
+        native = _native_module()
+        candidates += [t for t in (instance.get("automatic_tier"),
+                                   getattr(native, "DATA_CLASS_MINIMUM", {}).get(instance.get("data_class")),
+                                   getattr(native, "CHANNEL_MINIMUM", {}).get(instance.get("channel")))
+                       if t in TIERS]
+    return max(candidates, key=TIERS.__getitem__), None
 
 
 def observed_at(hb_epoch: int) -> str:
@@ -185,10 +225,13 @@ def evaluate_take(manifest: dict[str, Any], *, task_id: str, hb_epoch: Any,
         ok, native["reason"] = _native_verdict(verifier, inst, task_id, digests["payload_sha256"],
                                                digests["transition_request_sha256"], hb_epoch)
         return ok
+    floor, refused = capability_floor(binding, instance)
+    if refused is not None:
+        return _six("FAIL_CLOSED", refused, TAKE_ENTRYPOINT, **lineage)
     # The manifest's admission is the boundary ingress receipt pair the caller already read back.
     base = evaluate_binding(public=False, node=binding.get("node"), posture=posture,
                             manifest={"task_id": task_id, "disposition": "ALLOW", "authenticated": True},
-                            required_tier=binding.get("required_tier", "SECURE"),
+                            required_tier=floor,
                             posture_verifier=natively if callable(verifier) else None)
     if base["disposition"] != "ALLOW":
         return _six(base["disposition"], base["predicate"], TAKE_ENTRYPOINT, native_reason=native.get("reason"),
@@ -207,7 +250,7 @@ def evaluate_take(manifest: dict[str, Any], *, task_id: str, hb_epoch: Any,
                     projection_only=not isinstance(declared, dict) or declared.get("projection_only") is not False,
                     **lineage)
     return {"schema": SCHEMA, "disposition": "ALLOW", "predicate": base["predicate"], "public": False,
-            "node_id": base["node_id"], "security_tier": base["security_tier"],
+            "node_id": base["node_id"], "security_tier": base["security_tier"], "capability_floor": floor,
             "posture_instance_sha256": instance_sha256, "claim_sha256": declared["claim_sha256"],
             "claim_ref": declared["claim_ref"], "fence_ref": declared["fence_ref"],
             "return_organization": (manifest.get("return_to") or {}).get("organization"),

@@ -197,6 +197,123 @@ class WorkCycleBinding(unittest.TestCase):
         taken = self.take_one(m)
         self.assert_refused_before_admission(taken, "DENY", "EFFECTIVE_POSTURE_BELOW_CAPABILITY_FLOOR")
 
+    # -- the tier and its floor come from nothing the caller controls (#47 review findings 1, 2) ---------------
+    def test_an_undigested_wrapper_tier_cannot_lift_a_low_posture(self):
+        m, claim = fx.bind(manifest("bind-wrapper-tier"), EPOCH, tier="SECURE", required_tier="HIGHEST")
+        self.cycle.admitted_claims.append(claim)
+        m["payload"]["binding"]["posture"]["effective_posture"]["tier"] = "HIGHEST"   # outside every digest
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "DENY", "POSTURE_RESOLUTION_WRAPPER_MATCHES_VERIFIED_INSTANCE")
+
+    def test_the_manifest_cannot_lower_the_service_floor(self):
+        m, claim = fx.bind(manifest("bind-lowered-floor"), EPOCH, tier="SECURE", required_tier="HIGHEST")
+        self.cycle.admitted_claims.append(claim)
+        m["payload"]["binding"]["required_tier"] = "SECURE"            # the submitter picks its own floor
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "DENY", "EFFECTIVE_POSTURE_BELOW_CAPABILITY_FLOOR")
+
+    def test_the_data_class_floor_holds_whatever_the_instance_or_manifest_says(self):
+        m, claim = fx.bind(manifest("bind-ephi"), EPOCH, tier="HIGH")
+        self.cycle.admitted_claims.append(claim)
+        posture = m["payload"]["binding"]["posture"]
+        inst = posture["posture_instance"]                              # self-minted: ePHI resolved as only HIGH
+        inst["data_class"] = "ePHI"
+        inst.pop("instance_sha256")
+        inst["instance_sha256"] = fx.STEGOS._digest(inst)
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "DENY", "EFFECTIVE_POSTURE_BELOW_CAPABILITY_FLOOR")
+
+    def test_a_manifest_may_raise_the_floor(self):
+        m, claim = fx.bind(manifest("bind-raised-floor"), EPOCH, tier="HIGH", required_tier="HIGHEST")
+        self.cycle.admitted_claims.append(claim)
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "DENY", "EFFECTIVE_POSTURE_BELOW_CAPABILITY_FLOOR")
+
+    def test_without_a_declared_service_minimum_protected_work_fails_closed(self):
+        undeclared = self.base / "sandbox-service.json"
+        service = json.loads(wcb.SERVICE_CONTRACT.read_text())
+        service.pop("minimum_security_tier")
+        undeclared.write_text(json.dumps(service))
+        m, claim = fx.bind(manifest("bind-no-service-floor"), EPOCH, required_tier="HIGHEST")
+        original = wcb.SERVICE_CONTRACT
+        try:
+            wcb.SERVICE_CONTRACT = undeclared
+            r = wcb.evaluate_take(m, task_id=m["manifest_id"], hb_epoch=EPOCH, admitted_claims=[claim], bound=[],
+                                  verifier=wcb.native_posture_verifier())
+        finally:
+            wcb.SERVICE_CONTRACT = original
+        self.assert_six(r, "FAIL_CLOSED", "SERVICE_MINIMUM_SECURITY_TIER_DECLARED", wcb.TAKE_ENTRYPOINT)
+
+    # -- claim replay and claim authority, evaluated directly --------------------------------
+    def assert_six(self, r, disposition, predicate, entrypoint):
+        self.assertEqual((r["disposition"], r["failed_predicate"], r["failure_code"]), (disposition, predicate, predicate), r)
+        self.assertTrue(all(isinstance(r.get(k), str) and r[k] for k in SIX), r)
+        self.assertEqual((r["retry_entrypoint"], r["authority_effect"]), (entrypoint, "NONE"))
+
+    def take_direct(self, m, claim, *, hb_epoch=EPOCH, bound=()):
+        return wcb.evaluate_take(m, task_id=m["manifest_id"], hb_epoch=hb_epoch, admitted_claims=[claim],
+                                 bound=list(bound), verifier=wcb.native_posture_verifier())
+
+    def test_a_used_claim_is_not_replayed_with_a_fresh_posture_instance(self):
+        m, claim = fx.bind(manifest("bind-claim-replay"), EPOCH)
+        first = self.take_direct(m, claim)
+        self.assertEqual(first["disposition"], "ALLOW", first)
+        again, _ = fx.bind(manifest("bind-claim-replay"), EPOCH + 1)    # a fresh instance, the same used claim
+        again["payload"]["binding"]["worker_claim"] = claim
+        self.assert_six(self.take_direct(again, claim, hb_epoch=EPOCH + 1, bound=[first]),
+                        "DENY", "WORKERCOORDINATOR_CLAIM_NOT_REPLAYED", wcb.TAKE_ENTRYPOINT)
+
+    def test_an_admitted_claim_from_another_authority_is_denied(self):
+        m, _ = fx.bind(manifest("bind-claim-authority"), EPOCH)
+        foreign = fx.claim(m, valid_until_epoch=EPOCH + 600, authority="SELF_ASSERTED")
+        m["payload"]["binding"]["worker_claim"] = foreign
+        self.assert_six(self.take_direct(m, foreign), "DENY", "WORKERCOORDINATOR_IS_CLAIM_AUTHORITY", wcb.TAKE_ENTRYPOINT)
+
+    # -- return-path refusals, evaluated directly against a take-time ALLOW --------------------
+    def returned(self, m, take, claim, *, hb_epoch=EPOCH, verifier="native"):
+        return wcb.evaluate_return(m, take, task_id=m["manifest_id"], hb_epoch=hb_epoch, admitted_claims=[claim],
+                                   verifier=wcb.native_posture_verifier() if verifier == "native" else verifier)
+
+    def bound_take(self, manifest_id):
+        m, claim = fx.bind(manifest(manifest_id), EPOCH)
+        take = self.take_direct(m, claim)
+        self.assertEqual(take["disposition"], "ALLOW", take)
+        self.assertEqual(self.returned(m, take, claim)["disposition"], "ALLOW")
+        return m, take, claim
+
+    def test_return_without_a_take_binding_fails_closed(self):
+        m, _take, claim = self.bound_take("bind-return-no-take")
+        self.assert_six(self.returned(m, None, claim), "FAIL_CLOSED", "TAKE_BINDING_RECEIPT_PRESENT", wcb.RETURN_ENTRYPOINT)
+
+    def test_return_for_a_different_request_is_denied(self):
+        m, take, claim = self.bound_take("bind-return-other-request")
+        m["payload"]["work"]["intent"] = "a different request"
+        self.assert_six(self.returned(m, take, claim), "DENY", "RETURN_BOUND_TO_TAKEN_REQUEST", wcb.RETURN_ENTRYPOINT)
+
+    def test_return_to_another_organization_is_denied(self):
+        m, take, claim = self.bound_take("bind-return-other-org")
+        take = {**take, "return_organization": "SomeoneElse"}
+        self.assert_six(self.returned(m, take, claim), "DENY", "RETURN_ORGANIZATION_IS_BOUND_ORGANIZATION",
+                        wcb.RETURN_ENTRYPOINT)
+
+    def test_return_with_another_posture_instance_is_denied(self):
+        m, take, claim = self.bound_take("bind-return-other-instance")
+        fresh, _ = fx.bind(manifest("bind-return-other-instance"), EPOCH + 1)
+        m["payload"]["binding"]["posture"] = fresh["payload"]["binding"]["posture"]
+        self.assert_six(self.returned(m, take, claim, hb_epoch=EPOCH + 1), "DENY",
+                        "RETURN_POSTURE_INSTANCE_IS_BOUND_INSTANCE", wcb.RETURN_ENTRYPOINT)
+
+    def test_return_after_the_posture_expired_fails_closed(self):
+        m, take, claim = self.bound_take("bind-return-expired")
+        r = self.returned(m, take, {**claim, "valid_until_epoch": EPOCH + 10_000}, hb_epoch=EPOCH + 900)  # TTL 900s
+        self.assert_six(r, "FAIL_CLOSED", "POSTURE_INSTANCE_CRYPTOGRAPHIC_VERIFICATION_NOT_OBSERVED", wcb.RETURN_ENTRYPOINT)
+        self.assertEqual(r["native_reason"], "posture_instance_inactive")
+
+    def test_return_without_the_native_verifier_fails_closed(self):
+        m, take, claim = self.bound_take("bind-return-no-verifier")
+        self.assert_six(self.returned(m, take, claim, verifier=None), "FAIL_CLOSED",
+                        "AUTHENTIC_INTR_POSTURE_VERIFIER_NOT_BOUND", wcb.RETURN_ENTRYPOINT)
+
     def test_without_the_vendored_native_verifier_protected_work_fails_closed(self):
         tampered = self.base / "vendor"
         shutil.copytree(wcb.VENDOR, tampered)
@@ -253,6 +370,7 @@ class WorkCycleBinding(unittest.TestCase):
         b = taken["binding"]
         self.assertEqual((b["disposition"], b["claim_sha256"], b["fence_ref"]), ("ALLOW", claim["claim_sha256"], "wc-fence:1"))
         self.assertIs(b["execution_authorized_by_binding"], False)
+        self.assertEqual((b["security_tier"], b["capability_floor"]), ("HIGH", "HIGH"))   # the service's declared floor
         self.assertEqual(taken["admit"]["disposition"], "ALLOW")
         closed, = out["close"]
         self.assertEqual(closed["complete"]["disposition"], "ALLOW")

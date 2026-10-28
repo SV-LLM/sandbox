@@ -9,6 +9,14 @@ from __future__ import annotations
 
 SCHEMA = "sv-llm.stegnode-capability-binding/v1"
 TIERS = {"SECURE": 1, "HIGH": 2, "HIGHEST": 3}
+# resolution wrapper key -> the digested posture-instance field it restates
+WRAPPER_TIERS = {"effective_posture": "effective_tier", "automatic_posture": "automatic_tier",
+                 "selected_posture": "selected_tier"}
+
+
+def _wrapper_tier(posture: dict, key: str):
+    part = posture.get(key)
+    return part.get("tier") if isinstance(part, dict) else None
 
 
 def evaluate_binding(*, public: bool, node: dict | None = None,
@@ -29,9 +37,6 @@ def evaluate_binding(*, public: bool, node: dict | None = None,
     instance = posture.get("posture_instance")
     if not isinstance(instance, dict) or instance.get("resolution_authority") != "INTERLOCK_INTR" or instance.get("credential_authority") != "TV/TVC" or instance.get("transferable") is not False or instance.get("reusable_across_tasks") is not False:
         return result("FAIL_CLOSED", "INTR_POSTURE_INSTANCE_PREDICATES_MISSING")
-    effective = posture.get("effective_posture", {}).get("tier") if isinstance(posture.get("effective_posture"), dict) else None
-    if effective not in TIERS or TIERS[effective] < TIERS[required_tier]:
-        return result("DENY", "EFFECTIVE_POSTURE_BELOW_CAPABILITY_FLOOR")
     if not isinstance(manifest, dict) or manifest.get("disposition") != "ALLOW" or manifest.get("authenticated") is not True or not manifest.get("task_id"):
         return result("FAIL_CLOSED", "AUTHENTIC_MANIFEST_ADMISSION_NOT_OBSERVED")
     if instance.get("task_id") != manifest["task_id"]:
@@ -44,6 +49,15 @@ def evaluate_binding(*, public: bool, node: dict | None = None,
         verified = False
     if not verified:
         return result("FAIL_CLOSED", "POSTURE_INSTANCE_CRYPTOGRAPHIC_VERIFICATION_NOT_OBSERVED")
+    # Tiers come only from the verified instance's own digested fields; the resolution wrapper is
+    # undigested, so it must restate them exactly or the binding is refused.
+    if any(_wrapper_tier(posture, key) != instance.get(field) for key, field in WRAPPER_TIERS.items()) \
+            or posture.get("task_id") != instance.get("task_id"):
+        return result("DENY", "POSTURE_RESOLUTION_WRAPPER_MATCHES_VERIFIED_INSTANCE")
+    effective, automatic = instance.get("effective_tier"), instance.get("automatic_tier")
+    if effective not in TIERS or automatic not in TIERS \
+            or TIERS[effective] < max(TIERS[required_tier], TIERS[automatic]):
+        return result("DENY", "EFFECTIVE_POSTURE_BELOW_CAPABILITY_FLOOR")
     return {**result("ALLOW", "EXISTING_NODE_POSTURE_AND_MANIFEST_EVIDENCE_PRESENT"),
             "node_id": node["node_id"], "task_id": manifest["task_id"],
             "security_tier": effective, "execution_authorized_by_binding": False}

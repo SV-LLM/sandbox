@@ -9,6 +9,7 @@
       "route_id": "sv-llm.sandbox.work-cycle.v1"
     }
   ],
+  "minimum_security_tier": "HIGH",
   "materialization_prefix": "ingress/materialized/sandbox/",
   "intake_prefix": "sandbox/intake/",
   "result_prefix": "sandbox/result/",
