@@ -83,3 +83,7 @@ jobs:
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
         run: python -B tests/test_work_cycle.py
+      - name: "#163: native StegNode/InTr binding at WorkCycle _take/_return; FAIL_CLOSED without a WorkerCoordinator claim/fence (no network)"
+        env:
+          SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
+        run: python -B tests/test_work_cycle_binding.py

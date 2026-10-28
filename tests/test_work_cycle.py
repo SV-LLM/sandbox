@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DOTGITHUB = Path(os.environ["SV_LLM_DOTGITHUB_ROOT"]).resolve()
 sys.path.insert(0, str(ROOT / "runtime"))
 sys.path.insert(0, str(ROOT / "tests"))
+import work_cycle_binding_fixture as binding_fixture  # noqa: E402
 from work_cycle import (WorkCycle, Entity, SERVICE, NO_INVOCATION, SURFACE_NOT_SUPPLIED, entity_set_digest,  # noqa: E402
                         unsupplied_contribution_id, unsupplied_envelope, unsupplied_terminal)
 
@@ -85,7 +86,11 @@ class WorkCycleEndToEnd(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def send(self, m):
+    def send(self, m, *, bind=True):
+        """Publish m. Protected work carries a fixture binding whose fixture claim this cycle admits."""
+        if bind:
+            m, claim = binding_fixture.bind(m, 4000)
+            self.cycle.admitted_claims.append(claim)
         k = self.labs.kernel
         self.labs.publish(k.build_packet(origin_org="StegVerse-Labs", origin_service="stegverse-labs.org-control",
                                          destination_org="SV-LLM", destination_service="sv-llm.org-control",
@@ -114,10 +119,12 @@ class WorkCycleEndToEnd(unittest.TestCase):
         self.assertEqual(work["parent_transition"]["org_receipt_sha256"], out["ingress"][0]["org_receipt_sha256"])
         self.assertEqual(self.cycle.sandbox.pending_propagation(), [])
         org = [r["org_transition_class"] for r in chain(self.base / "org-ledger")]
-        self.assertEqual(org, ["ORGANIZATION_LEDGER_OPENED", "ORGANIZATION_INGRESS_MATERIALIZED", "SANDBOX_WORK_ADMITTED",
+        self.assertEqual(org, ["ORGANIZATION_LEDGER_OPENED", "ORGANIZATION_INGRESS_MATERIALIZED",
+                               "SANDBOX_WORK_BINDING_VERIFIED", "SANDBOX_WORK_ADMITTED",
                                "CAPABILITY_ASSIGNMENT", "CONTRIBUTION_REQUESTED", "CAPABILITY_ASSIGNMENT",
                                "CONTRIBUTION_REQUESTED", "ENTITY_CONTRIBUTION_RECORDED", "ENTITY_CONTRIBUTION_RECORDED",
-                               "SANDBOX_SYNTHESIS_RECORDED", "SANDBOX_WORK_COMPLETED", "ORGANIZATION_EGRESS_EMITTED"])
+                               "SANDBOX_SYNTHESIS_RECORDED", "SANDBOX_WORK_COMPLETED",
+                               "SANDBOX_RETURN_BINDING_REVALIDATED", "ORGANIZATION_EGRESS_EMITTED"])
         rebuilt = self.cycle.sandbox.reconstruct("work-cycle-001")
         self.assertEqual(rebuilt["work_id"], "work-cycle-001")
         for r in self.cycle.sandbox.contributions("work-cycle-001"):

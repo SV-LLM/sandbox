@@ -1,0 +1,21 @@
+{
+  "schema": "sv-llm.vendored-contract-manifest/v1",
+  "canonical_source": "StegVerse-Labs/StegOS",
+  "source_commit": "2d76c7780d09c8a53ad15004f5f9ef46b74a893f",
+  "integration_date": "2026-10-28",
+  "reason": "StegVerse-org/.github#163: the native InTr posture verifier for runtime/work_cycle_binding.py. Byte-for-byte; runtime/work_cycle_binding.py loads it only when its sha256 matches the pin below, and fails closed otherwise.",
+  "upstream_paths": {
+    "intr_security_posture_resolution.py": "stegos/intr_security_posture_resolution.py"
+  },
+  "files": {
+    "intr_security_posture_resolution.py": "sha256:07c4dcd5df1e3e07c6be345e6960d9d9574ce64426eca5f4bdca597abd1b9029"
+  },
+  "git_blobs": {
+    "intr_security_posture_resolution.py": "e7f1e89abad89008f5dbba736621bbd23a294aa0"
+  },
+  "python_dependencies": {
+    "runtime": "standard library only"
+  },
+  "not_proven_by_this_module": "the instance self-digest proves neither sovereign issuance, custody nor non-replay; work_cycle_binding.py adds the ledger-bound replay guard and the WorkerCoordinator claim/fence gate",
+  "authority_effect": "NONE"
+}
