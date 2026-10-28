@@ -274,9 +274,14 @@ class WorkCycle:
     def _bind(self, manifest: dict[str, Any], org: dict[str, Any], source: dict[str, Any]) -> dict[str, Any]:
         """The take-time binding, recorded as a Sandbox receipt bound to the parent ingress receipt pair."""
         task_id = manifest.get("manifest_id")
-        verdict = work_cycle_binding.evaluate_take(
-            manifest, task_id=task_id, hb_epoch=self.hb_epoch, admitted_claims=self.admitted_claims,
-            bound=self._bindings("SANDBOX_WORK_BINDING_VERIFIED"), verifier=self.posture_verifier)
+        try:
+            verdict = work_cycle_binding.evaluate_take(
+                manifest, task_id=task_id, hb_epoch=self.hb_epoch, admitted_claims=self.admitted_claims,
+                bound=self._bindings("SANDBOX_WORK_BINDING_VERIFIED"), verifier=self.posture_verifier)
+        except Exception as exc:
+            # Poison-pill guard: a binding that cannot be evaluated is a terminal six-field refusal, never a crash
+            # that leaves the intake unmarked and re-raises on every later run.
+            verdict = work_cycle_binding.refuse_unevaluable(manifest, task_id=task_id, exc=exc)
         verdict = {**verdict, "work_id": task_id, "parent_repo_receipt_sha256": source["receipt_sha256"],
                    "parent_org_receipt_sha256": org["receipt_sha256"]}
         attempt = {"intended_action": "BIND_MATERIALIZED_MANIFEST_BEFORE_ADMISSION", "manifest_id": task_id,

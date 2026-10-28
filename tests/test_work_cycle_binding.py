@@ -244,6 +244,80 @@ class WorkCycleBinding(unittest.TestCase):
             wcb.SERVICE_CONTRACT = original
         self.assert_six(r, "FAIL_CLOSED", "SERVICE_MINIMUM_SECURITY_TIER_DECLARED", wcb.TAKE_ENTRYPOINT)
 
+    # -- poison-pill guard: a malformed binding is a terminal refusal, never a crash (#47 re-review F1) --------
+    def assert_terminal_without_crash(self, m, disposition, predicate):
+        refused_before = self.org_classes().count("SANDBOX_WORK_BINDING_REFUSED")
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, disposition, predicate)
+        self.assertEqual(self.org_classes().count("SANDBOX_WORK_BINDING_REFUSED"), refused_before + 1)
+        again = self.run_pass()                                          # the marker is written: nothing re-raises
+        self.assertEqual((again["intake"], again["respond"], again["close"]), ([], [], []))
+        self.assertEqual(self.org_classes().count("SANDBOX_WORK_BINDING_REFUSED"), refused_before + 1)
+        return taken
+
+    def malformed(self, manifest_id, field, value, *, redigest):
+        """The production state (no admitted claim) with one posture-instance field malformed. Without redigest
+        the digest breaks (the re-review's input); with it the instance is self-minted and verifies natively."""
+        m, _claim = fx.bind(manifest(manifest_id), EPOCH)
+        inst = m["payload"]["binding"]["posture"]["posture_instance"]
+        inst[field] = value
+        if redigest:
+            inst.pop("instance_sha256")
+            inst["instance_sha256"] = fx.STEGOS._digest(inst)
+        return m
+
+    def assert_malformed_field_fails_closed(self, field, values):
+        for i, value in enumerate(values):
+            with self.subTest(value=value, redigest=False):
+                self.assert_terminal_without_crash(self.malformed(f"bind-bad-{field}-{i}", field, value, redigest=False),
+                                                   "FAIL_CLOSED", "POSTURE_INSTANCE_CRYPTOGRAPHIC_VERIFICATION_NOT_OBSERVED")
+            with self.subTest(value=value, redigest=True):
+                self.assert_terminal_without_crash(self.malformed(f"bind-bad-{field}-{i}-r", field, value, redigest=True),
+                                                   "FAIL_CLOSED", "INTR_POSTURE_INSTANCE_FIELDS_WELL_FORMED")
+
+    def test_a_non_string_data_class_fails_closed_terminally(self):
+        self.assert_malformed_field_fails_closed("data_class", [{}, ["ePHI"], "ephi-unknown"])
+
+    def test_a_non_string_channel_fails_closed_terminally(self):
+        self.assert_malformed_field_fails_closed("channel", [{}, ["KV-SKAP"], "kv-unknown"])
+
+    def test_a_non_string_automatic_tier_fails_closed_terminally(self):
+        self.assert_malformed_field_fails_closed("automatic_tier", [{}, ["HIGH"]])
+        self.assert_terminal_without_crash(self.malformed("bind-bad-automatic-none", "automatic_tier", None, redigest=True),
+                                           "FAIL_CLOSED", "INTR_POSTURE_INSTANCE_FIELDS_WELL_FORMED")
+
+    def test_a_non_string_required_tier_fails_closed_terminally(self):
+        for i, value in enumerate([["SECURE"], {"tier": "HIGHEST"}]):
+            with self.subTest(value=value):
+                m, _claim = fx.bind(manifest(f"bind-bad-required-{i}"), EPOCH)
+                m["payload"]["binding"]["required_tier"] = value
+                self.assert_terminal_without_crash(m, "FAIL_CLOSED", "UNRECOGNIZED_REQUIRED_SECURITY_TIER")
+
+    def test_any_exception_while_binding_is_a_terminal_six_field_refusal(self):
+        m, claim = fx.bind(manifest("bind-raises"), EPOCH)
+        self.cycle.admitted_claims.append(claim)
+        original = wcb.evaluate_take
+
+        def raising(*_a, **_k):
+            raise RuntimeError("an unforeseen malformed binding")
+        try:
+            wcb.evaluate_take = raising
+            taken = self.assert_terminal_without_crash(m, "FAIL_CLOSED", wcb.UNEVALUABLE)
+        finally:
+            wcb.evaluate_take = original
+        b = taken["binding"]
+        self.assertEqual((b["exception"], b["task_id"]), ("RuntimeError", "bind-raises"))
+        self.assertEqual(b["transition_request_sha256"], wcb.request_digests(m)["transition_request_sha256"])
+
+    # -- the claim binds the posture instance (#47 re-review F2) -------------------------------------------
+    def test_an_admitted_claim_does_not_carry_over_to_a_re_minted_posture(self):
+        m, claim = fx.bind(manifest("bind-reminted"), EPOCH, tier="HIGH")
+        self.cycle.admitted_claims.append(claim)
+        reminted, _ = fx.bind(manifest("bind-reminted"), EPOCH, tier="HIGHEST")   # the submitter re-resolves
+        m["payload"]["binding"]["posture"] = reminted["payload"]["binding"]["posture"]
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "DENY", "WORKERCOORDINATOR_CLAIM_POSTURE_BINDING")
+
     # -- claim replay and claim authority, evaluated directly --------------------------------
     def assert_six(self, r, disposition, predicate, entrypoint):
         self.assertEqual((r["disposition"], r["failed_predicate"], r["failure_code"]), (disposition, predicate, predicate), r)

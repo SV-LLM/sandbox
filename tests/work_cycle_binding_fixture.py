@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime"))
 import work_cycle_binding as wcb  # noqa: E402
+from ledger import sha  # noqa: E402
 
 _spec = importlib.util.spec_from_file_location("sv_llm_test_stegos_intr_resolver",
                                                wcb.VENDOR / wcb.NATIVE_MODULE)
@@ -20,12 +21,17 @@ _spec.loader.exec_module(STEGOS)
 NODE = {"node_id": "stegnode-fixture", "continuity_established": True, "class_established": True}
 
 
-def claim(manifest: dict, *, valid_until_epoch: int, task_id: str | None = None, **overrides) -> dict:
+def claim(manifest: dict, *, valid_until_epoch: int, task_id: str | None = None, posture_instance: dict | None = None,
+          **overrides) -> dict:
+    """A fixture claim/fence bound to the manifest's request and to `posture_instance` (default: the manifest's own)."""
     digests = wcb.request_digests(manifest)
+    if posture_instance is None:
+        posture_instance = ((manifest["payload"].get("binding") or {}).get("posture") or {}).get("posture_instance")
     c = {"schema": wcb.CLAIM_SCHEMA, "authority": wcb.CLAIM_AUTHORITY,
          "task_id": task_id or manifest["manifest_id"], "claim_ref": "wc-claim:" + manifest["manifest_id"],
          "fence_ref": "wc-fence:1", "projection_only": False,
-         "transition_request_sha256": digests["transition_request_sha256"], "valid_until_epoch": valid_until_epoch}
+         "transition_request_sha256": digests["transition_request_sha256"],
+         "posture_instance_sha256": sha(posture_instance), "valid_until_epoch": valid_until_epoch}
     c.update(overrides)
     c["claim_sha256"] = wcb.claim_digest(c)
     return c
@@ -42,7 +48,8 @@ def bind(manifest: dict, hb_epoch: int, *, tier: str = "HIGH", required_tier: st
                  "task_id": m["manifest_id"], "selected_tier": tier},
         task_id=m["manifest_id"], payload_sha256=digests["payload_sha256"],
         transition_request_sha256=digests["transition_request_sha256"], observed_at=wcb.observed_at(hb_epoch))
-    c = claim(m, valid_until_epoch=hb_epoch + valid_for, **(claim_overrides or {}))
+    c = claim(m, valid_until_epoch=hb_epoch + valid_for, posture_instance=posture["posture_instance"],
+              **(claim_overrides or {}))
     m["payload"]["binding"] = {"node": dict(NODE), "posture": posture, "required_tier": required_tier,
                                "worker_claim": c}
     return m, c

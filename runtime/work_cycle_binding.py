@@ -15,7 +15,9 @@ Protected work requires, in order:
      runtime/vendor/stegos_intr and digest-checked against its vendor-manifest.json.
      It is resolved here, never injected: a caller-supplied callable is not native
      authentication. Absent or digest-mismatched, protected work FAILS CLOSED;
-  3. a capability floor the caller does not control: the max of the service's declared
+  3. computed only AFTER step 2 verified the instance, and only from fields that are known strings
+     (tiers in TIERS; data_class/channel absent or a key of the native minimum maps, else FAIL_CLOSED),
+     a capability floor the caller does not control: the max of the service's declared
      minimum_security_tier (runtime/contracts/sandbox-service.json), the verified instance's
      automatic_tier, and the native data-class/channel minimums for the instance's digested
      data_class/channel. A manifest's binding.required_tier may only RAISE that floor. The
@@ -26,13 +28,17 @@ Protected work requires, in order:
      This guard is scoped to this one ledger chain: a second Sandbox instance or a reset
      ledger would accept the same instance and claim again. Cross-instance non-replay is
      the WorkerCoordinator fence's job, which is why step 5 is mandatory;
-  5. a task-bound WorkerCoordinator claim/fence (worker_claim.authority = WORKERCOORDINATOR).
+  5. a task-bound WorkerCoordinator claim/fence (worker_claim.authority = WORKERCOORDINATOR) that also
+     binds the posture instance's digest (posture_instance_sha256), so a re-minted posture fails the claim.
      The admitted claim set is not yet supplied by any Registry/WorkerCoordinator
      surface, so main() supplies none and every protected take FAILS CLOSED with
      AUTHENTIC_WORKERCOORDINATOR_CLAIM_FENCE_NOT_OBSERVED. It never ALLOWs without one.
 
 Public retrieval keeps its exemption: a manifest that declares binding.public and
 requests only public-retrieval capabilities needs no node, posture or claim.
+
+WorkCycle._bind turns any exception raised while evaluating the binding into a six-field FAIL_CLOSED
+(BINDING_INPUT_EVALUABLE), so a malformed manifest is marked terminal once instead of halting every later run.
 
 Nothing here confers governance authority.
 """
@@ -52,6 +58,7 @@ RETURN_ENTRYPOINT = "SV-LLM/sandbox runtime/work_cycle.py::_return"
 CLAIM_AUTHORITY = "WORKERCOORDINATOR"
 CLAIM_SCHEMA = "stegverse.workercoordinator-claim-fence/v1"
 NO_CLAIM_FENCE = "AUTHENTIC_WORKERCOORDINATOR_CLAIM_FENCE_NOT_OBSERVED"
+UNEVALUABLE = "BINDING_INPUT_EVALUABLE"
 # The only public-read surface the Sandbox carries is page_load.v1 (navigate + read_public).
 PUBLIC_RETRIEVAL_CAPABILITIES = frozenset({"page_load.v1"})
 VENDOR = Path(__file__).resolve().parent / "vendor/stegos_intr"
@@ -68,6 +75,10 @@ REPAIRS: dict[str, tuple[str, str]] = {
         "an authentic WorkerCoordinator claim/fence (claim_ref and fence_ref non-null, projection_only false) "
         "admitted by the Registry/WorkerCoordinator surface for this task",
         "a new manifest for the same work carrying the admitted claim/fence; this intake is terminal and nothing waits"),
+    UNEVALUABLE: (
+        "a well-formed manifest binding: JSON objects where objects are read and known strings where tiers, "
+        "data classes and channels are read",
+        "a new, well-formed manifest for the same work; this intake is terminal and nothing waits"),
 }
 
 
@@ -121,15 +132,24 @@ def capability_floor(binding: dict[str, Any], instance: Any) -> tuple[str | None
     candidates = [service]
     requested = binding.get("required_tier")
     if requested is not None:
-        if requested not in TIERS:
+        if not isinstance(requested, str) or requested not in TIERS:
             return None, "UNRECOGNIZED_REQUIRED_SECURITY_TIER"
         candidates.append(requested)
-    if isinstance(instance, dict):
-        native = _native_module()
-        candidates += [t for t in (instance.get("automatic_tier"),
-                                   getattr(native, "DATA_CLASS_MINIMUM", {}).get(instance.get("data_class")),
-                                   getattr(native, "CHANNEL_MINIMUM", {}).get(instance.get("channel")))
-                       if t in TIERS]
+    if not isinstance(instance, dict):
+        return None, "INTR_POSTURE_INSTANCE_FIELDS_WELL_FORMED"
+    native = _native_module()
+    automatic = instance.get("automatic_tier")
+    if not isinstance(automatic, str) or automatic not in TIERS:
+        return None, "INTR_POSTURE_INSTANCE_FIELDS_WELL_FORMED"
+    candidates.append(automatic)
+    for field, minimums in (("data_class", getattr(native, "DATA_CLASS_MINIMUM", {})),
+                            ("channel", getattr(native, "CHANNEL_MINIMUM", {}))):
+        value = instance.get(field)
+        if value is None:                     # not declared: the native resolver's own default
+            continue
+        if not isinstance(value, str) or value not in minimums or minimums[value] not in TIERS:
+            return None, "INTR_POSTURE_INSTANCE_FIELDS_WELL_FORMED"
+        candidates.append(minimums[value])
     return max(candidates, key=TIERS.__getitem__), None
 
 
@@ -177,7 +197,8 @@ def _is_public(binding: dict[str, Any], work: dict[str, Any]) -> bool:
 
 
 def _claim_predicate(declared: Any, admitted: dict[str, dict[str, Any]], *, task_id: str,
-                     digests: dict[str, str], hb_epoch: int, used_claims: set[str]) -> tuple[str, str] | None:
+                     digests: dict[str, str], hb_epoch: int, used_claims: set[str],
+                     instance_sha256: str) -> tuple[str, str] | None:
     """(disposition, predicate) refusing the declared claim/fence, or None when it is the admitted one for this task."""
     if (not isinstance(declared, dict) or declared.get("claim_ref") is None or declared.get("fence_ref") is None
             or declared.get("projection_only") is not False or not admitted):
@@ -198,6 +219,8 @@ def _claim_predicate(declared: Any, admitted: dict[str, dict[str, Any]], *, task
         return "DENY", "WORKERCOORDINATOR_CLAIM_NOT_STALE"
     if declared["claim_sha256"] in used_claims:
         return "DENY", "WORKERCOORDINATOR_CLAIM_NOT_REPLAYED"
+    if declared.get("posture_instance_sha256") != instance_sha256:
+        return "DENY", "WORKERCOORDINATOR_CLAIM_POSTURE_BINDING"
     return None
 
 
@@ -225,17 +248,20 @@ def evaluate_take(manifest: dict[str, Any], *, task_id: str, hb_epoch: Any,
         ok, native["reason"] = _native_verdict(verifier, inst, task_id, digests["payload_sha256"],
                                                digests["transition_request_sha256"], hb_epoch)
         return ok
-    floor, refused = capability_floor(binding, instance)
-    if refused is not None:
-        return _six("FAIL_CLOSED", refused, TAKE_ENTRYPOINT, **lineage)
-    # The manifest's admission is the boundary ingress receipt pair the caller already read back.
+    # The manifest's admission is the boundary ingress receipt pair the caller already read back. The native
+    # verifier and the instance's tier-type checks run here, before any floor is computed from the instance.
     base = evaluate_binding(public=False, node=binding.get("node"), posture=posture,
                             manifest={"task_id": task_id, "disposition": "ALLOW", "authenticated": True},
-                            required_tier=floor,
+                            required_tier=min(TIERS, key=TIERS.__getitem__),
                             posture_verifier=natively if callable(verifier) else None)
     if base["disposition"] != "ALLOW":
         return _six(base["disposition"], base["predicate"], TAKE_ENTRYPOINT, native_reason=native.get("reason"),
                     **lineage)
+    floor, refused = capability_floor(binding, instance)
+    if refused is not None:
+        return _six("FAIL_CLOSED", refused, TAKE_ENTRYPOINT, **lineage)
+    if TIERS[base["security_tier"]] < TIERS[floor]:
+        return _six("DENY", "EFFECTIVE_POSTURE_BELOW_CAPABILITY_FLOOR", TAKE_ENTRYPOINT, **lineage)
     bound = list(bound)
     instance_sha256 = sha(instance)
     if instance_sha256 in {b.get("posture_instance_sha256") for b in bound}:
@@ -243,7 +269,7 @@ def evaluate_take(manifest: dict[str, Any], *, task_id: str, hb_epoch: Any,
     admitted = {c.get("claim_sha256"): c for c in admitted_claims if isinstance(c, dict)}
     declared = binding.get("worker_claim")
     refused = _claim_predicate(declared, admitted, task_id=task_id, digests=digests, hb_epoch=hb_epoch,
-                               used_claims={b.get("claim_sha256") for b in bound})
+                               used_claims={b.get("claim_sha256") for b in bound}, instance_sha256=instance_sha256)
     if refused is not None:
         return _six(*refused, TAKE_ENTRYPOINT, claim_ref=(declared or {}).get("claim_ref") if isinstance(declared, dict) else None,
                     fence_ref=(declared or {}).get("fence_ref") if isinstance(declared, dict) else None,
@@ -255,6 +281,15 @@ def evaluate_take(manifest: dict[str, Any], *, task_id: str, hb_epoch: Any,
             "claim_ref": declared["claim_ref"], "fence_ref": declared["fence_ref"],
             "return_organization": (manifest.get("return_to") or {}).get("organization"),
             "execution_authorized_by_binding": False, "authority_effect": "NONE", **lineage}
+
+
+def refuse_unevaluable(manifest: Any, *, task_id: Any, exc: BaseException) -> dict[str, Any]:
+    """The six-field FAIL_CLOSED for a binding whose evaluation raised: the intake stays terminal, nothing assigns."""
+    try:
+        digests = request_digests(manifest)
+    except Exception:
+        digests = {"payload_sha256": None, "transition_request_sha256": None}
+    return _six("FAIL_CLOSED", UNEVALUABLE, TAKE_ENTRYPOINT, exception=type(exc).__name__, task_id=task_id, **digests)
 
 
 def evaluate_return(manifest: dict[str, Any], take_binding: dict[str, Any] | None, *, task_id: str,
