@@ -2,9 +2,9 @@
 
 Deterministic, at the supplied epoch 4000: missing, forged, mismatched, stale, replayed, wrong-task, wrong-head and
 low-tier bindings are refused before admission with six fields, the intake is terminal once and nothing is assigned or
-requested; public retrieval keeps its exemption; a valid FIXTURE claim/fence (admitted only by this test) ALLOWs and
-_return revalidates it before egress. With no admitted WorkerCoordinator claim/fence -- the production state -- every
-protected take FAILS CLOSED. Source-level evidence only: CI-class, never SANDBOX_RUNTIME_OBSERVED.
+requested; public retrieval requires independent classification; a valid FIXTURE claim/fence (admitted only by this test) ALLOWs and
+_return revalidates it before egress. With no native admission observation -- the production state -- every
+protected take FAILS CLOSED. Existing lower-layer tests use an explicit test-only admission fixture. Source-level evidence only: CI-class, never SANDBOX_RUNTIME_OBSERVED.
 
 Run: SV_LLM_DOTGITHUB_ROOT=<SV-LLM/.github checkout> python -B tests/test_work_cycle_binding.py
 """
@@ -28,6 +28,7 @@ SIX = ["failed_predicate", "failure_code", "next_attempt", "owning_existing_goal
 
 class WorkCycleBinding(unittest.TestCase):
     def setUp(self):
+        self.admission_fixtures = fx.install_admission_fixture(self)
         self.tmp = tempfile.TemporaryDirectory()
         base = self.base = Path(self.tmp.name)
         os.environ["STEGVERSE_REPO_LEDGER_ROOT"] = str(base / "dotgithub-ledger")
@@ -62,6 +63,7 @@ class WorkCycleBinding(unittest.TestCase):
 
     def assert_refused_before_admission(self, taken, disposition, predicate):
         b = taken["binding"]
+        self.assertEqual(b["disposition"], disposition, b)
         self.assertEqual((b["disposition"], b["failed_predicate"], b["failure_code"]), (disposition, predicate, predicate), b)
         self.assertEqual(sorted(k for k in SIX if k in b), SIX)
         self.assertTrue(all(isinstance(b[k], str) and b[k] for k in SIX))
@@ -416,7 +418,7 @@ class WorkCycleBinding(unittest.TestCase):
                          "sha256:07c4dcd5df1e3e07c6be345e6960d9d9574ce64426eca5f4bdca597abd1b9029")
 
     # -- public retrieval ----------------------------------------------------------------------
-    def test_public_retrieval_needs_no_node_posture_or_claim(self):
+    def test_public_retrieval_requires_authentic_classification(self):
         m = manifest("bind-public", participants=[])
         m["payload"]["work"]["requested_capabilities"] = ["page_load.v1"]
         m["payload"]["work"]["permitted_capabilities"] = ["page_load.v1"]
@@ -424,15 +426,89 @@ class WorkCycleBinding(unittest.TestCase):
         self.send(m)
         taken, = self.run_pass()["intake"]
         b = taken["binding"]
-        self.assertEqual((b["disposition"], b["predicate"], b["public"]),
-                         ("ALLOW", "PUBLIC_INFORMATION_NODE_NOT_REQUIRED", True), b)
-        self.assertEqual(b["transition_class"], "SANDBOX_WORK_BINDING_VERIFIED")
+        self.assert_refused_before_admission(taken, "FAIL_CLOSED", wcb.NO_PUBLIC_CLASSIFICATION)
 
     def test_declaring_public_does_not_exempt_protected_capabilities(self):
         m = manifest("bind-public-protected")
         m["payload"]["binding"] = {"public": True}                       # adversarial_review is not public retrieval
         taken = self.take_one(m)
         self.assert_refused_before_admission(taken, "FAIL_CLOSED", "EXISTING_STEGNODE_NOT_AUTHENTICALLY_OBSERVED")
+
+    # These tests exercise the real production default, with NO admission fixture.
+    def without_admission_fixture(self):
+        for item in self.admission_fixtures:
+            item.stop()
+
+    def test_public_pii_downgrade_is_terminal_without_admission_assignment_or_egress(self):
+        self.without_admission_fixture()
+        m = manifest("public-pii-downgrade", participants=[])
+        m["payload"]["work"].update(requested_capabilities=["page_load.v1"],
+                                    permitted_capabilities=["page_load.v1"],
+                                    data_class="PII", input_data={"synthetic_private": "fixture-only"})
+        m["payload"]["binding"] = {"public": True, "classification": {"authenticated": True, "data_class": "PUBLIC"}}
+        self.send(m)
+        out = self.run_pass()
+        self.assert_refused_before_admission(out["intake"][0], "FAIL_CLOSED",
+                                             "AUTHENTIC_PUBLIC_CLASSIFICATION_NOT_OBSERVED")
+        self.assertEqual((out["respond"], out["close"]), ([], []))
+        before = self.org_classes()
+        self.assertNotIn("CONTRIBUTION_REQUESTED", before)
+        self.assertNotIn("ORGANIZATION_EGRESS_EMITTED", before)
+        again = self.run_pass()
+        self.assertEqual((again["intake"], again["respond"], again["close"]), ([], [], []))
+        self.assertEqual(self.org_classes(), before)
+
+    def test_valid_fixture_claim_cannot_manufacture_production_manifest_admission(self):
+        self.without_admission_fixture()
+        m, claim = fx.bind(manifest("no-authentic-admission"), EPOCH)
+        self.cycle.admitted_claims.append(claim)
+        self.assert_refused_before_admission(self.take_one(m), "FAIL_CLOSED",
+                                             "AUTHENTIC_MANIFEST_ADMISSION_NOT_OBSERVED")
+
+    def test_manifest_cannot_supply_its_own_authenticated_admission(self):
+        self.without_admission_fixture()
+        m, claim = fx.bind(manifest("forged-admission"), EPOCH)
+        m["payload"]["binding"]["manifest_admission"] = fx.admission(m)
+        self.cycle.admitted_claims.append(claim)
+        self.assert_refused_before_admission(self.take_one(m), "FAIL_CLOSED",
+                                             "AUTHENTIC_MANIFEST_ADMISSION_NOT_OBSERVED")
+
+    def test_legacy_public_take_receipt_does_not_authorize_return(self):
+        self.without_admission_fixture()
+        m = manifest("legacy-public-return")
+        take = {"task_id": m["manifest_id"], "disposition": "ALLOW", "public": True,
+                "repo_receipt_sha256": "sha256:fixture", **wcb.request_digests(m)}
+        verdict = wcb.evaluate_return(m, take, task_id=m["manifest_id"], hb_epoch=EPOCH,
+                                      admitted_claims=[], verifier=None)
+        self.assertEqual(verdict["disposition"], "FAIL_CLOSED")
+        self.assertEqual(verdict["failed_predicate"], "AUTHENTIC_PUBLIC_CLASSIFICATION_NOT_OBSERVED")
+        self.assertTrue(all(verdict.get(key) for key in SIX))
+
+    def test_admission_observation_must_bind_task_and_both_request_digests(self):
+        self.without_admission_fixture()
+        m, claim = fx.bind(manifest("admission-bindings"), EPOCH)
+        for field in ("task_id", "payload_sha256", "transition_request_sha256"):
+            with self.subTest(field=field):
+                admission = fx.admission(m)
+                admission[field] = "wrong"
+                verdict = wcb.evaluate_take(m, task_id=m["manifest_id"], hb_epoch=EPOCH,
+                    admitted_claims=[claim], bound=[], verifier=wcb.native_posture_verifier(),
+                    manifest_admission=admission)
+                self.assertEqual((verdict["disposition"], verdict["failed_predicate"]),
+                                 ("DENY", "MANIFEST_ADMISSION_REQUEST_BINDING"))
+                self.assertTrue(all(verdict.get(key) for key in SIX))
+
+    def test_protected_return_requires_current_admission_observation(self):
+        self.without_admission_fixture()
+        m, claim = fx.bind(manifest("return-no-admission"), EPOCH)
+        take = wcb.evaluate_take(m, task_id=m["manifest_id"], hb_epoch=EPOCH,
+            admitted_claims=[claim], bound=[], verifier=wcb.native_posture_verifier(),
+            manifest_admission=fx.admission(m))
+        self.assertEqual(take["disposition"], "ALLOW")  # explicitly simulated predicate evidence
+        verdict = wcb.evaluate_return(m, take, task_id=m["manifest_id"], hb_epoch=EPOCH,
+                                      admitted_claims=[claim], verifier=wcb.native_posture_verifier())
+        self.assertEqual((verdict["disposition"], verdict["failed_predicate"]),
+                         ("FAIL_CLOSED", "AUTHENTIC_MANIFEST_ADMISSION_NOT_OBSERVED"))
 
     # -- valid fixture claim: ALLOW, then _return closes it -----------------------------------
     def test_a_valid_fixture_claim_allows_and_return_revalidates_before_egress(self):

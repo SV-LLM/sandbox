@@ -11,7 +11,7 @@ processor there. This module is the Sandbox side of that hand-off:
            work requires a verified StegNode/InTr binding with the native StegOS
            posture verifier and an authentic WorkerCoordinator claim/fence
            (runtime/work_cycle_binding.py, StegVerse-org/.github#163); public
-           retrieval keeps its exemption. A refused binding is a six-field Sandbox
+           retrieval requires an authenticated classification producer (currently unbound). A refused binding is a six-field Sandbox
            receipt, the intake is marked terminal once, and nothing is assigned or
            requested. Before egress the return crossing is revalidated against the
            take-time binding receipt; a refusal emits nothing.
@@ -169,7 +169,10 @@ class WorkCycle:
         self.node_state = self.kernel.addressed_node_state_store(self.node_state_root)
         self.entities = entities or {}
         # The WorkerCoordinator claims/fences admitted for this pass. No Registry/WorkerCoordinator surface supplies
-        # them yet, so main() passes none and every protected take fails closed. The posture verifier is never a
+        # them yet. Native manifest-admission readback is also unbound: evaluate_take/return
+        # receive no manifest_admission and fail closed. Never derive authenticated=True
+        # from this local ingress receipt pair. Only offline tests simulate the missing input.
+        # The posture verifier is never a
         # parameter: it is the vendored StegOS one, digest-checked, or none.
         self.admitted_claims = list(admitted_claims or [])
         self.posture_verifier = work_cycle_binding.native_posture_verifier()

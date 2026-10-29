@@ -8,7 +8,7 @@ carries the six fields (failure_code, failed_predicate,
 required_evidence_or_repair, retry_entrypoint, owning_existing_goal,
 next_attempt).
 
-Protected work requires, in order:
+After authentic manifest admission is observed, protected work requires:
   1. the existing StegNode/InTr posture predicates (runtime/stegnode_capability_binding.py);
   2. the NATIVE posture verifier: StegOS stegos/intr_security_posture_resolution.py
      verify_task_security_posture_instance, vendored byte-for-byte under
@@ -31,11 +31,14 @@ Protected work requires, in order:
   5. a task-bound WorkerCoordinator claim/fence (worker_claim.authority = WORKERCOORDINATOR) that also
      binds the posture instance's digest (posture_instance_sha256), so a re-minted posture fails the claim.
      The admitted claim set is not yet supplied by any Registry/WorkerCoordinator
-     surface, so main() supplies none and every protected take FAILS CLOSED with
-     AUTHENTIC_WORKERCOORDINATOR_CLAIM_FENCE_NOT_OBSERVED. It never ALLOWs without one.
+     surface. Once admission is wired, missing claims still FAIL CLOSED with
+     AUTHENTIC_WORKERCOORDINATOR_CLAIM_FENCE_NOT_OBSERVED. Today admission itself
+     is unbound, so production refuses earlier. It never ALLOWs without both.
 
-Public retrieval keeps its exemption: a manifest that declares binding.public and
-requests only public-retrieval capabilities needs no node, posture or claim.
+Public retrieval needs authenticated data classification, not a caller public flag.
+No native classification producer is bound here, so that shortcut fails closed.
+Manifest admission is an explicit predicate input; WorkCycle supplies none until
+its existing sovereign readback is wired. Test fixtures are never runtime proof.
 
 WorkCycle._bind turns any exception raised while evaluating the binding into a six-field FAIL_CLOSED
 (BINDING_INPUT_EVALUABLE), so a malformed manifest is marked terminal once instead of halting every later run.
@@ -59,6 +62,8 @@ CLAIM_AUTHORITY = "WORKERCOORDINATOR"
 CLAIM_SCHEMA = "stegverse.workercoordinator-claim-fence/v1"
 NO_CLAIM_FENCE = "AUTHENTIC_WORKERCOORDINATOR_CLAIM_FENCE_NOT_OBSERVED"
 UNEVALUABLE = "BINDING_INPUT_EVALUABLE"
+NO_PUBLIC_CLASSIFICATION = "AUTHENTIC_PUBLIC_CLASSIFICATION_NOT_OBSERVED"
+NO_MANIFEST_ADMISSION = "AUTHENTIC_MANIFEST_ADMISSION_NOT_OBSERVED"
 # The only public-read surface the Sandbox carries is page_load.v1 (navigate + read_public).
 PUBLIC_RETRIEVAL_CAPABILITIES = frozenset({"page_load.v1"})
 VENDOR = Path(__file__).resolve().parent / "vendor/stegos_intr"
@@ -75,6 +80,14 @@ REPAIRS: dict[str, tuple[str, str]] = {
         "an authentic WorkerCoordinator claim/fence (claim_ref and fence_ref non-null, projection_only false) "
         "admitted by the Registry/WorkerCoordinator surface for this task",
         "a new manifest for the same work carrying the admitted claim/fence; this intake is terminal and nothing waits"),
+    NO_PUBLIC_CLASSIFICATION: (
+        "bind the existing authoritative classification reader to all input, payload and output classes; "
+        "caller flags and public capability names are not classification evidence",
+        "a new manifest after authenticated public classification is bound; no public shortcut is enabled"),
+    NO_MANIFEST_ADMISSION: (
+        "read the existing sovereign admission receipt independently and bind it to this task, payload and request; "
+        "do not set authenticated from manifest fields or ingress materialization alone",
+        "a new manifest after the original admission producer is bound; no runtime ALLOW is inferred"),
     UNEVALUABLE: (
         "a well-formed manifest binding: JSON objects where objects are read and known strings where tiers, "
         "data classes and channels are read",
@@ -189,11 +202,26 @@ def _epoch(hb_epoch: Any) -> int | None:
     return hb_epoch if isinstance(hb_epoch, int) and not isinstance(hb_epoch, bool) else None
 
 
-def _is_public(binding: dict[str, Any], work: dict[str, Any]) -> bool:
+def _requests_public_exemption(binding: dict[str, Any], work: dict[str, Any]) -> bool:
     requested = work.get("requested_capabilities")
     permitted = work.get("permitted_capabilities")
     return (binding.get("public") is True and isinstance(requested, list) and isinstance(permitted, list)
-            and bool(requested) and set(requested) | set(permitted) <= PUBLIC_RETRIEVAL_CAPABILITIES)
+            and bool(requested) and all(isinstance(c, str) for c in requested + permitted)
+            and set(requested) | set(permitted) <= PUBLIC_RETRIEVAL_CAPABILITIES)
+
+
+def _admission_predicate(admission: Any, task_id: str, digests: dict[str, str]) -> tuple[str, str] | None:
+    """Check a trusted producer's observation; this does not authenticate supplied data.
+
+    Production WorkCycle has no native producer and passes no observation. Offline
+    tests explicitly supply simulated evidence; payload fields are never read here.
+    """
+    if (not isinstance(admission, dict) or admission.get("authenticated") is not True
+            or admission.get("disposition") != "ALLOW"):
+        return "FAIL_CLOSED", NO_MANIFEST_ADMISSION
+    if admission.get("task_id") != task_id or any(admission.get(k) != v for k, v in digests.items()):
+        return "DENY", "MANIFEST_ADMISSION_REQUEST_BINDING"
+    return None
 
 
 def _claim_predicate(declared: Any, admitted: dict[str, dict[str, Any]], *, task_id: str,
@@ -226,17 +254,19 @@ def _claim_predicate(declared: Any, admitted: dict[str, dict[str, Any]], *, task
 
 def evaluate_take(manifest: dict[str, Any], *, task_id: str, hb_epoch: Any,
                   admitted_claims: Iterable[dict[str, Any]], bound: Iterable[dict[str, Any]],
-                  verifier: Callable[..., Any] | None) -> dict[str, Any]:
+                  verifier: Callable[..., Any] | None,
+                  manifest_admission: dict[str, Any] | None = None) -> dict[str, Any]:
     """The binding verdict for taking `manifest` in. `bound` is every earlier ALLOW binding on this ledger chain."""
     payload = manifest.get("payload") or {}
     binding = payload.get("binding") if isinstance(payload.get("binding"), dict) else {}
     work = payload.get("work") if isinstance(payload.get("work"), dict) else {}
     digests = request_digests(manifest)
     lineage = {"task_id": task_id, **digests}
-    if _is_public(binding, work):
-        base = evaluate_binding(public=True)
-        return {"schema": SCHEMA, "disposition": "ALLOW", "predicate": base["predicate"], "public": True,
-                "authority_effect": "NONE", **lineage}
+    if _requests_public_exemption(binding, work):
+        return _six("FAIL_CLOSED", NO_PUBLIC_CLASSIFICATION, TAKE_ENTRYPOINT, **lineage)
+    refused = _admission_predicate(manifest_admission, task_id, digests)
+    if refused is not None:
+        return _six(*refused, TAKE_ENTRYPOINT, **lineage)
     hb_epoch = _epoch(hb_epoch)
     if hb_epoch is None:
         return _six("FAIL_CLOSED", "SUPPLIED_EPOCH_FOR_BINDING_OBSERVATION", TAKE_ENTRYPOINT, **lineage)
@@ -248,10 +278,10 @@ def evaluate_take(manifest: dict[str, Any], *, task_id: str, hb_epoch: Any,
         ok, native["reason"] = _native_verdict(verifier, inst, task_id, digests["payload_sha256"],
                                                digests["transition_request_sha256"], hb_epoch)
         return ok
-    # The manifest's admission is the boundary ingress receipt pair the caller already read back. The native
-    # verifier and the instance's tier-type checks run here, before any floor is computed from the instance.
+    # Ingress materialization is not authenticated admission. Only the explicit
+    # observation checked above reaches the non-authorizing predicate evaluator.
     base = evaluate_binding(public=False, node=binding.get("node"), posture=posture,
-                            manifest={"task_id": task_id, "disposition": "ALLOW", "authenticated": True},
+                            manifest=manifest_admission,
                             required_tier=min(TIERS, key=TIERS.__getitem__),
                             posture_verifier=natively if callable(verifier) else None)
     if base["disposition"] != "ALLOW":
@@ -294,7 +324,8 @@ def refuse_unevaluable(manifest: Any, *, task_id: Any, exc: BaseException) -> di
 
 def evaluate_return(manifest: dict[str, Any], take_binding: dict[str, Any] | None, *, task_id: str,
                     hb_epoch: Any, admitted_claims: Iterable[dict[str, Any]],
-                    verifier: Callable[..., Any] | None) -> dict[str, Any]:
+                    verifier: Callable[..., Any] | None,
+                    manifest_admission: dict[str, Any] | None = None) -> dict[str, Any]:
     """Revalidate, before egress, that the return crossing is the one the take-time binding bound."""
     digests = request_digests(manifest)
     lineage = {"task_id": task_id, **digests}
@@ -304,8 +335,10 @@ def evaluate_return(manifest: dict[str, Any], take_binding: dict[str, Any] | Non
     if take_binding.get("task_id") != task_id or any(take_binding.get(k) != v for k, v in digests.items()):
         return _six("DENY", "RETURN_BOUND_TO_TAKEN_REQUEST", RETURN_ENTRYPOINT, **lineage)
     if take_binding.get("public") is True:
-        return {"schema": SCHEMA, "disposition": "ALLOW", "predicate": "PUBLIC_INFORMATION_NODE_NOT_REQUIRED",
-                "public": True, "authority_effect": "NONE", **lineage}
+        return _six("FAIL_CLOSED", NO_PUBLIC_CLASSIFICATION, RETURN_ENTRYPOINT, **lineage)
+    refused = _admission_predicate(manifest_admission, task_id, digests)
+    if refused is not None:
+        return _six(*refused, RETURN_ENTRYPOINT, **lineage)
     if (manifest.get("return_to") or {}).get("organization") != take_binding.get("return_organization"):
         return _six("DENY", "RETURN_ORGANIZATION_IS_BOUND_ORGANIZATION", RETURN_ENTRYPOINT, **lineage)
     hb_epoch = _epoch(hb_epoch)

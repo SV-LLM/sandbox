@@ -67,6 +67,7 @@ def chain(ledger: Path):
 
 class WorkCycleEndToEnd(unittest.TestCase):
     def setUp(self):
+        binding_fixture.install_admission_fixture(self)
         self.tmp = tempfile.TemporaryDirectory()
         base = Path(self.tmp.name)
         self.base = base

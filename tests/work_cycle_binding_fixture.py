@@ -53,3 +53,29 @@ def bind(manifest: dict, hb_epoch: int, *, tier: str = "HIGH", required_tier: st
     m["payload"]["binding"] = {"node": dict(NODE), "posture": posture, "required_tier": required_tier,
                                "worker_claim": c}
     return m, c
+
+# Offline predicate evidence only. These patches are installed by tests, never
+# imported by runtime code, and do not provide an admission producer to WorkCycle.
+RAW_TAKE = wcb.evaluate_take
+RAW_RETURN = wcb.evaluate_return
+
+
+def admission(manifest):
+    return {"task_id": manifest["manifest_id"], "authenticated": True,
+            "disposition": "ALLOW", **wcb.request_digests(manifest)}
+
+
+def install_admission_fixture(case):
+    from unittest.mock import patch
+    def take(manifest, *args, **kwargs):
+        kwargs.setdefault("manifest_admission", admission(manifest))
+        return RAW_TAKE(manifest, *args, **kwargs)
+    def returned(manifest, *args, **kwargs):
+        kwargs.setdefault("manifest_admission", admission(manifest))
+        return RAW_RETURN(manifest, *args, **kwargs)
+    patches = [patch.object(wcb, "evaluate_take", side_effect=take),
+               patch.object(wcb, "evaluate_return", side_effect=returned)]
+    for item in patches:
+        item.start()
+        case.addCleanup(item.stop)
+    return patches
