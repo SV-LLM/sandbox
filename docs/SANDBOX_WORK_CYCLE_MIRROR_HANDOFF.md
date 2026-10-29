@@ -13,7 +13,7 @@ not a new Task Registry admission, assignment transfer, claim, or runtime author
 - Registry status: `validating`; COSV task.v1 `30000000021222`, lifecycle `CLAIMED_VALIDATION`.
 - Applicable canonical handoff: `StegVerse-org/.github:docs/LLM_ORG_FOUNDATION_MIRROR_HANDOFF.md`.
 - Current work discussion: `StegVerse-org/.github#163`; source lane: `SV-LLM/sandbox#47`.
-- Expected source head: `9b97b93835365f4634c7598f843d030fc8e2dc23`.
+- Reviewed and merged source head: `807871943a1bccbc805535e7c5c9fece93a2d57e` (independent exact-head CONFIRM, SV-LLM/sandbox#47 comment 6505862501); PR #47 merged as `5b10932bd920b0cbad10f901e1550aa4910fc213`. The earlier expected head `9b97b93835365f4634c7598f843d030fc8e2dc23` is superseded.
 - Test dependency: `SV-LLM/.github@a00a72ec54055e11b23841e3718cfd7352ad8a8c`.
 
 The W07 row establishes existing work scope, not proven assignment of PR #47.
@@ -65,9 +65,11 @@ No dependency, hosted service, machine or alternative authority is introduced.
   4/4 pass on candidate. They expose public PII downgrade, synthetic admission
   with an admitted fixture claim, manifest-carried fake admission, and legacy
   public return. No native transition was attempted by these tests.
-- Candidate: all 20 commands in sandbox-runtime.yml passed, 285 tests including
-  44 binding tests and 14 work-cycle tests. This is local source evidence, not
-  candidate GitHub CI; PR #47's CI run 40772131959 validates only its old head.
+- At head `80787194`: all 20 commands in sandbox-runtime.yml passed, 285 tests
+  including 44 binding tests and 14 work-cycle tests. Exact-head GitHub CI is
+  run 40804197521 (`validate`, 27/27 steps success, 0 skipped). The earlier run
+  40772131959 validated only the old head `9b97b93`. This is source-level
+  evidence only, not native runtime activation, issuance or an ALLOW.
 - Independent readback reused the unmodified
   `SV-LLM/.github@a00a72ec:resident-runtime/organization_ledger_readback.py`.
   Fresh designated ledger ref resolved to `e01e34cd686c85aba022b1e7ba8e225bdc159991`.
@@ -79,7 +81,7 @@ No dependency, hosted service, machine or alternative authority is introduced.
   `sandbox-work-cycle` / `sv-llm.sandbox.work-cycle.v1`; existing owner issue is
   `StegVerse-org/StegVerse-SDK#559`.
 
-Original branch is preserved. This candidate handoff becomes repository truth
-only after original-owner integration; until then the applicable canonical
-handoff remains the Org foundation handoff named above. No new cumulative prompt
-count or coordination-state value is minted by this candidate.
+This handoff is repository truth as of the PR #47 merge; the applicable canonical
+handoff remains the Org foundation handoff named above. W07 stays `validating`:
+the merge is not a Registry assignment, claim, or activation. No new cumulative
+prompt count or coordination-state value is minted here.
