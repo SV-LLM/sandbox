@@ -62,3 +62,24 @@ Open bindings, recorded for the owner of `SDK-GENERIC-MANIFEST-ECOSYSTEM-INVARIA
 ## Existing StegNode capability binding (PR #44)
 
 `runtime/stegnode_capability_binding.py` is a non-authorizing, side-effect-free predicate evaluator. It does not create node registration, authenticate caller-supplied node/posture objects, read SKAP Vault credentials, or independently authorize a transition. Public retrieval requires no node. Protected work fails closed without an authentic InTr posture verifier and admitted manifest. Its result is **not** native InTr ALLOW, SDK route publication, a WorkerCoordinator claim/fence, or sovereign Organization Ledger readback. The isolated regression is executed in CI by `tests/test_stegnode_capability_binding.py`. Integration into `runtime/work_cycle.py` requires the original authenticated producer and route/manifest binding, not an injected untrusted verifier. No new runtime, hosted dependency or connected device is required.
+
+## PR #47 admission repair candidate
+
+The repair at [Sandbox work-cycle handoff](docs/SANDBOX_WORK_CYCLE_MIRROR_HANDOFF.md)
+is a source candidate for the original owner lane. `binding.public` and
+`page_load.v1` do not prove that input, payload or output data is public. The
+public shortcut and legacy public return receipts fail closed until an
+authenticated classification producer is bound.
+
+The binding predicate no longer constructs `authenticated=True`. It accepts
+explicit admission observation data only for predicate evaluation, binding task
+and both request digests. Production WorkCycle supplies no such observation: no
+native admission reader has been wired, so protected intake and return fail
+closed. Test-only patches supply simulated admission data to exercise downstream
+posture/claim/fence checks. These patches are absent from runtime imports and
+never establish sovereign receipt custody, issuance or execution.
+
+The existing W07 continuation is `validating`, COSV `30000000021222` in the Org
+Registry; PR #47 task scope/assignment and authentic WorkerCoordinator claim/fence
+remain unresolved. This candidate does not activate Sandbox, publish the SDK
+route, modify Registry state, or authorize a merge.

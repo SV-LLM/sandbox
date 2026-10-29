@@ -1,0 +1,568 @@
+"""Native StegNode/InTr binding at WorkCycle._take and ._return (StegVerse-org/.github#163), offline.
+
+Deterministic, at the supplied epoch 4000: missing, forged, mismatched, stale, replayed, wrong-task, wrong-head and
+low-tier bindings are refused before admission with six fields, the intake is terminal once and nothing is assigned or
+requested; public retrieval requires independent classification; a valid FIXTURE claim/fence (admitted only by this test) ALLOWs and
+_return revalidates it before egress. With no native admission observation -- the production state -- every
+protected take FAILS CLOSED. Existing lower-layer tests use an explicit test-only admission fixture. Source-level evidence only: CI-class, never SANDBOX_RUNTIME_OBSERVED.
+
+Run: SV_LLM_DOTGITHUB_ROOT=<SV-LLM/.github checkout> python -B tests/test_work_cycle_binding.py
+"""
+from __future__ import annotations
+import copy, json, os, shutil, sys, tempfile, unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+DOTGITHUB = Path(os.environ["SV_LLM_DOTGITHUB_ROOT"]).resolve()
+sys.path.insert(0, str(ROOT / "runtime"))
+sys.path.insert(0, str(ROOT / "tests"))
+import work_cycle_binding as wcb  # noqa: E402
+import work_cycle_binding_fixture as fx  # noqa: E402
+from work_cycle import WorkCycle, Entity  # noqa: E402
+from test_work_cycle import REAL, STANDING, manifest, load, chain  # noqa: E402
+
+EPOCH = 4000
+SIX = ["failed_predicate", "failure_code", "next_attempt", "owning_existing_goal", "required_evidence_or_repair",
+       "retry_entrypoint"]
+
+
+class WorkCycleBinding(unittest.TestCase):
+    def setUp(self):
+        self.admission_fixtures = fx.install_admission_fixture(self)
+        self.tmp = tempfile.TemporaryDirectory()
+        base = self.base = Path(self.tmp.name)
+        os.environ["STEGVERSE_REPO_LEDGER_ROOT"] = str(base / "dotgithub-ledger")
+        os.environ["STEGVERSE_ORG_LEDGER_ROOT"] = str(base / "org-ledger")
+        self.mesh = base / "mesh"
+        self.entities = {e: Entity(REAL / e / "core.py", REAL / e / "entity-capability.json")
+                         for e in ("Anthropic", "OpenAI")}
+        self.cycle = WorkCycle(dotgithub=DOTGITHUB, sandbox_ledger=base / "sandbox-ledger",
+                               node_state_root=base / "node-state", entities=self.entities, hb_epoch=EPOCH)
+        self.cycle.crossing.open_organization_ledger(root=DOTGITHUB, hb_epoch=EPOCH)
+        peers = load("peer_organization", DOTGITHUB / "org-runtime/tests/peer_organization.py")
+        self.labs = peers.materialize(base / "peers", "StegVerse-Labs",
+                                      [{"service_id": "stegverse-labs.org-control", "repository": "StegVerse-Labs/.github",
+                                        "boundary_role": "BOUNDARY_LOCAL_CONTROL"}])
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def send(self, m, packet_id=None):
+        k = self.labs.kernel
+        self.labs.publish(k.build_packet(origin_org="StegVerse-Labs", origin_service="stegverse-labs.org-control",
+                                         destination_org="SV-LLM", destination_service="sv-llm.org-control",
+                                         payload={"manifest": m}, standing=STANDING,
+                                         packet_id=packet_id or "in-" + m["manifest_id"]),
+                          mesh_root=self.mesh, epoch=EPOCH)
+
+    def run_pass(self):
+        return self.cycle.run(standing=STANDING, mesh_root=self.mesh)
+
+    def org_classes(self):
+        return [r["org_transition_class"] for r in chain(self.base / "org-ledger")]
+
+    def assert_refused_before_admission(self, taken, disposition, predicate):
+        b = taken["binding"]
+        self.assertEqual(b["disposition"], disposition, b)
+        self.assertEqual((b["disposition"], b["failed_predicate"], b["failure_code"]), (disposition, predicate, predicate), b)
+        self.assertEqual(sorted(k for k in SIX if k in b), SIX)
+        self.assertTrue(all(isinstance(b[k], str) and b[k] for k in SIX))
+        self.assertEqual(b["owning_existing_goal"], "StegVerse-org/.github#163")
+        self.assertEqual(b["retry_entrypoint"], wcb.TAKE_ENTRYPOINT)
+        self.assertEqual(b["authority_effect"], "NONE")
+        self.assertEqual(b["transition_class"], "SANDBOX_WORK_BINDING_REFUSED")
+        self.assertTrue(b["org_receipt_sha256"])                       # the refusal is on the organization ledger
+        self.assertIs(taken["admit"], b)
+        self.assertEqual((taken["assign"], taken["request"]), ([], []))
+        self.assertNotIn("SANDBOX_WORK_ADMITTED", self.org_classes())
+        self.assertNotIn("CAPABILITY_ASSIGNMENT", self.org_classes())
+
+    def take_one(self, m, packet_id=None):
+        self.send(m, packet_id)
+        out = self.run_pass()
+        taken, = out["intake"]
+        self.assertEqual((out["respond"], out["close"]), ([], []))
+        return taken
+
+    # -- no claim/fence: the production state ------------------------------------------
+    def test_no_admitted_claim_fence_fails_closed_and_never_allows(self):
+        m, _claim = fx.bind(manifest("bind-no-claim"), EPOCH)          # the claim is never admitted
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "FAIL_CLOSED", wcb.NO_CLAIM_FENCE)
+        b = taken["binding"]
+        self.assertEqual((b["claim_ref"], b["fence_ref"], b["projection_only"]),
+                         ("wc-claim:bind-no-claim", "wc-fence:1", False))
+        self.assertEqual(b["parent_org_receipt_sha256"], self.org_ledger_ingress())
+        # Terminal once: a later pass neither re-takes nor re-records it.
+        before = len(self.org_classes())
+        again = self.run_pass()
+        self.assertEqual((again["intake"], again["respond"], again["close"]), ([], [], []))
+        self.assertEqual(len(self.org_classes()), before)
+
+    def test_a_projection_only_claim_with_null_refs_fails_closed(self):
+        m, claim = fx.bind(manifest("bind-projection"), EPOCH,
+                           claim_overrides={"claim_ref": None, "fence_ref": None, "projection_only": True})
+        self.cycle.admitted_claims.append(claim)
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "FAIL_CLOSED", wcb.NO_CLAIM_FENCE)
+        self.assertEqual((taken["binding"]["claim_ref"], taken["binding"]["fence_ref"],
+                          taken["binding"]["projection_only"]), (None, None, True))
+
+    def test_missing_binding_fails_closed(self):
+        taken = self.take_one(manifest("bind-missing"))
+        self.assert_refused_before_admission(taken, "FAIL_CLOSED", "EXISTING_STEGNODE_NOT_AUTHENTICALLY_OBSERVED")
+
+    # -- forged / mismatched -------------------------------------------------------------
+    def test_a_forged_claim_is_denied(self):
+        m, claim = fx.bind(manifest("bind-forged"), EPOCH)
+        self.cycle.admitted_claims.append(claim)
+        m["payload"]["binding"]["worker_claim"]["fence_ref"] = "wc-fence:forged"   # digest no longer matches
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "DENY", "WORKERCOORDINATOR_CLAIM_SELF_DIGEST_MATCHES")
+
+    def test_a_self_consistent_claim_that_was_not_admitted_is_denied(self):
+        m, claim = fx.bind(manifest("bind-mismatch"), EPOCH)
+        self.cycle.admitted_claims.append(claim)
+        other = fx.claim(m, valid_until_epoch=EPOCH + 600, fence_ref="wc-fence:2")
+        m["payload"]["binding"]["worker_claim"] = other
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "DENY", "WORKERCOORDINATOR_CLAIM_ADMITTED")
+
+    def test_a_forged_posture_instance_fails_native_verification(self):
+        m, claim = fx.bind(manifest("bind-forged-posture"), EPOCH)
+        self.cycle.admitted_claims.append(claim)
+        m["payload"]["binding"]["posture"]["posture_instance"]["effective_tier"] = "HIGHEST"
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "FAIL_CLOSED",
+                                             "POSTURE_INSTANCE_CRYPTOGRAPHIC_VERIFICATION_NOT_OBSERVED")
+        self.assertEqual(taken["binding"]["native_reason"], "posture_instance_digest_mismatch")
+
+    def test_a_wrong_task_claim_is_denied(self):
+        m, _ = fx.bind(manifest("bind-wrong-task"), EPOCH)
+        wrong = fx.claim(m, valid_until_epoch=EPOCH + 600, task_id="another-task")
+        m["payload"]["binding"]["worker_claim"] = wrong
+        self.cycle.admitted_claims.append(wrong)
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "DENY", "WORKERCOORDINATOR_CLAIM_TASK_BINDING")
+
+    def test_a_wrong_task_posture_instance_fails_native_verification(self):
+        m, claim = fx.bind(manifest("bind-wrong-task-posture"), EPOCH)
+        other, _ = fx.bind(manifest("bind-other-task"), EPOCH)
+        m["payload"]["binding"]["posture"] = other["payload"]["binding"]["posture"]
+        self.cycle.admitted_claims.append(claim)
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "DENY", "POSTURE_INSTANCE_TASK_BINDING_MISMATCH")
+
+    def test_a_wrong_head_claim_is_denied(self):
+        m, _ = fx.bind(manifest("bind-wrong-head"), EPOCH)
+        other = copy.deepcopy(m)
+        other["payload"]["work"]["intent"] = "a different request"
+        wrong = fx.claim(other, valid_until_epoch=EPOCH + 600)        # same task id, another request head
+        m["payload"]["binding"]["worker_claim"] = wrong
+        self.cycle.admitted_claims.append(wrong)
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "DENY", "WORKERCOORDINATOR_FENCE_HEAD_BINDING")
+
+    # -- stale / replayed / low tier --------------------------------------------------------
+    def test_a_stale_posture_instance_fails_native_verification(self):
+        m, claim = fx.bind(manifest("bind-stale-posture"), EPOCH - 1000)  # issued at 3000, expired at 3900
+        claim = fx.claim(m, valid_until_epoch=EPOCH + 600)
+        m["payload"]["binding"]["worker_claim"] = claim
+        self.cycle.admitted_claims.append(claim)
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "FAIL_CLOSED",
+                                             "POSTURE_INSTANCE_CRYPTOGRAPHIC_VERIFICATION_NOT_OBSERVED")
+        self.assertEqual(taken["binding"]["native_reason"], "posture_instance_inactive")
+
+    def test_a_stale_claim_is_denied(self):
+        m, claim = fx.bind(manifest("bind-stale-claim"), EPOCH, valid_for=-1)
+        self.cycle.admitted_claims.append(claim)
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "DENY", "WORKERCOORDINATOR_CLAIM_NOT_STALE")
+
+    def test_a_replayed_posture_instance_is_denied(self):
+        m, claim = fx.bind(manifest("bind-replay"), EPOCH)
+        self.cycle.admitted_claims.append(claim)
+        self.send(m)
+        first, = self.run_pass()["intake"]
+        self.assertEqual(first["binding"]["disposition"], "ALLOW", first["binding"])
+        self.send(m, packet_id="in-bind-replay-again")                   # the same binding, a second time
+        second, = self.run_pass()["intake"]
+        b = second["binding"]
+        self.assertEqual((b["disposition"], b["failed_predicate"]), ("DENY", "POSTURE_INSTANCE_NOT_REPLAYED"))
+        self.assertEqual((second["assign"], second["request"]), ([], []))
+        self.assertEqual(self.org_classes().count("SANDBOX_WORK_ADMITTED"), 1)
+
+    def test_a_low_tier_posture_is_denied(self):
+        m, claim = fx.bind(manifest("bind-low-tier"), EPOCH, tier="SECURE", required_tier="HIGHEST")
+        self.cycle.admitted_claims.append(claim)
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "DENY", "EFFECTIVE_POSTURE_BELOW_CAPABILITY_FLOOR")
+
+    # -- the tier and its floor come from nothing the caller controls (#47 review findings 1, 2) ---------------
+    def test_an_undigested_wrapper_tier_cannot_lift_a_low_posture(self):
+        m, claim = fx.bind(manifest("bind-wrapper-tier"), EPOCH, tier="SECURE", required_tier="HIGHEST")
+        self.cycle.admitted_claims.append(claim)
+        m["payload"]["binding"]["posture"]["effective_posture"]["tier"] = "HIGHEST"   # outside every digest
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "DENY", "POSTURE_RESOLUTION_WRAPPER_MATCHES_VERIFIED_INSTANCE")
+
+    def test_the_manifest_cannot_lower_the_service_floor(self):
+        m, claim = fx.bind(manifest("bind-lowered-floor"), EPOCH, tier="SECURE", required_tier="HIGHEST")
+        self.cycle.admitted_claims.append(claim)
+        m["payload"]["binding"]["required_tier"] = "SECURE"            # the submitter picks its own floor
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "DENY", "EFFECTIVE_POSTURE_BELOW_CAPABILITY_FLOOR")
+
+    def test_the_data_class_floor_holds_whatever_the_instance_or_manifest_says(self):
+        m, claim = fx.bind(manifest("bind-ephi"), EPOCH, tier="HIGH")
+        self.cycle.admitted_claims.append(claim)
+        posture = m["payload"]["binding"]["posture"]
+        inst = posture["posture_instance"]                              # self-minted: ePHI resolved as only HIGH
+        inst["data_class"] = "ePHI"
+        inst.pop("instance_sha256")
+        inst["instance_sha256"] = fx.STEGOS._digest(inst)
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "DENY", "EFFECTIVE_POSTURE_BELOW_CAPABILITY_FLOOR")
+
+    def test_a_manifest_may_raise_the_floor(self):
+        m, claim = fx.bind(manifest("bind-raised-floor"), EPOCH, tier="HIGH", required_tier="HIGHEST")
+        self.cycle.admitted_claims.append(claim)
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "DENY", "EFFECTIVE_POSTURE_BELOW_CAPABILITY_FLOOR")
+
+    def test_without_a_declared_service_minimum_protected_work_fails_closed(self):
+        undeclared = self.base / "sandbox-service.json"
+        service = json.loads(wcb.SERVICE_CONTRACT.read_text())
+        service.pop("minimum_security_tier")
+        undeclared.write_text(json.dumps(service))
+        m, claim = fx.bind(manifest("bind-no-service-floor"), EPOCH, required_tier="HIGHEST")
+        original = wcb.SERVICE_CONTRACT
+        try:
+            wcb.SERVICE_CONTRACT = undeclared
+            r = wcb.evaluate_take(m, task_id=m["manifest_id"], hb_epoch=EPOCH, admitted_claims=[claim], bound=[],
+                                  verifier=wcb.native_posture_verifier())
+        finally:
+            wcb.SERVICE_CONTRACT = original
+        self.assert_six(r, "FAIL_CLOSED", "SERVICE_MINIMUM_SECURITY_TIER_DECLARED", wcb.TAKE_ENTRYPOINT)
+
+    # -- poison-pill guard: a malformed binding is a terminal refusal, never a crash (#47 re-review F1) --------
+    def assert_terminal_without_crash(self, m, disposition, predicate):
+        refused_before = self.org_classes().count("SANDBOX_WORK_BINDING_REFUSED")
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, disposition, predicate)
+        self.assertEqual(self.org_classes().count("SANDBOX_WORK_BINDING_REFUSED"), refused_before + 1)
+        again = self.run_pass()                                          # the marker is written: nothing re-raises
+        self.assertEqual((again["intake"], again["respond"], again["close"]), ([], [], []))
+        self.assertEqual(self.org_classes().count("SANDBOX_WORK_BINDING_REFUSED"), refused_before + 1)
+        return taken
+
+    def malformed(self, manifest_id, field, value, *, redigest):
+        """The production state (no admitted claim) with one posture-instance field malformed. Without redigest
+        the digest breaks (the re-review's input); with it the instance is self-minted and verifies natively."""
+        m, _claim = fx.bind(manifest(manifest_id), EPOCH)
+        inst = m["payload"]["binding"]["posture"]["posture_instance"]
+        inst[field] = value
+        if redigest:
+            inst.pop("instance_sha256")
+            inst["instance_sha256"] = fx.STEGOS._digest(inst)
+        return m
+
+    def assert_malformed_field_fails_closed(self, field, values):
+        for i, value in enumerate(values):
+            with self.subTest(value=value, redigest=False):
+                self.assert_terminal_without_crash(self.malformed(f"bind-bad-{field}-{i}", field, value, redigest=False),
+                                                   "FAIL_CLOSED", "POSTURE_INSTANCE_CRYPTOGRAPHIC_VERIFICATION_NOT_OBSERVED")
+            with self.subTest(value=value, redigest=True):
+                self.assert_terminal_without_crash(self.malformed(f"bind-bad-{field}-{i}-r", field, value, redigest=True),
+                                                   "FAIL_CLOSED", "INTR_POSTURE_INSTANCE_FIELDS_WELL_FORMED")
+
+    def test_a_non_string_data_class_fails_closed_terminally(self):
+        self.assert_malformed_field_fails_closed("data_class", [{}, ["ePHI"], "ephi-unknown"])
+
+    def test_a_non_string_channel_fails_closed_terminally(self):
+        self.assert_malformed_field_fails_closed("channel", [{}, ["KV-SKAP"], "kv-unknown"])
+
+    def test_a_non_string_automatic_tier_fails_closed_terminally(self):
+        self.assert_malformed_field_fails_closed("automatic_tier", [{}, ["HIGH"]])
+        self.assert_terminal_without_crash(self.malformed("bind-bad-automatic-none", "automatic_tier", None, redigest=True),
+                                           "FAIL_CLOSED", "INTR_POSTURE_INSTANCE_FIELDS_WELL_FORMED")
+
+    def test_a_non_string_required_tier_fails_closed_terminally(self):
+        for i, value in enumerate([["SECURE"], {"tier": "HIGHEST"}]):
+            with self.subTest(value=value):
+                m, _claim = fx.bind(manifest(f"bind-bad-required-{i}"), EPOCH)
+                m["payload"]["binding"]["required_tier"] = value
+                self.assert_terminal_without_crash(m, "FAIL_CLOSED", "UNRECOGNIZED_REQUIRED_SECURITY_TIER")
+
+    def test_any_exception_while_binding_is_a_terminal_six_field_refusal(self):
+        m, claim = fx.bind(manifest("bind-raises"), EPOCH)
+        self.cycle.admitted_claims.append(claim)
+        original = wcb.evaluate_take
+
+        def raising(*_a, **_k):
+            raise RuntimeError("an unforeseen malformed binding")
+        try:
+            wcb.evaluate_take = raising
+            taken = self.assert_terminal_without_crash(m, "FAIL_CLOSED", wcb.UNEVALUABLE)
+        finally:
+            wcb.evaluate_take = original
+        b = taken["binding"]
+        self.assertEqual((b["exception"], b["task_id"]), ("RuntimeError", "bind-raises"))
+        self.assertEqual(b["transition_request_sha256"], wcb.request_digests(m)["transition_request_sha256"])
+
+    # -- the claim binds the posture instance (#47 re-review F2) -------------------------------------------
+    def test_an_admitted_claim_does_not_carry_over_to_a_re_minted_posture(self):
+        m, claim = fx.bind(manifest("bind-reminted"), EPOCH, tier="HIGH")
+        self.cycle.admitted_claims.append(claim)
+        reminted, _ = fx.bind(manifest("bind-reminted"), EPOCH, tier="HIGHEST")   # the submitter re-resolves
+        m["payload"]["binding"]["posture"] = reminted["payload"]["binding"]["posture"]
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "DENY", "WORKERCOORDINATOR_CLAIM_POSTURE_BINDING")
+
+    # -- claim replay and claim authority, evaluated directly --------------------------------
+    def assert_six(self, r, disposition, predicate, entrypoint):
+        self.assertEqual((r["disposition"], r["failed_predicate"], r["failure_code"]), (disposition, predicate, predicate), r)
+        self.assertTrue(all(isinstance(r.get(k), str) and r[k] for k in SIX), r)
+        self.assertEqual((r["retry_entrypoint"], r["authority_effect"]), (entrypoint, "NONE"))
+
+    def take_direct(self, m, claim, *, hb_epoch=EPOCH, bound=()):
+        return wcb.evaluate_take(m, task_id=m["manifest_id"], hb_epoch=hb_epoch, admitted_claims=[claim],
+                                 bound=list(bound), verifier=wcb.native_posture_verifier())
+
+    def test_a_used_claim_is_not_replayed_with_a_fresh_posture_instance(self):
+        m, claim = fx.bind(manifest("bind-claim-replay"), EPOCH)
+        first = self.take_direct(m, claim)
+        self.assertEqual(first["disposition"], "ALLOW", first)
+        again, _ = fx.bind(manifest("bind-claim-replay"), EPOCH + 1)    # a fresh instance, the same used claim
+        again["payload"]["binding"]["worker_claim"] = claim
+        self.assert_six(self.take_direct(again, claim, hb_epoch=EPOCH + 1, bound=[first]),
+                        "DENY", "WORKERCOORDINATOR_CLAIM_NOT_REPLAYED", wcb.TAKE_ENTRYPOINT)
+
+    def test_an_admitted_claim_from_another_authority_is_denied(self):
+        m, _ = fx.bind(manifest("bind-claim-authority"), EPOCH)
+        foreign = fx.claim(m, valid_until_epoch=EPOCH + 600, authority="SELF_ASSERTED")
+        m["payload"]["binding"]["worker_claim"] = foreign
+        self.assert_six(self.take_direct(m, foreign), "DENY", "WORKERCOORDINATOR_IS_CLAIM_AUTHORITY", wcb.TAKE_ENTRYPOINT)
+
+    # -- return-path refusals, evaluated directly against a take-time ALLOW --------------------
+    def returned(self, m, take, claim, *, hb_epoch=EPOCH, verifier="native"):
+        return wcb.evaluate_return(m, take, task_id=m["manifest_id"], hb_epoch=hb_epoch, admitted_claims=[claim],
+                                   verifier=wcb.native_posture_verifier() if verifier == "native" else verifier)
+
+    def bound_take(self, manifest_id):
+        m, claim = fx.bind(manifest(manifest_id), EPOCH)
+        take = self.take_direct(m, claim)
+        self.assertEqual(take["disposition"], "ALLOW", take)
+        self.assertEqual(self.returned(m, take, claim)["disposition"], "ALLOW")
+        return m, take, claim
+
+    def test_return_without_a_take_binding_fails_closed(self):
+        m, _take, claim = self.bound_take("bind-return-no-take")
+        self.assert_six(self.returned(m, None, claim), "FAIL_CLOSED", "TAKE_BINDING_RECEIPT_PRESENT", wcb.RETURN_ENTRYPOINT)
+
+    def test_return_for_a_different_request_is_denied(self):
+        m, take, claim = self.bound_take("bind-return-other-request")
+        m["payload"]["work"]["intent"] = "a different request"
+        self.assert_six(self.returned(m, take, claim), "DENY", "RETURN_BOUND_TO_TAKEN_REQUEST", wcb.RETURN_ENTRYPOINT)
+
+    def test_return_to_another_organization_is_denied(self):
+        m, take, claim = self.bound_take("bind-return-other-org")
+        take = {**take, "return_organization": "SomeoneElse"}
+        self.assert_six(self.returned(m, take, claim), "DENY", "RETURN_ORGANIZATION_IS_BOUND_ORGANIZATION",
+                        wcb.RETURN_ENTRYPOINT)
+
+    def test_return_with_another_posture_instance_is_denied(self):
+        m, take, claim = self.bound_take("bind-return-other-instance")
+        fresh, _ = fx.bind(manifest("bind-return-other-instance"), EPOCH + 1)
+        m["payload"]["binding"]["posture"] = fresh["payload"]["binding"]["posture"]
+        self.assert_six(self.returned(m, take, claim, hb_epoch=EPOCH + 1), "DENY",
+                        "RETURN_POSTURE_INSTANCE_IS_BOUND_INSTANCE", wcb.RETURN_ENTRYPOINT)
+
+    def test_return_after_the_posture_expired_fails_closed(self):
+        m, take, claim = self.bound_take("bind-return-expired")
+        r = self.returned(m, take, {**claim, "valid_until_epoch": EPOCH + 10_000}, hb_epoch=EPOCH + 900)  # TTL 900s
+        self.assert_six(r, "FAIL_CLOSED", "POSTURE_INSTANCE_CRYPTOGRAPHIC_VERIFICATION_NOT_OBSERVED", wcb.RETURN_ENTRYPOINT)
+        self.assertEqual(r["native_reason"], "posture_instance_inactive")
+
+    def test_return_without_the_native_verifier_fails_closed(self):
+        m, take, claim = self.bound_take("bind-return-no-verifier")
+        self.assert_six(self.returned(m, take, claim, verifier=None), "FAIL_CLOSED",
+                        "AUTHENTIC_INTR_POSTURE_VERIFIER_NOT_BOUND", wcb.RETURN_ENTRYPOINT)
+
+    def test_without_the_vendored_native_verifier_protected_work_fails_closed(self):
+        tampered = self.base / "vendor"
+        shutil.copytree(wcb.VENDOR, tampered)
+        (tampered / wcb.NATIVE_MODULE).write_text("def verify_task_security_posture_instance(*a, **k):\n    return None\n")
+        original = wcb.VENDOR
+        try:
+            wcb.VENDOR = tampered
+            self.assertIsNone(wcb.native_posture_verifier())             # digest mismatch: never loaded
+            wcb.VENDOR = self.base / "absent"
+            self.assertIsNone(wcb.native_posture_verifier())
+        finally:
+            wcb.VENDOR = original
+        self.assertTrue(callable(wcb.native_posture_verifier()))
+        m, claim = fx.bind(manifest("bind-no-verifier"), EPOCH)
+        self.cycle.admitted_claims.append(claim)
+        self.cycle.posture_verifier = None
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "FAIL_CLOSED", "AUTHENTIC_INTR_POSTURE_VERIFIER_NOT_BOUND")
+
+    def test_the_vendored_verifier_is_the_pinned_stegos_bytes(self):
+        pinned = json.loads((wcb.VENDOR / "vendor-manifest.json").read_text())
+        self.assertEqual(pinned["canonical_source"], "StegVerse-Labs/StegOS")
+        self.assertEqual(pinned["source_commit"], "2d76c7780d09c8a53ad15004f5f9ef46b74a893f")
+        self.assertEqual(pinned["files"][wcb.NATIVE_MODULE], wcb._file_sha256(wcb.VENDOR / wcb.NATIVE_MODULE))
+        self.assertEqual(pinned["files"][wcb.NATIVE_MODULE],
+                         "sha256:07c4dcd5df1e3e07c6be345e6960d9d9574ce64426eca5f4bdca597abd1b9029")
+
+    # -- public retrieval ----------------------------------------------------------------------
+    def test_public_retrieval_requires_authentic_classification(self):
+        m = manifest("bind-public", participants=[])
+        m["payload"]["work"]["requested_capabilities"] = ["page_load.v1"]
+        m["payload"]["work"]["permitted_capabilities"] = ["page_load.v1"]
+        m["payload"]["binding"] = {"public": True}
+        self.send(m)
+        taken, = self.run_pass()["intake"]
+        b = taken["binding"]
+        self.assert_refused_before_admission(taken, "FAIL_CLOSED", wcb.NO_PUBLIC_CLASSIFICATION)
+
+    def test_declaring_public_does_not_exempt_protected_capabilities(self):
+        m = manifest("bind-public-protected")
+        m["payload"]["binding"] = {"public": True}                       # adversarial_review is not public retrieval
+        taken = self.take_one(m)
+        self.assert_refused_before_admission(taken, "FAIL_CLOSED", "EXISTING_STEGNODE_NOT_AUTHENTICALLY_OBSERVED")
+
+    # These tests exercise the real production default, with NO admission fixture.
+    def without_admission_fixture(self):
+        for item in self.admission_fixtures:
+            item.stop()
+
+    def test_public_pii_downgrade_is_terminal_without_admission_assignment_or_egress(self):
+        self.without_admission_fixture()
+        m = manifest("public-pii-downgrade", participants=[])
+        m["payload"]["work"].update(requested_capabilities=["page_load.v1"],
+                                    permitted_capabilities=["page_load.v1"],
+                                    data_class="PII", input_data={"synthetic_private": "fixture-only"})
+        m["payload"]["binding"] = {"public": True, "classification": {"authenticated": True, "data_class": "PUBLIC"}}
+        self.send(m)
+        out = self.run_pass()
+        self.assert_refused_before_admission(out["intake"][0], "FAIL_CLOSED",
+                                             "AUTHENTIC_PUBLIC_CLASSIFICATION_NOT_OBSERVED")
+        self.assertEqual((out["respond"], out["close"]), ([], []))
+        before = self.org_classes()
+        self.assertNotIn("CONTRIBUTION_REQUESTED", before)
+        self.assertNotIn("ORGANIZATION_EGRESS_EMITTED", before)
+        again = self.run_pass()
+        self.assertEqual((again["intake"], again["respond"], again["close"]), ([], [], []))
+        self.assertEqual(self.org_classes(), before)
+
+    def test_valid_fixture_claim_cannot_manufacture_production_manifest_admission(self):
+        self.without_admission_fixture()
+        m, claim = fx.bind(manifest("no-authentic-admission"), EPOCH)
+        self.cycle.admitted_claims.append(claim)
+        self.assert_refused_before_admission(self.take_one(m), "FAIL_CLOSED",
+                                             "AUTHENTIC_MANIFEST_ADMISSION_NOT_OBSERVED")
+
+    def test_manifest_cannot_supply_its_own_authenticated_admission(self):
+        self.without_admission_fixture()
+        m, claim = fx.bind(manifest("forged-admission"), EPOCH)
+        m["payload"]["binding"]["manifest_admission"] = fx.admission(m)
+        self.cycle.admitted_claims.append(claim)
+        self.assert_refused_before_admission(self.take_one(m), "FAIL_CLOSED",
+                                             "AUTHENTIC_MANIFEST_ADMISSION_NOT_OBSERVED")
+
+    def test_legacy_public_take_receipt_does_not_authorize_return(self):
+        self.without_admission_fixture()
+        m = manifest("legacy-public-return")
+        take = {"task_id": m["manifest_id"], "disposition": "ALLOW", "public": True,
+                "repo_receipt_sha256": "sha256:fixture", **wcb.request_digests(m)}
+        verdict = wcb.evaluate_return(m, take, task_id=m["manifest_id"], hb_epoch=EPOCH,
+                                      admitted_claims=[], verifier=None)
+        self.assertEqual(verdict["disposition"], "FAIL_CLOSED")
+        self.assertEqual(verdict["failed_predicate"], "AUTHENTIC_PUBLIC_CLASSIFICATION_NOT_OBSERVED")
+        self.assertTrue(all(verdict.get(key) for key in SIX))
+
+    def test_admission_observation_must_bind_task_and_both_request_digests(self):
+        self.without_admission_fixture()
+        m, claim = fx.bind(manifest("admission-bindings"), EPOCH)
+        for field in ("task_id", "payload_sha256", "transition_request_sha256"):
+            with self.subTest(field=field):
+                admission = fx.admission(m)
+                admission[field] = "wrong"
+                verdict = wcb.evaluate_take(m, task_id=m["manifest_id"], hb_epoch=EPOCH,
+                    admitted_claims=[claim], bound=[], verifier=wcb.native_posture_verifier(),
+                    manifest_admission=admission)
+                self.assertEqual((verdict["disposition"], verdict["failed_predicate"]),
+                                 ("DENY", "MANIFEST_ADMISSION_REQUEST_BINDING"))
+                self.assertTrue(all(verdict.get(key) for key in SIX))
+
+    def test_protected_return_requires_current_admission_observation(self):
+        self.without_admission_fixture()
+        m, claim = fx.bind(manifest("return-no-admission"), EPOCH)
+        take = wcb.evaluate_take(m, task_id=m["manifest_id"], hb_epoch=EPOCH,
+            admitted_claims=[claim], bound=[], verifier=wcb.native_posture_verifier(),
+            manifest_admission=fx.admission(m))
+        self.assertEqual(take["disposition"], "ALLOW")  # explicitly simulated predicate evidence
+        verdict = wcb.evaluate_return(m, take, task_id=m["manifest_id"], hb_epoch=EPOCH,
+                                      admitted_claims=[claim], verifier=wcb.native_posture_verifier())
+        self.assertEqual((verdict["disposition"], verdict["failed_predicate"]),
+                         ("FAIL_CLOSED", "AUTHENTIC_MANIFEST_ADMISSION_NOT_OBSERVED"))
+
+    # -- valid fixture claim: ALLOW, then _return closes it -----------------------------------
+    def test_a_valid_fixture_claim_allows_and_return_revalidates_before_egress(self):
+        m, claim = fx.bind(manifest("bind-valid"), EPOCH)
+        self.cycle.admitted_claims.append(claim)
+        self.send(m)
+        out = self.run_pass()
+        taken, = out["intake"]
+        b = taken["binding"]
+        self.assertEqual((b["disposition"], b["claim_sha256"], b["fence_ref"]), ("ALLOW", claim["claim_sha256"], "wc-fence:1"))
+        self.assertIs(b["execution_authorized_by_binding"], False)
+        self.assertEqual((b["security_tier"], b["capability_floor"]), ("HIGH", "HIGH"))   # the service's declared floor
+        self.assertEqual(taken["admit"]["disposition"], "ALLOW")
+        closed, = out["close"]
+        self.assertEqual(closed["complete"]["disposition"], "ALLOW")
+        self.assertEqual(closed["egress"]["transition_class"], "ORGANIZATION_EGRESS_EMITTED")
+        classes = self.org_classes()
+        self.assertLess(classes.index("SANDBOX_WORK_BINDING_VERIFIED"), classes.index("SANDBOX_WORK_ADMITTED"))
+        self.assertEqual(classes[-2:], ["SANDBOX_RETURN_BINDING_REVALIDATED", "ORGANIZATION_EGRESS_EMITTED"])
+        # Lineage both ways: the return binding names the take binding; the egressed result names the return binding.
+        rebound, = [r for r in self.cycle.sandbox.ledger.chain()
+                    if r["transition_class"] == "SANDBOX_RETURN_BINDING_REVALIDATED"]
+        self.assertEqual(rebound["evidence"]["take_binding_receipt_sha256"], b["repo_receipt_sha256"])
+        got = self.labs.consume_addressed(mesh_root=self.mesh)
+        payload = got[0]["result"]["packet"]["payload"]["manifest"]["payload"]
+        self.assertEqual(payload["return_binding_repo_receipt_sha256"], rebound["receipt_sha256"])
+        again = self.run_pass()                                          # closed once
+        self.assertEqual([c.get("egress") for c in again["close"]], [None])
+
+    def test_a_return_whose_claim_fence_is_no_longer_held_emits_nothing(self):
+        m, claim = fx.bind(manifest("bind-return-revoked"), EPOCH)
+        self.cycle.admitted_claims.append(claim)
+        c = self.cycle
+        self.send(m)
+        c.crossing.ingress(mesh_root=self.mesh, node_state_root=c.node_state_root, root=DOTGITHUB, hb_epoch=EPOCH)
+        taken, = c.intake()
+        self.assertEqual(taken["binding"]["disposition"], "ALLOW")
+        c.respond()
+        c.admitted_claims = []                                           # the fence is gone before the return
+        closed, = c.close(standing=STANDING, mesh_root=self.mesh)
+        refused = closed["egress"]
+        self.assertEqual((refused["transition_class"], refused["disposition"], refused["failed_predicate"]),
+                         ("SANDBOX_RETURN_BINDING_REFUSED", "FAIL_CLOSED", wcb.NO_CLAIM_FENCE))
+        self.assertEqual(refused["retry_entrypoint"], wcb.RETURN_ENTRYPOINT)
+        self.assertNotIn("ORGANIZATION_EGRESS_EMITTED", self.org_classes())
+        self.assertEqual(self.labs.consume_addressed(mesh_root=self.mesh), [])
+        again = c.close(standing=STANDING, mesh_root=self.mesh)          # terminal once, nothing re-attempted
+        self.assertEqual([x.get("egress") for x in again], [None])
+
+    def org_ledger_ingress(self):
+        rows = [r for r in chain(self.base / "org-ledger")
+                if r["org_transition_class"] == "ORGANIZATION_INGRESS_MATERIALIZED"]
+        return rows[-1]["receipt_sha256"]
+
+
+if __name__ == "__main__":
+    unittest.main()

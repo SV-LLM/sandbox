@@ -7,6 +7,14 @@ materializer supplied, and records ORGANIZATION_INGRESS_MATERIALIZED on the
 SV-LLM/.github repository ledger and the organization ledger. It selects no
 processor there. This module is the Sandbox side of that hand-off:
 
+  binding  after selection and the parent readback and before admission, protected
+           work requires a verified StegNode/InTr binding with the native StegOS
+           posture verifier and an authentic WorkerCoordinator claim/fence
+           (runtime/work_cycle_binding.py, StegVerse-org/.github#163); public
+           retrieval requires an authenticated classification producer (currently unbound). A refused binding is a six-field Sandbox
+           receipt, the intake is marked terminal once, and nothing is assigned or
+           requested. Before egress the return crossing is revalidated against the
+           take-time binding receipt; a refusal emits nothing.
   intake   each materialization not yet taken in. Processing is selected only by
            the manifest's declared `processing.capability` bound to
            `processing.route_id`, which this service must admit
@@ -63,6 +71,7 @@ from ledger import Ledger, epoch_refusal  # noqa: E402
 from sandbox import Sandbox, ALLOW  # noqa: E402
 import conformance_proposal  # noqa: E402
 import capability_routing  # noqa: E402
+import work_cycle_binding  # noqa: E402
 
 SERVICE = json.loads((ROOT / "runtime/contracts/sandbox-service.json").read_text())
 NO_INVOCATION = "NO_ADMITTED_INVOCATION_SURFACE"
@@ -144,7 +153,8 @@ def unsupplied_envelope(work: dict[str, Any], entity: str, capability: str, set_
 
 class WorkCycle:
     def __init__(self, *, dotgithub: Path, sandbox_ledger: Path, node_state_root: Path,
-                 entities: dict[str, Entity] | None = None, hb_epoch: Any = None):
+                 entities: dict[str, Entity] | None = None, hb_epoch: Any = None,
+                 admitted_claims: list[dict[str, Any]] | None = None):
         self.dotgithub = Path(dotgithub).resolve()
         # The supplied heartbeat epoch every receipt of this cycle carries, on the
         # Sandbox ledger, the .github repository ledger and the organization
@@ -158,6 +168,14 @@ class WorkCycle:
         self.node_state_root = Path(node_state_root)
         self.node_state = self.kernel.addressed_node_state_store(self.node_state_root)
         self.entities = entities or {}
+        # The WorkerCoordinator claims/fences admitted for this pass. No Registry/WorkerCoordinator surface supplies
+        # them yet. Native manifest-admission readback is also unbound: evaluate_take/return
+        # receive no manifest_admission and fail closed. Never derive authenticated=True
+        # from this local ingress receipt pair. Only offline tests simulate the missing input.
+        # The posture verifier is never a
+        # parameter: it is the vendored StegOS one, digest-checked, or none.
+        self.admitted_claims = list(admitted_claims or [])
+        self.posture_verifier = work_cycle_binding.native_posture_verifier()
         # Routing precedence is declared by the canonical organization tree's row order, never by name.
         tree = json.loads((self.dotgithub / "data/organization-tree.json").read_text(encoding="utf-8"))
         self.tree_order = [row["name"] for row in tree.get("repositories", []) if isinstance(row, dict) and "name" in row]
@@ -214,11 +232,15 @@ class WorkCycle:
         spec = (manifest.get("payload") or {}).get("work")
         if not isinstance(spec, dict) or any(f not in spec for f in WORK_FIELDS):
             return {"admit": self._refuse(attempt, "WORK_DECLARED_BY_MANIFEST")}
+        binding = self._bind(manifest, org, source)
+        if binding["disposition"] != ALLOW:
+            # Terminal: intake() writes its marker once from this refusal; nothing is assigned or requested.
+            return {"admit": binding, "selection": selected, "binding": binding, "assign": [], "request": []}
         subject = source["evidence"]
         work = self._work_object(manifest, org, source, spec)
         admitted = self.sandbox.admit(self.sandbox.canon.canonical(work), parent_repo_receipt=source,
                                       parent_org_receipt=org, subject=subject)
-        out = {"admit": admitted, "selection": selected, "assign": [], "request": []}
+        out = {"admit": admitted, "selection": selected, "binding": binding, "assign": [], "request": []}
         if admitted["disposition"] != ALLOW:
             return out
         participants = spec["participants"]
@@ -246,6 +268,42 @@ class WorkCycle:
             if assigned["disposition"] == ALLOW:
                 out["request"].append(self.sandbox.request(work["work_id"], entity, capability))
         return out
+
+    # -- binding ----------------------------------------------------------------------
+    def _bindings(self, transition_class: str) -> list[dict[str, Any]]:
+        return [{**r["evidence"], "repo_receipt_sha256": r["receipt_sha256"]} for r in self.sandbox.ledger.chain()
+                if r["transition_class"] == transition_class and r["evidence"].get("disposition") == ALLOW]
+
+    def _bind(self, manifest: dict[str, Any], org: dict[str, Any], source: dict[str, Any]) -> dict[str, Any]:
+        """The take-time binding, recorded as a Sandbox receipt bound to the parent ingress receipt pair."""
+        task_id = manifest.get("manifest_id")
+        try:
+            verdict = work_cycle_binding.evaluate_take(
+                manifest, task_id=task_id, hb_epoch=self.hb_epoch, admitted_claims=self.admitted_claims,
+                bound=self._bindings("SANDBOX_WORK_BINDING_VERIFIED"), verifier=self.posture_verifier)
+        except Exception as exc:
+            # Poison-pill guard: a binding that cannot be evaluated is a terminal six-field refusal, never a crash
+            # that leaves the intake unmarked and re-raises on every later run.
+            verdict = work_cycle_binding.refuse_unevaluable(manifest, task_id=task_id, exc=exc)
+        verdict = {**verdict, "work_id": task_id, "parent_repo_receipt_sha256": source["receipt_sha256"],
+                   "parent_org_receipt_sha256": org["receipt_sha256"]}
+        attempt = {"intended_action": "BIND_MATERIALIZED_MANIFEST_BEFORE_ADMISSION", "manifest_id": task_id,
+                   "transition_request_sha256": verdict["transition_request_sha256"]}
+        cls = "SANDBOX_WORK_BINDING_VERIFIED" if verdict["disposition"] == ALLOW else "SANDBOX_WORK_BINDING_REFUSED"
+        return self.sandbox._record(cls, attempt, verdict)
+
+    def _rebind(self, work: dict[str, Any], completion: dict[str, Any]) -> dict[str, Any]:
+        """Revalidate the manifest-selected return crossing against the take-time binding, before any egress."""
+        manifest = work["manifested_request"]
+        taken = [b for b in self._bindings("SANDBOX_WORK_BINDING_VERIFIED") if b.get("work_id") == work["work_id"]]
+        verdict = work_cycle_binding.evaluate_return(
+            manifest, taken[-1] if taken else None, task_id=work["work_id"], hb_epoch=self.hb_epoch,
+            admitted_claims=self.admitted_claims, verifier=self.posture_verifier)
+        verdict = {**verdict, "work_id": work["work_id"], "completion_repo_receipt_sha256": completion["receipt_sha256"]}
+        attempt = {"intended_action": "REVALIDATE_RETURN_CROSSING_BEFORE_EGRESS", "work_id": work["work_id"],
+                   "completion_repo_receipt_sha256": completion["receipt_sha256"]}
+        cls = "SANDBOX_RETURN_BINDING_REVALIDATED" if verdict["disposition"] == ALLOW else "SANDBOX_RETURN_BINDING_REFUSED"
+        return self.sandbox._record(cls, attempt, verdict)
 
     @staticmethod
     def _work_object(manifest: dict[str, Any], org: dict[str, Any], source: dict[str, Any],
@@ -356,6 +414,13 @@ class WorkCycle:
         organization = (manifest.get("return_to") or {}).get("organization")
         if organization is None or self.node_state.exists(marker):
             return None
+        rebound = self._rebind(work, completion)
+        if rebound["disposition"] != ALLOW:
+            # No alternative authority and no egress; the refusal is terminal for this work, recorded once.
+            self.node_state.put_once(marker, {"schema": "sv-llm.sandbox-result-marker/v1", "work_id": work["work_id"],
+                                              "transition_class": rebound["transition_class"],
+                                              "binding_repo_receipt_sha256": rebound["repo_receipt_sha256"]})
+            return rebound
         synthesis = self.sandbox.ledger.chain()
         synthesis = next(r for r in synthesis if r["receipt_sha256"] == completion["evidence"]["synthesis_receipt_sha256"])
         result = {"manifest_id": "sv-llm-sandbox-result-" + work["work_id"],
@@ -363,6 +428,7 @@ class WorkCycle:
                   "payload": {"schema": RESULT_SCHEMA, "request_manifest_id": manifest["manifest_id"],
                               "work_id": work["work_id"],
                               "completion_repo_receipt_sha256": completion["receipt_sha256"],
+                              "return_binding_repo_receipt_sha256": rebound["repo_receipt_sha256"],
                               "synthesis": synthesis["evidence"]["synthesis"],
                               "synthesis_digest": synthesis["evidence"]["synthesis_digest"],
                               "authority_effect": "NONE"}}
