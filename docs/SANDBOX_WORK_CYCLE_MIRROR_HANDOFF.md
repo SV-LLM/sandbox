@@ -1,9 +1,9 @@
-# Sandbox work-cycle repair handoff (candidate)
+# Sandbox work-cycle repair handoff
 
-Updated: 2026-10-28 America/Chicago.
+Updated: 2026-11-09 America/Chicago.
 Activity: `5a16c28c-37d4-4b84-9f97-46603e15f2df` (self-generated).
 
-This is an additive source candidate for the existing PR #47 owner lane. It is
+PR #47 carried this repair on the existing owner branch. It is
 not a new Task Registry admission, assignment transfer, claim, or runtime authority.
 
 ## Current canonical coordinates
@@ -46,8 +46,7 @@ turn this into production ALLOW.
 
 1. Resolve PR #47's exact task scope and source assignment through P1/Registry;
    use the existing W07 record where applicable, without duplicating a goal.
-2. Review/apply this bounded candidate to the original branch with expected-head
-   protection, update this handoff and README, and run exact-head CI plus independent review.
+2. Source integration, CI and P4 review are complete. Preserve the reviewed head and merge references above.
 3. Wire actual admission/classification readback through existing SDK/organization
    interfaces; task/payload/request digests must match independently retained receipts.
 4. Obtain authentic WorkerCoordinator claim/fence and sovereign issuer/destination
@@ -85,3 +84,7 @@ This handoff is repository truth as of the PR #47 merge; the applicable canonica
 handoff remains the Org foundation handoff named above. W07 stays `validating`:
 the merge is not a Registry assignment, claim, or activation. No new cumulative
 prompt count or coordination-state value is minted here.
+
+## November 9 source-session transfer
+
+[CODEX inventory](https://github.com/StegVerse-Labs/.github/issues/3447#issuecomment-6750110419) · [Coordinator intake](https://github.com/StegVerse-Labs/.github/issues/3443#issuecomment-6750116330) · [Pairing](https://github.com/StegVerse-Labs/.github/issues/3467#issuecomment-6750116892). The W07 Registry still reports validating and canonical_owner_installed=false. The SDK route is absent from route_resolution.py blob 81ee1a3424f2933e530ad8e976f4959fd3b3f77c. The designated ledger has advanced to 7f8604a6948f2faf555bf05087e6574b20a0bfbf. Reopen the current ref for independent W07 take/return readback. The inventory carries the artifact hashes and acceptance predicates.
