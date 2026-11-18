@@ -32,6 +32,7 @@ Modes:
              without any token. Never touches public-url.txt.
 """
 import base64
+import shutil
 import json
 import os
 import re
@@ -45,7 +46,9 @@ import urllib.parse
 import urllib.request
 
 WS = os.path.dirname(os.path.abspath(__file__))
-CLOUDFLARED = "/home/hatch/workspace/tools/cloudflared"
+# Site slot: the cloudflared binary is the site's own tool — supplied
+# via ME_CLOUDFLARED_BIN or found on PATH. No other site's path here.
+CLOUDFLARED = os.environ.get("ME_CLOUDFLARED_BIN") or shutil.which("cloudflared") or "cloudflared"
 TOKEN_FILE = os.path.join(WS, "cf-tunnel-token.txt")
 URL_FILE = os.path.join(WS, "public-url.txt")
 ORIGIN_FILE = os.path.join(WS, "cf-origin.txt")

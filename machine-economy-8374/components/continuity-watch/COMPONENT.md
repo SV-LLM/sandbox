@@ -37,3 +37,18 @@ naming map, not a health finding; every health check (endpoint
 /health, replay MATCH, proxy /health, path filter, origin /health)
 passes. Against a fully matching configuration (all five units present
 under lane-form names, pointer = origin) it passes 6/6, exit 0.
+
+## Relayer monitoring (added GEN 08, BUILD-Q-27/Q-35)
+
+`funds_projection.py <instance-tree> [--runway-threshold N]` reads
+the instance's own address set live (from HOST__RECORD__01.json),
+reconciles the instance's supply accounting (USDC: supplied −
+settled-out == payer on hand; ETH: provided − burned == relayer on
+hand; remainders must be 0), and reports the relayer RUNWAY in
+settlements remaining at the mean actual settlement cost, flagging
+LOW_RUNWAY below the named threshold (default 500).
+
+Restarts performed by the watchdog are receipted as append-only
+records in `<instance>/continuity/records.jsonl` (UNIT_RESTORED
+events) — the continuity history a 7-day zero-intervention
+observation (BUILD-Q-32 acceptance) is measured from.

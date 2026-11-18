@@ -1,3 +1,11 @@
+> **Lane form (GEN 08, BUILD-Q-33):** a lane site runs
+> `lane_signing.py` — admission by the site Authority store's
+> scoped, expiring, revocable, single-use grants
+> (`authority.py`), custody in the site SKAP tree. The document
+> below describes the coordinator node's production form
+> (`skap_signing.py`, ecosystem SKAP retrieval), retained in this
+> tree as reference.
+
 # SKAP Sign-Under-Seal Operation — BUILD-Q-14 Build
 
 The production SKAP custody signing path for machine-economy identity

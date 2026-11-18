@@ -42,6 +42,8 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from keccak_pure import keccak256, eip55
 import settlement as settle_mod
+import funds as funds_mod
+import urllib.parse
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 CONFIG = json.load(open(os.path.join(BASE, "config.json")))
@@ -1716,6 +1718,29 @@ class H(BaseHTTPRequestHandler):
         raw = self.rfile.read(n) if n else b"{}"
         return json.loads(raw or b"{}")
     def do_GET(self):
+        _split = urllib.parse.urlsplit(self.path)
+        if _split.path == "/funds":
+            # Operator surface only: this server binds 127.0.0.1 and
+            # /funds is not in the public proxy allowlist (same
+            # restriction class as POST /settle-pair). The complete
+            # funds projection: every ecosystem address, reconciled.
+            try:
+                doc = funds_mod.funds_document()
+            except Exception as e:
+                self._json(503, {"error": "funds projection unavailable",
+                                 "failure_code": "FUNDS_PROJECTION_UNAVAILABLE",
+                                 "detail": str(e)[:200]})
+                return
+            if urllib.parse.parse_qs(_split.query).get("format") == ["html"]:
+                body = funds_mod.render_html(doc).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            else:
+                self._json(200, doc)
+            return
         if self.path == "/health":
             self._json(200, {"status": "ok", "service": CONFIG["service"],
                              "port": PORT, "project_id": CONFIG["project_id"],

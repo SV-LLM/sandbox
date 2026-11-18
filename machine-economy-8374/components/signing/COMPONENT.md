@@ -1,15 +1,22 @@
 # Component: signing
 
-SKAP sign-under-seal custody signing: governed retrieval per call,
-sign in memory, zeroize, nothing cached. Custody is an operator slot —
-the specimen is born and sealed at the receiving site; no key material
-is in this repository.
+Custody signing for a lane site, in the BUILD-Q-33 production form:
+admission by scoped, expiring, revocable, single-use Authority
+grants (see `../authority/`); the specimen is born at the site by
+the host bootstrap and held in the site SKAP tree
+(`signing/custody/`, mode 0600); material is loaded per call and
+zeroized; nothing is cached.
 
-- Entrypoint: `entrypoint.sh`
-- Code: `../../signing/skap_signing.py` (+ `../../signing/replay.py`)
-- Proved by: the settlement battery's custody-signature leg and the
-  production specimen's standing replay MATCH. The signing plane
-  starts usefully only with the site's own SKAP tree + Authority store
-  (production form BUILD-Q-33) — failure_code
-  `SIGNING_CUSTODY_SLOTS_UNFILLED` until then; the crossing plane does
-  not depend on it.
+- Entrypoint: `entrypoint.sh` → `../../signing/lane_signing.py`
+- Code: `../../signing/lane_signing.py` (+ `../../signing/authority.py`);
+  `../../signing/skap_signing.py` is the coordinator node's
+  production form (ecosystem SKAP retrieval under TV/TVC), retained
+  as reference — a lane site does not run it.
+- Proved by: `../authority/authority_battery.py` (the revocation
+  drill, including an end-to-end ALLOW through the endpoint's /sign
+  route) and the lane-instance proof in GEN 08.
+- The earlier open predicate `SIGNING_CUSTODY_SLOTS_UNFILLED` is
+  cured in this form: the host bootstrap fills the slots at the
+  site (specimen + Authority store) before the service starts.
+  With the slots unfilled the service still fails closed under
+  that exact failure_code.

@@ -52,12 +52,22 @@ check() { # name, command...
 unit_missing() { [ ! -f "$ME_SYSTEMD_DIR/$1.service" ]; }
 unit_active()  { systemctl is-active --quiet "$1.service"; }
 
+receipt_record() { # event, detail — restarts are receipted as records
+  # in the instance tree (continuity/records.jsonl, append-only).
+  local rec_dir="$ME_TREE/continuity"
+  mkdir -p "$rec_dir" 2>/dev/null || return 0
+  printf '{"ts":"%s","event":"%s","unit":"%s","prefix":"%s"}\n' \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1" "$2" "$ME_PREFIX" \
+    >> "$rec_dir/records.jsonl" 2>/dev/null || true
+}
+
 restore_unit() { # unit-name, source-file
   local unit="$1" src="$2"
   if [ "$DRY" = "1" ]; then act "would restore $unit from $src"; return 0; fi
   cp "$src" "$ME_SYSTEMD_DIR/$unit.service" || return 1
   systemctl daemon-reload || return 1
   systemctl enable --now "$unit.service" >/dev/null 2>&1 || return 1
+  receipt_record "UNIT_RESTORED" "$unit"
   act "restored $unit"
 }
 

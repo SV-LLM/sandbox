@@ -21,6 +21,32 @@ custody signing, settlement on Base (USDC) with the settlement charge
 quoted separately from the governance fee (offer v07), a path-filtered
 public proxy, and bore + Cloudflare named-tunnel public exposure.
 
+## GEN 08 — the operation as a function of the Build Lanes (2026-11-18)
+
+8374 is a function of the Build Lanes. As of GEN 08 this repository
+carries the complete lane-operation form: a **host** component that
+bootstraps a running instance from a bare checkout of this branch
+(keys born and custody-verified in-tree), a production-form
+**authority** component (scoped, expiring, revocable, single-use
+grants — the bearer-digest pattern is retired in lane form), the
+**exposure** component (proxy provable locally; tunnel credentials
+are site slots), and the **continuity** component (receipted
+auto-restore plus the relayer funds projection with runway
+monitoring). GEN 08's proof: an instance bootstrapped from a fresh
+clone of this branch, all batteries green (x402 10/10, v2 8/8,
+settlement 5/5, agreement 5/5, authority drill 8/8, exposure 9/9),
+funds RECONCILED, and a full-evaluation crossing settled on-chain
+from the instance's own relayer — recorded in
+`LANE__OPERATION__BUILD__RECORD__01.md` and in
+MACHINE__ECONOMY__ENTRY__SUITE GEN 08.
+
+Ecosystem support remains wired in as support, not ownership: the
+Ecosystem KV carries the evidence; SVAI monitoring covers the
+operation; EOS answers through manifested queries; the coordinator
+node runs the production instance as interim running backbone.
+Production cutover and the 7-day zero-intervention observation
+(BUILD-Q-32 acceptance) are NOT claimed by GEN 08.
+
 ## Lane home — fallback, stated as such
 
 This build resides at **SV-LLM/sandbox**, branch `machine-economy-8374`,

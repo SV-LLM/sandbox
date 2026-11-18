@@ -1,11 +1,11 @@
 [Unit]
-Description=SKAP sign-under-seal operation — lane instance (transfer package)
+Description=Lane-form custody signing (BUILD-Q-33 Authority grants) — lane instance
 After=network.target
 
 [Service]
 Type=simple
 WorkingDirectory={{TREE}}/signing
-ExecStart=/usr/bin/python3 {{TREE}}/signing/skap_signing.py
+ExecStart=/usr/bin/python3 {{TREE}}/signing/lane_signing.py
 Restart=always
 RestartSec=3
 MemoryMax=512M

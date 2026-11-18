@@ -23,12 +23,14 @@ Exits when bore exits; systemd Restart=always relaunches it, and the
 new port is recorded the same way. Only the path-filtered public
 proxy (127.0.0.1:8796) is exposed; the signing service is untouched.
 """
-import base64, os, re, socket, subprocess, sys, threading, urllib.parse
+import base64, os, re, shutil, socket, subprocess, sys, threading, urllib.parse
 
 WS = os.path.dirname(os.path.abspath(__file__))
 URL_FILE = os.path.join(WS, "public-url.txt")
 PIN_FILE = os.path.join(WS, "public-port.pin")
-BORE = "/home/hatch/workspace/tools/bore"
+# Site slot: the bore binary is the site's own tool — supplied via
+# ME_BORE_BIN or found on PATH. No other site's path is named here.
+BORE = os.environ.get("ME_BORE_BIN") or shutil.which("bore") or "bore"
 TARGET_HOST, TARGET_PORT = "bore.pub", 7835
 
 def proxy_candidates():
