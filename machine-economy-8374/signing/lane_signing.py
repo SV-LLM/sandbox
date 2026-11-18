@@ -315,7 +315,10 @@ class H(BaseHTTPRequestHandler):
         with SIGN_LOCK:
             store.consume(grant["grant_id"])
             doc = json.load(open(SPECIMEN_FILE))
-            ba = bytearray(bytes.fromhex(doc["private_key"]))
+            raw_key = doc["private_key"]
+            if raw_key.startswith("0x"):
+                raw_key = raw_key[2:]
+            ba = bytearray(bytes.fromhex(raw_key))
             try:
                 n = int.from_bytes(ba, "big")
             finally:
