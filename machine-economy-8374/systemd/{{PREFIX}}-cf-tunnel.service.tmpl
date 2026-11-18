@@ -1,0 +1,15 @@
+[Unit]
+Description=Machine Economy Cloudflare named tunnel — lane instance (transfer package)
+After=network.target {{PREFIX}}-public-proxy.service
+ConditionPathExists={{TREE}}/operation/cf-tunnel-token.txt
+
+[Service]
+Type=simple
+WorkingDirectory={{TREE}}/operation
+ExecStart=/usr/bin/python3 {{TREE}}/operation/cf_tunnel_supervisor.py
+Restart=always
+RestartSec=10
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

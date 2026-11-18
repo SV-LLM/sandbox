@@ -1,0 +1,14 @@
+[Unit]
+Description=Machine Economy public tunnel (bore) — lane instance (transfer package)
+After=network.target {{PREFIX}}-public-proxy.service
+
+[Service]
+Type=simple
+WorkingDirectory={{TREE}}/operation
+ExecStart=/usr/bin/python3 {{TREE}}/operation/tunnel_supervisor.py
+Restart=always
+RestartSec=5
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

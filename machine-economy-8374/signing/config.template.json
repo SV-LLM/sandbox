@@ -1,0 +1,47 @@
+{
+  "authorization": {
+    "admitted_ref": "96e78d585f3db3e0018a38dd27e8fcaf261ba9557b717f051e7c2efa6efe5658",
+    "artifact": {
+      "artifact_id": "AUTH-BUILD-Q-14-SIGN-UNDER-SEAL-01",
+      "artifact_type": "build_authorization",
+      "authorization_basis": "BUILD-Q-14 checkout, StegVerse-Labs/.github #3443 comment 6940917897 (principal direction 2026-11-17 00:44 CST: 'Build the sign-under-seal operation now')",
+      "authorized_operation": "skap-signing POST /sign (127.0.0.1:{{SIGNING_PORT}}): sign a presented SHA-256 payload digest under seal, per call, under governed SKAP retrieval",
+      "form_note": "Admitted reference = SHA-256 of this artifact's canonical JSON. Bearer-reference form for the proving build; production authorization rides TV/TVC grants on their own track.",
+      "identity": "8374",
+      "issued_at": "2026-11-17T06:50:12Z",
+      "issued_by": "coordinator (Muse seat)",
+      "scope_limits": "localhost proving operation only; no external counterparty negotiation; every admitted use is receipted on the operation chain and on the SKAP chain (GRANT/USAGE/RETRIEVAL per call)",
+      "specimen_id": "{{SLOT:SIGNING_SPECIMEN_ID}}"
+    },
+    "filed_record_drive_id": "182btznFcJ9FjWJi6jFmhWh20Sz7UqYY3"
+  },
+  "custody": {
+    "form": "OPERATOR SLOT: the receiving site's own SKAP custody form. The signing specimen for this operation is born and sealed at the receiving site under SKAP discipline and released per call under governed retrieval (GRANT/USAGE/RETRIEVAL receipted). Key material is NEVER copied from another site.",
+    "authority_store": "{{SLOT:SKAP_AUTHORITY_STORE_PATH}}",
+    "skap_tree": "{{SLOT:SKAP_TREE_PATH}}",
+    "skap_suite_path": "{{SLOT:SKAP_SUITE_PATH}}",
+    "envelope_drive_id": "{{SLOT:SKAP_ENVELOPE_REF}}",
+    "deposit_seq": "{{SLOT:SKAP_DEPOSIT_SEQ}}",
+    "material_policy": "the signing material is fetched and unsealed per signing call and zeroized after use; it is never cached between calls, never written unsealed, never logged"
+  },
+  "identity": {
+    "curve": "secp256k1",
+    "designation": "8374",
+    "expansion": "BETA",
+    "form": "@8374",
+    "fingerprint_form": "SHA-256 of the 65-byte uncompressed public key (0x04||X||Y)",
+    "specimen_id": "{{SLOT:SIGNING_SPECIMEN_ID}}",
+    "key_fingerprint": "{{SLOT:SIGNING_KEY_FINGERPRINT}}",
+    "public_address": "{{SLOT:SIGNING_PUBLIC_ADDRESS}}",
+    "note": "For the 8374 operation, continuity is proven when the receiving instance's specimen resolves to the operation's published address under the governed SKAP retrieval path (BUILD-Q-25); the specimen itself is never transferred."
+  },
+  "port": "{{SIGNING_PORT}}",
+  "project_id": "MACHINE-ECONOMY-ENTRY-01",
+  "queue_item": "BUILD-Q-14",
+  "service": "skap-signing",
+  "signing": {
+    "input": "payload_digest: the SHA-256 digest (64 hex) of the payload to sign; the digest itself is signed (Prehashed)",
+    "scheme": "ECDSA over secp256k1",
+    "signature_format": "DER-encoded ECDSA signature, hex"
+  }
+}

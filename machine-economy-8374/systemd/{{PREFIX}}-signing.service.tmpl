@@ -1,0 +1,17 @@
+[Unit]
+Description=SKAP sign-under-seal operation — lane instance (transfer package)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory={{TREE}}/signing
+ExecStart=/usr/bin/python3 {{TREE}}/signing/skap_signing.py
+Restart=always
+RestartSec=3
+MemoryMax=512M
+Environment=SKAP_SIGNING_PORT={{SIGNING_PORT}}
+Environment=HOME={{HOME_DIR}}
+Environment=PYTHONPATH={{PYTHONPATH_LOCAL}}
+
+[Install]
+WantedBy=multi-user.target

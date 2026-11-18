@@ -1,0 +1,200 @@
+{
+ "activation_gate": {
+  "gate": "The principal's interim intent-signing ruling LANDED on 2026-11-16 (23:52 CST), negative: 'Intent signing should not be a lesser act at this time.' Intent signing is custody-grade, identical in grade to custody signing; there is no lesser policy-key path for negotiation. Activation of live negotiation therefore requires the production SKAP custody signing path to be settled \u2014 negotiation waits on that path, not on a further ruling. Until that path is settled, the endpoint build proceeds but no live negotiation or signing occurs. UPDATE 2026-11-17 (BUILD-Q-14): the production SKAP custody signing path is SETTLED and signing is live via the sign-under-seal operation; crossings settle via the endpoint's own gas-only relayer (Gate 2). The gated state described in this paragraph is historical.",
+  "negotiating_identity": "The negotiating identity is a dedicated identity specifically for the machine economy, distinct from the suite-side identity \u2014 identities are per profit center (the principal's determination, 2026-11-16). Its designation landed on 2026-11-16 (23:56\u201323:57 CST): the operative designation is the digits 8374 \u2014 the digits represent BETA (8=B, 3=E, 7=T, 4=A) as meaning/expansion, and identity form follows the economy (digits for the machine economy; letters for the suite economy). Designation only: the identity does not yet exist as a declared receptor \u2014 formal namespace registration is a separate governed act at gated activation, and it is not asserted as a declared receptor in this offer. UPDATE 2026-11-17 (BUILD-Q-17): the identity is registered as 8374@StegVerse.ai and the receptor is declared under tonight's operating configuration.",
+  "not_gated": "Endpoint build and offer publication do not wait on the custody signing path.",
+  "revisability": "The ruling is landed as CURRENT POSTURE ('at this time'): changeable policy, capable of being changed in the near future if the market sees things differently, supersedeable only by a later principal determination \u2014 which would arrive as a new generation of this suite. It is not an invariant of the endpoint's design."
+ },
+ "document": "OFFER__MACHINE__READABLE__01",
+ "issued": "2026-11-17",
+ "offered_resources": [
+  {
+   "description": "Admissibility evaluation of a machine-proposed transaction or action at the signing boundary, under the ecosystem disposition grammar (ALLOW / DENY / FAIL_CLOSED). Only ALLOW commits, at the signing boundary this service controls; execution paths that do not pass through this endpoint's evaluation are outside that boundary.",
+   "evaluation_depths": [
+    "receipt-only",
+    "full-evaluation"
+   ],
+   "resource": "governed-evaluation"
+  },
+  {
+   "description": "Issuance of a dual-recorded receipt pair for a governed crossing: receipts attach to transitions, not transactions, and one boundary crossing yields one matched pair \u2014 two records, one per side of the crossing, hash-chained \u2014 constituting a portable settlement proof: the pair is verifiable by either side against the chain's anchors without trusting the other party's internal log. Independent retention of the pair by the customer is not yet demonstrated; it is the subject of BUILD-Q-44. A refused or fail-closed attempt likewise produces a receipt: the refusal record.",
+   "evaluation_depths": [
+    "receipt-only",
+    "full-evaluation"
+   ],
+   "resource": "receipt-pair-issuance"
+  },
+  {
+   "description": "Agreement receipting under the admitted scope ME-AGREE-01 (BUILD-Q-49, admitted 2026-11-18): a bot or agent that has reached an agreement — deal terms accepted by both sides — records it as a governed crossing with action \"record-agreement\" before treating the deal as final. The crossing carries the commit-time evidence object (authority, delegation, evidence_refs, exclusions, policy ME-POLICY-01, validity_at_commit) and the resource names the agreement being receipted (form: agreement-record:<agreement reference>). On ALLOW the crossing issues the matched receipt pair for the agreement; on NON-ALLOW the attempt is refused or fails closed with the six-field disposition and a refusal receipt, and the fee position follows the offer's active pricing mode. Priced at the full-evaluation tier: the governance fee (15,000 micro-USDC) plus the settlement charge quoted at challenge time (BUILD-Q-43 / offer v07); the challenge amount is the total authorized.",
+   "evaluation_depths": [
+    "full-evaluation"
+   ],
+   "resource": "agreement-record",
+   "scope_ref": "ME-AGREE-01",
+   "actions": [
+    "record-agreement"
+   ]
+  }
+ ],
+ "payment_requirements": {
+  "accepts": [
+   {
+    "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "maxTimeoutSeconds": 60,
+    "mimeType": "application/json",
+    "network": "eip155:8453",
+    "note": "Receptor declared 2026-11-17 (BUILD-Q-17, 8374@StegVerse.ai) as tonight's operating configuration, revisable by a later principal determination. Governance fees are tiered per crossing (receipt-only 500 micro-USDC; full-evaluation 15000 micro-USDC); the amount stated exactly in each 402 response's maxAmountRequired is the TOTAL authorized for that crossing -- governance fee plus the settlement charge quoted at challenge time from live Base gas conditions (BUILD-Q-43).",
+    "payTo": "0x7721aB66161e60fCcA59CCe2A86817cbdd9b16Be",
+    "resource": "governed-evaluation / receipt-pair-issuance",
+    "scheme": "exact",
+    "extra": {
+     "name": "USD Coin",
+     "version": "2",
+     "settlement": "authorization verified at crossing; settlement is submitted on Base by the endpoint's own gas-only relayer and the outcome is receipted in the crossing's pair (Gate 2, live 2026-11-17) \u2014 no facilitator is used Settlement gas is charged additionally on the crossing, quoted at challenge time (see pricing.settlement_charge) -- it is not part of, and is not absorbed into, the governance fee."
+    }
+   }
+  ],
+  "form": "x402 accepts[] shape; settlement fields declared 2026-11-17 (BUILD-Q-17) as tonight's operating configuration, revisable by a later principal determination."
+ },
+ "pricing": {
+  "classes": [
+   {
+    "class": "ratified",
+    "lines": [
+     {
+      "line": "Eval Package",
+      "machine_consumption_relevance": "Governed evaluation of a framework's repository set; the machine-consumable form of the evaluation service.",
+      "price": {
+       "additional_repo_usd": 500,
+       "first_repo_usd": 1500,
+       "unit": "per engagement, priced over the subject's repositories"
+      }
+     },
+     {
+      "line": "Governance Continuity",
+      "machine_consumption_relevance": "Continuing governed evaluation and receipting over a framework's repositories; UNFUNDED reversion on lapse per the schedule.",
+      "price": {
+       "additional_repo_usd_per_month": 100,
+       "base_usd_per_month": 250,
+       "unit": "per month"
+      }
+     },
+     {
+      "line": "Introductory Session",
+      "machine_consumption_relevance": "Entry engagement under the ratified schedule.",
+      "price": {
+       "amount_usd": 250,
+       "unit": "per session"
+      }
+     },
+     {
+      "line": "Governed document run",
+      "machine_consumption_relevance": "A single governed document production run under the ratified schedule.",
+      "price": {
+       "amount_usd": 750,
+       "unit": "per run"
+      }
+     },
+     {
+      "line": "Collab seat",
+      "machine_consumption_relevance": "Collaboration seat under the ratified schedule.",
+      "price": {
+       "amount_usd_per_month": 100,
+       "unit": "per seat per month"
+      }
+     }
+    ],
+    "source": "PRICE SCHEDULE 01 \u2014 the ratified schedule of StegVerse LLC, the same pricing source anyone would see"
+   },
+   {
+    "class": "ratified",
+    "derivation_note": "The tiers derive from the compute cost estimate derived 2026-11-08 (receipt-only well under $0.001 per governed crossing; full evaluation on the $0.007\u20130.024 per-evaluated-outcome basis). The principal confirmed on 2026-11-16 that this compute-cost derivation is the tiers' source, and RATIFIED the tiers on 2026-11-17 (00:42 CST) with one word: 'Ratified.' The figures are unchanged from the analysis-derived proposal; only their class changed.",
+    "ratification_status": "RATIFIED \u2014 ratified by the principal on 2026-11-17 (00:42 CST, 'Ratified.'). The figures in this class are prices of StegVerse LLC, unchanged from the analysis-derived proposal they ratify.",
+    "source": "2026-11-08 sizing analysis (coordinator analysis, discussion-grade): market figures REPORTED-grade; scenarios arithmetic; adoption fractions NOT ESTABLISHED",
+    "tiers": [
+     {
+      "amount_micro_usdc": 500,
+      "amount_usd": 0.0005,
+      "basis": "Receipt-pair issuance and record only, without full production evaluation; the tier exists because full production evaluation cannot ride the median ~$0.01 machine-economy call.",
+      "price": "500 micro-USDC ($0.0005) per governed crossing",
+      "status": "ratified",
+      "tier": "receipt-only",
+      "unit": "per governed crossing; amount stated in micro-USDC (USDC, 6 decimals)",
+      "governance_fee_micro_usdc": 500,
+      "settlement_charge": "additional, on top of the governance fee: quoted at challenge time per pricing.settlement_charge",
+      "total_authorized": "governance fee + settlement charge (the total is stated exactly in each 402 challenge)"
+     },
+     {
+      "amount_micro_usdc": 15000,
+      "amount_usd": 0.015,
+      "basis": "Full admissibility evaluation at the signing boundary for flows whose value supports the evaluation cost; tiered by evaluation depth per the 2026-11-08 analysis (pricing Model 2).",
+      "price": "15000 micro-USDC ($0.015) per evaluated outcome",
+      "status": "ratified",
+      "tier": "full-evaluation",
+      "unit": "per evaluated outcome; amount stated in micro-USDC (USDC, 6 decimals)",
+      "governance_fee_micro_usdc": 15000,
+      "settlement_charge": "additional, on top of the governance fee: quoted at challenge time per pricing.settlement_charge",
+      "total_authorized": "governance fee + settlement charge (the total is stated exactly in each 402 challenge)"
+     }
+    ]
+   }
+  ],
+  "fee_position": {
+   "position": "The fee is a posted, non-negotiable toll \u2014 'The fee is the fee' (principal, 2026-11-16 23:52 CST). Negotiation in the machine economy concerns the work and the terms of the crossing, never the governance fee.",
+   "pricing_mode_status": "The mode (a)/(b) structure in pricing.pricing_mode stands as STANDING pricing structure, set as policy \u2014 expressly not per-transaction bargaining.",
+   "revisability": "This fee position and the intent-signing ruling (activation_gate) are landed as CURRENT POSTURE, capable of being changed in the near future if the market sees things differently; either is supersedeable only by a later principal determination, which would arrive as a new generation of this suite. Neither is an invariant of the endpoint's design."
+  },
+  "pricing_mode": {
+   "active_mode": "fee-follows-all-dispositions",
+   "fee_paid_either_way": true,
+   "modes": [
+    {
+     "active": true,
+     "description": "The fee is charged per evaluation regardless of outcome: an ALLOW, a DENY, and a FAIL_CLOSED each bear the fee for the unit of compute they consumed. This is the ACTIVE mode under the current operating configuration.",
+     "mode": "fee-follows-all-dispositions"
+    },
+    {
+     "active": false,
+     "description": "The ALLOW disposition price covers all dispositions: the cost of refused evaluations is amortized into the ALLOW price; a refusal draws no separate charge, and its compute is paid for through the ALLOW price. This mode is NOT active.",
+     "mode": "allow-price-covers-all-dispositions"
+    }
+   ],
+   "refusal_compute": "Refusal compute is fee-bearing under either mode: a NON-ALLOW attempt consumes exactly one unit of compute (1 receipt pair, ALLOW or NON-ALLOW), and that unit is paid for under mode (a) directly or under mode (b) through the ALLOW price.",
+   "selection": "The pricing structure is a selectable cost-optimization option for the consumer of the service; the mode changes the shape of the charge, never whether the compute is paid. The selected mode is standing pricing structure set as policy; it is not negotiated per transaction, and the fee itself is never a subject of negotiation (see pricing.fee_position)."
+  },
+  "settlement_charge": {
+   "applies_to": "every paid crossing, both tiers, under the active pricing mode",
+   "determination": "Principal determination 2026-11-18 (BUILD-Q-43): the ratified tiers are WITHOUT settlement gas; settlement gas is an additional fee charged on the crossing, never absorbed by StegVerse. Rationale stated by the principal: absorbing volatile gas could bankrupt StegVerse during gas-price spikes.",
+   "computation": "settlement charge = gas_units_basis x max_fee_per_gas x ETH/USD, quoted at challenge time and rounded up to the next micro-USDC. gas_units_basis = 86,679 units (the settlement leg's receipted eth_estimateGas for one transferWithAuthorization settlement of Base USDC, PAIR-000024/PAIR-000034 records); max_fee_per_gas = 2 x pending baseFeePerGas + priority fee, read live via eth_feeHistory / eth_maxPriorityFeePerGas over the endpoint's egress proxy -- the same fee basis the gas-only relayer provisions with; ETH/USD read live (Coinbase spot) over the same proxy.",
+   "total_authorized": "the total a payer authorizes = governance fee + settlement charge, stated exactly in each 402 challenge (the v1 body's maxAmountRequired and the v2 PAYMENT-REQUIRED accepts amount agree); verification accepts exactly the quoted total for that crossing",
+   "fail_closed": "if a live gas or ETH/USD read fails, no paid challenge is issued (SETTLEMENT_CHARGE_QUOTE_UNAVAILABLE) rather than the charge being silently absorbed"
+  }
+ },
+ "project_id": "MACHINE-ECONOMY-ENTRY-01",
+ "protocol": {
+  "alternate_dialect": "MPP (noted as alternate; x402 is the primary dialect of this offer)",
+  "flow_summary": "Machine client requests the governed resource -> endpoint evaluates admissibility at the signing boundary -> on ALLOW the client completes payment authorization under x402 and execution proceeds -> one dual-recorded, hash-chained matched receipt pair issues for the crossing (two records, one per side) as the crossing's settlement proof, verifiable by either side against the chain's anchors. On DENY or FAIL_CLOSED no execution occurs and nothing moves; the response carries the six-field disposition (failure_code, failed_predicate, required_evidence_or_repair, retry_entrypoint, owning goal, next_attempt), and the refused attempt itself produces a receipt \u2014 the refusal record \u2014 as in the W-1 run (2026-11-13), whose out-of-scope and post-dissolution attempts produced refusal receipts while moving nothing.",
+  "primary_dialect": "x402",
+  "scheme": "exact",
+  "transport": "HTTP 402 Payment Required",
+  "x402Version": 1
+ },
+ "provider": {
+  "contact_surface": "StegVerse-Labs/.github issue #3443 (coordination record); public offer page https://stegverse.org/0r10n15-8374/ and this offer at the endpoint's public exposure (BUILD-Q-19)",
+  "legal_name": "StegVerse LLC",
+  "negotiating_identity": "A dedicated identity specifically for the machine economy, distinct from the suite-side identity (identities are per profit center) \u2014 designated 8374 (the digits; the digits represent BETA as meaning/expansion), landed 2026-11-16; REGISTERED 2026-11-17 as 8374@StegVerse.ai (BUILD-Q-17) with the receptor declared under tonight's operating configuration (see payment_requirements).",
+  "role": "service provider \u2014 governance and receipting over machine-economy transactions already flowing on existing rails"
+ },
+ "status": "PUBLISHED AS SUITE MEMBER \u2014 offer publication is part of the entry build. The negotiating identity 8374 is registered (BUILD-Q-17) and the receptor settlement values are declared as the 2026-11-17 operating configuration (revisable); the endpoint verifies payment authorizations cryptographically and submits settlement on Base via its own gas-only relayer (Gate 2, live 2026-11-17) \u2014 no facilitator is used. The production SKAP custody signing path is SETTLED (BUILD-Q-14) and signing is live via POST /sign; the interim intent-signing ruling landed 2026-11-16 \u2014 intent signing is not a lesser act at this time. The per-transaction fee tiers were ratified by the principal on 2026-11-17 (00:42 CST); their figures are unchanged from GEN 04. This is version 07 of the offer document, issued 2026-11-18 under BUILD-Q-43: the ratified tier amounts are the GOVERNANCE FEE ALONE (the principal's settlement-gas determination, 2026-11-18); settlement gas is an additional charge on the crossing, quoted at challenge time from live Base gas conditions and the live ETH/USD rate, and the total a payer authorizes is governance fee + settlement charge. The exact governance-fee amounts and the active pricing mode are stated in the offer itself, and the receipt-independence and ALLOW-boundary claims are scoped to what is demonstrated.",
+ "suite": "MACHINE__ECONOMY__ENTRY__SUITE GEN 05 (as filed); live offer document version 06, issued by the endpoint 2026-11-17 under BUILD-Q-42",
+ "terms": {
+  "compute_unit": "Metering counts receipt pairs: 1 receipt pair is a unit of compute, ALLOW or NON-ALLOW (compute-assignment SLOT A, landed by the principal 2026-11-16). An ALLOW crossing's matched pair and a NON-ALLOW attempt's refusal record pair each constitute exactly one unit; the unit is disposition-independent.",
+  "dispositions": "Every evaluation resolves to ALLOW, DENY, or FAIL_CLOSED. Only ALLOW commits, at the signing boundary this service controls. A non-ALLOW response carries failure_code, failed_predicate, required_evidence_or_repair, retry_entrypoint, owning goal, and next_attempt \u2014 a label-only reason is never returned \u2014 and the refused or fail-closed attempt produces a receipt (the refusal record) while moving nothing.",
+  "fail_closed": "Missing evidence, stale authority, or an unevaluable predicate fails the crossing closed; the refused attempt produces a refusal receipt, and reconstruction after the fact supports investigation and never retroactively creates commit-time admissibility.",
+  "fees": "The fee is paid either way, under a selectable pricing mode: (a) the fee follows all dispositions, or (b) the ALLOW disposition price covers all dispositions. The fee is a posted, non-negotiable toll \u2014 negotiation concerns the work and the terms of the crossing, never the governance fee. See pricing.pricing_mode and pricing.fee_position. Settlement gas is not included in the governance fee: it is charged additionally on each crossing, quoted at challenge time from live Base gas conditions and the live ETH/USD rate (principal determination, 2026-11-18, BUILD-Q-43; see pricing.settlement_charge).",
+  "no_credentials": "This offer holds no credentials and requests none; any signing capability operates under the principal's own custody doctrine (SKAP), never as a stored key in this service.",
+  "posture_revisability": "The fee position (pricing.fee_position) and the intent-signing ruling (activation_gate) are CURRENT POSTURE: capable of being changed in the near future if the market sees things differently, supersedeable only by a later principal determination arriving as a new generation of this suite. Neither is an invariant of the endpoint's design.",
+  "receipts": "Receipts attach to transitions, not transactions: each governed crossing produces one dual-recorded, hash-chained matched pair (two records, one per side); the pair \u2014 verifiable by either side against the chain's anchors, not dependent on either party's internal log \u2014 is the record of the crossing. Independent retention of the pair by the customer is not yet demonstrated (BUILD-Q-44). A refused or fail-closed attempt also produces a receipt \u2014 the refusal record \u2014 while moving nothing."
+ },
+ "version": "07"
+}

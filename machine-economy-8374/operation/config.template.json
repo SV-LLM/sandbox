@@ -1,0 +1,97 @@
+{
+  "current_policy": "ME-POLICY-01",
+  "gate": {
+    "custody_signing_path": "SETTLED",
+    "intent_signing_ruling": "Landed 2026-11-16 23:52 CST: intent signing is NOT a lesser act; every signature is custody-grade. No policy/operational-key signing path exists. Live signing requires the production SKAP custody signing path, which is not settled; the signing slot fails closed until it is wired.",
+    "posture": "current posture, revisable by later principal determination",
+    "settlement": {
+      "acceptance": "specimen intent signature issued through POST /sign and independently verified against 8374's public address/fingerprint; receipt pairs replay MATCH on both chains; unauthorized attempt FAIL_CLOSED AUTHORIZATION_NOT_ADMITTED with refusal pairs",
+      "by": "BUILD-Q-14 (SKAP custody signing path build)",
+      "note": "the intent-signing ruling stands verbatim: every signature is custody-grade; signing issues only from the SKAP seal under governed retrieval per call; this endpoint holds no key material",
+      "operation": "skap-signing, 127.0.0.1:8795, specimen SKI-SIGNING_KEY-31c77c60 (SKAP deposit seq 42)",
+      "settled_at": "2026-11-17"
+    },
+    "signing_disposition": "ALLOW_VIA_SKAP_SIGN_UNDER_SEAL",
+    "signing_failed_predicate": "CUSTODY_SIGNING_PATH_NOT_SETTLED",
+    "signing_operation": {
+      "note": "wired 2026-11-17 under BUILD-Q-14; gate state flips to SETTLED only on acceptance evidence",
+      "queue_item": "BUILD-Q-14",
+      "service": "skap-signing",
+      "specimen_id": "SKI-SIGNING_KEY-31c77c60"
+    },
+    "signing_operation_url": "http://127.0.0.1:{{SIGNING_PORT}}"
+  },
+  "identity": {
+    "designation": "8374",
+    "expansion": "BETA",
+    "form": "@8374",
+    "note": "The DIGITS are the operative designation for the machine economy (principal, 2026-11-16 23:57 CST: 'leave it as the digits for the machine economy. letters for the suite economy.'). 8374 represents BETA by digit substitution (8=B, 3=E, 7=T, 4=A) \u2014 BETA is the meaning/expansion; the machine-facing designation stays numeric. The suite-side identity, when designated, will be letters \u2014 not part of this build.",
+    "status": "REGISTERED 2026-11-17 (BUILD-Q-17): 8374@StegVerse.ai defined in the SV-LLM/.github namespace directory (namespace/stegverse.ai/8374/DEFINITION.md, GENESIS), with the receptor declaration carried as tonight's operating configuration, revisable by a later principal determination."
+  },
+  "manifold": {
+    "build": "BUILD-Q-15",
+    "segment_size_crossings": 100,
+    "sublane_charset": "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+    "sublane_grammar_note": "Configuration, not invariant (principal's sketch, 2026-11-17): sub-lane names are two-character alphanumeric, AA through 99 (1,296 names). Sub-lanes are names (routing), not identities, and are not separately keyed; every sub-lane's signing resolves to 8374's one SKAP specimen (SKI-SIGNING_KEY-31c77c60).",
+    "sublane_length": 2
+  },
+  "port": "{{ENDPOINT_PORT}}",
+  "pricing": {
+    "active_mode": "fee-follows-all-dispositions",
+    "fee_negotiable": false,
+    "fee_paid_either_way": true,
+    "fee_position": "The fee is the fee: a posted, non-negotiable toll (principal, 2026-11-16 23:52 CST). Negotiation concerns the work and the terms of the crossing, never the governance fee. Current posture, revisable by later principal determination.",
+    "modes": [
+      {
+        "description": "Mode (a): the fee is charged per evaluation regardless of outcome \u2014 ALLOW, DENY, and FAIL_CLOSED each bear the fee for the unit of compute consumed.",
+        "mode": "fee-follows-all-dispositions"
+      },
+      {
+        "description": "Mode (b): the ALLOW disposition price covers all dispositions; refused evaluations draw no separate charge and their compute is paid through the ALLOW price.",
+        "mode": "allow-price-covers-all-dispositions"
+      }
+    ],
+    "tiers": {
+      "full-evaluation": {
+        "basis": "Complete admissibility evaluation at the signing boundary. Analysis cost basis $0.007-0.024 per evaluated outcome (2026-11-08); configured value is the analysis midpoint.",
+        "fee_usd": 0.015,
+        "status": "ratified",
+        "unit": "per evaluated outcome"
+      },
+      "receipt-only": {
+        "basis": "Receipt-pair issuance and record only. Analysis figure: well under $0.001 per governed crossing (2026-11-08 sizing analysis). Configured value sits inside the analysis bound.",
+        "fee_usd": 0.0005,
+        "status": "ratified",
+        "unit": "per governed crossing"
+      }
+    }
+  },
+  "project_id": "MACHINE-ECONOMY-ENTRY-01",
+  "queue_item": "BUILD-Q-13",
+  "service": "machine-economy-endpoint",
+  "settlement": {
+    "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "asset_decimals": 6,
+    "asset_symbol": "USDC",
+    "network": "eip155:8453",
+    "network_name": "Base",
+    "payTo": "0x7721aB66161e60fCcA59CCe2A86817cbdd9b16Be",
+    "registration": "8374@StegVerse.ai \u2014 SV-LLM/.github namespace/stegverse.ai/8374/DEFINITION.md (BUILD-Q-17)",
+    "scheme": "exact",
+    "settlement_note": "authorization verified at crossing; settlement is submitted by the endpoint's gas-only relayer over the Base public RPC and the outcome (tx hash, or a named SETTLEMENT_* failure code) is receipted in the crossing's pair. The relayer holds no USDC; it pays gas only.",
+    "status": "OPERATING CONFIGURATION 2026-11-17 \u2014 the receptor settlement values are elected as tonight's operating configuration, revisable by a later principal determination",
+    "submission": {
+      "build": "GATE-2 (2026-11-17)",
+      "enabled": true,
+      "mode": "self-relayer",
+      "note": "gas-only relayer operated by this endpoint (settlement.py): holds no USDC and no ecosystem material by design; fund its address with dust ETH on Base only (about $2 covers thousands of settlements)",
+      "relayer_key_file": "settlement_relayer.json",
+      "rpc_fallback": "https://base-rpc.publicnode.com",
+      "rpc_primary": "https://mainnet.base.org"
+    },
+    "tiers_micro_usdc": {
+      "full-evaluation": 15000,
+      "receipt-only": 500
+    }
+  }
+}

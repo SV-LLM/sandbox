@@ -1,0 +1,130 @@
+{
+  "OPERATOR__SLOTS.md": {
+    "size": 3316,
+    "sha256": "4e38f5e5653e649acdccb23a6c82b6544e6a70aacdaf326d6711119f8a30f408"
+  },
+  "README.md": {
+    "size": 2929,
+    "sha256": "4fa76ee43c7351bf39c5afe677fdf32e52e198e1ad43eba314d5da1bf46766a8"
+  },
+  "install-all.sh": {
+    "size": 5004,
+    "sha256": "c3e14c8e778440012fa28c8403e5a878725a3361c6cbe13e37e788ed671c9f28"
+  },
+  "operation/carriage.py": {
+    "size": 4558,
+    "sha256": "447e707329ff8cfdf1e977753d5c73c7fafa206724293388c1572dde45df13ae"
+  },
+  "operation/cf_tunnel_supervisor.py": {
+    "size": 18179,
+    "sha256": "90f0e82928afe5d38bf0546c47ca81bd9ed0995930ab8f837a4a629145b97c0e"
+  },
+  "operation/config.template.json": {
+    "size": 6141,
+    "sha256": "59bd26f3c928df918d7d6a7c1ccd8e09be7ae0e656c46296cacc15a02a4393d0"
+  },
+  "operation/connect_shim.py": {
+    "size": 2072,
+    "sha256": "d2cafed1ff3f7073735f0d71af998fd5622534e9cbe058d4da18e7900fb65aeb"
+  },
+  "operation/endpoint.py": {
+    "size": 122513,
+    "sha256": "641da49271581416a619aa2741b21e1d2402954d8044f7f8db494bcc1f6eacd7"
+  },
+  "operation/keccak_pure.py": {
+    "size": 2597,
+    "sha256": "a666adeef5310d5db82d6b879803704bf436083c45933a2f9c3bcba96be9b0af"
+  },
+  "operation/offer.base.json": {
+    "size": 20107,
+    "sha256": "2b18d98c8a3b8601c1703f1352a9a0e4646c79d5c85e37dc4e9989e49a7392b2"
+  },
+  "operation/public_proxy.py": {
+    "size": 14144,
+    "sha256": "9707caea1012dd8a03c35b51b9f4535eb1ba022f5026d9019529d698eb0407ee"
+  },
+  "operation/relayer_setup.py": {
+    "size": 1374,
+    "sha256": "c7cbf9076bd9d8d1c551dc92d210bcc5817f03d0eb47faf742ff1285cfe21ee9"
+  },
+  "operation/replay.py": {
+    "size": 731,
+    "sha256": "8dfe1f01bcf2da7f904a13c6feebd7c0bbd80ca2de8698ac283ac3eb3399548a"
+  },
+  "operation/scopes.json": {
+    "size": 1306,
+    "sha256": "c3ec95f48c1c1d6f4cbd6d38b2f1998aec20ea87a4c77c2dcf38fe0142a3e381"
+  },
+  "operation/settlement.py": {
+    "size": 25691,
+    "sha256": "b0c78d08a224ed9a91fe7949972af6e1ae9e299a45c9279ce041d9c81918ad28"
+  },
+  "operation/tunnel_supervisor.py": {
+    "size": 6446,
+    "sha256": "11b62560e63a339d43a031869bd9d718a8fc10d8f8804ed744cdab757ed138b5"
+  },
+  "operation/x402_specimen.py": {
+    "size": 4374,
+    "sha256": "6e3fd2f6e133bcc405741fc9c22c9ddff7e91fa884069e4462497f39ae899a56"
+  },
+  "operation/agent-kit/BOT__INSTRUCTIONS__01.md": {
+    "size": 6050,
+    "sha256": "f6a8ca84299108d342b1e4f3c0dcaf5d04b3ad5395838bd68fc9f5fb9002629f"
+  },
+  "operation/agent-kit/receipt_client.py": {
+    "size": 24124,
+    "sha256": "290b76dcff6f19edf2c6382424c6b32f87d4337ffface5cffeacbd148875234b"
+  },
+  "signing/README.md": {
+    "size": 5813,
+    "sha256": "9af07de969aff14d1273d4b188f2ba8cbfa2fd87e74405505c161ede1606be19"
+  },
+  "signing/config.template.json": {
+    "size": 3003,
+    "sha256": "082887c28bf998ce347cbe8712dc0bd8ce10fda3ce87650ad80d62049a11fc3c"
+  },
+  "signing/replay.py": {
+    "size": 723,
+    "sha256": "4437758ac8da2c4e5d6260daa94b0848f9361e873486360082f86b309e00e1f9"
+  },
+  "signing/skap_signing.py": {
+    "size": 22605,
+    "sha256": "fedd9b392862da2a77dc69ff5a2829afb57d3e05e042df484642c98e8d69fa9f"
+  },
+  "batteries/agreement_battery.py": {
+    "size": 6982,
+    "sha256": "5ae6dceaf89a0447065bfd7f28d5b442956317e6e79b021e74eb42c87e53fd92"
+  },
+  "batteries/settlement_battery.py": {
+    "size": 7088,
+    "sha256": "d69cb4a128b0b04fde86ca384d4427add6ce84607c48eb404c8af86df28fb87f"
+  },
+  "batteries/x402_battery.py": {
+    "size": 9429,
+    "sha256": "e813ed6fb43dcd3620e012824367daffd13d14a4670a6a1aa1d2721892abfb19"
+  },
+  "batteries/x402_v2_battery.py": {
+    "size": 10200,
+    "sha256": "16cd5f4b7b6230b9065dfcd09f6c555a00b4d473d36bcbb34d431a5de5f61d34"
+  },
+  "systemd/{{PREFIX}}-cf-tunnel.service.tmpl": {
+    "size": 419,
+    "sha256": "1219aac017b8cedf94813213f6f095f971ead6603e497bd9ad366aaf3ff66544"
+  },
+  "systemd/{{PREFIX}}-endpoint.service.tmpl": {
+    "size": 356,
+    "sha256": "a157e4e4c5f02f3afebe898b777f45c0a3b7aeb6bc93a22c2f6cf4964321349f"
+  },
+  "systemd/{{PREFIX}}-public-proxy.service.tmpl": {
+    "size": 433,
+    "sha256": "9b8f598757d03990ee5580d365149aebfaf24737559fba685d27f570edaf054a"
+  },
+  "systemd/{{PREFIX}}-signing.service.tmpl": {
+    "size": 427,
+    "sha256": "4de9ac3e4dc001d96fc3f97d3afebf76a79405e9e33cffdf7cc20e8ef8502861"
+  },
+  "systemd/{{PREFIX}}-tunnel.service.tmpl": {
+    "size": 353,
+    "sha256": "f92c2045a9cd2475e3da4f1b66cfa529d8ac80cf0f5f38d2a1e250c986869169"
+  }
+}

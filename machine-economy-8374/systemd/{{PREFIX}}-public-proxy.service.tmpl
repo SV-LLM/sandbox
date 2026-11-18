@@ -1,0 +1,16 @@
+[Unit]
+Description=Machine Economy public exposure proxy — lane instance (transfer package)
+After=network.target {{PREFIX}}-endpoint.service
+
+[Service]
+Type=simple
+WorkingDirectory={{TREE}}/operation
+ExecStart=/usr/bin/python3 {{TREE}}/operation/public_proxy.py
+Restart=always
+RestartSec=3
+MemoryMax=256M
+Environment=ME_PROXY_PORT={{PROXY_PORT}}
+Environment=ME_UPSTREAM_PORT={{ENDPOINT_PORT}}
+
+[Install]
+WantedBy=multi-user.target

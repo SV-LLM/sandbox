@@ -1,0 +1,15 @@
+[Unit]
+Description=Machine Economy governed endpoint — lane instance (transfer package)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory={{TREE}}/operation
+ExecStart=/usr/bin/python3 {{TREE}}/operation/endpoint.py
+Restart=always
+RestartSec=3
+MemoryMax=512M
+Environment=ME_ENDPOINT_PORT={{ENDPOINT_PORT}}
+
+[Install]
+WantedBy=multi-user.target
