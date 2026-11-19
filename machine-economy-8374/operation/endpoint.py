@@ -2263,6 +2263,9 @@ DECLARED_SURFACES = [
     ("/compare", "the frozen test's comparison page: the reference "
                  "result and the open reporting table"),
     ("/conformance", "suite, batteries, and discovery standing"),
+    ("/standard", "the 8374 Standard: the predicates any "
+                  "announcing service may be evaluated against, "
+                  "and 8374's standing under them"),
     ("/frozen-test", "the frozen pair-first outage test document "
                      "(byte-exact; hash it)"),
     ("/verify", "verify any x402 row: its terms and whether it "
@@ -2974,6 +2977,183 @@ def compare_html():
     return _page_shell("0R10N15-8374 — test comparisons", body)
 
 
+# ---------------- /standard: the anyone-may-evaluate standard ----
+# GET /standard (STANDARD-01, principal-directed 2026-11-19): the
+# standard stated as checkable predicates any announcing service
+# may be evaluated against, the five-minute evaluation path, and
+# 8374's own standing as its first instance — every figure read
+# live at page time from the same sources /inspect reads. The
+# page claims nothing its cited checks do not support at page
+# time (its own predicate 6).
+STANDARD_PATENT_LINE = (
+    "U.S. Provisional Patent Application No. 64/198,910, filed "
+    "November 14, 2026 \u2014 patent pending. The governed-crossing "
+    "and receipt-pair mechanism is subject matter of the pending "
+    "application.")
+
+STANDARD_PREDICATES = [
+    {"n": 1, "name": "DECLARED SURFACES",
+     "predicate": "The address declares its public surfaces at "
+                  "its root. Everything checkable is findable "
+                  "from the address itself; nothing public is "
+                  "undeclared.",
+     "check": "Read the root document's declared-surfaces index. "
+              "Every route it names answers; anything reachable "
+              "is named there."},
+    {"n": 2, "name": "TERMS PROBE-ABLE",
+     "predicate": "An unpaid request returns the service's "
+                  "actual payment terms: scheme, network, asset, "
+                  "amount, and payTo.",
+     "check": "Request a resource without paying. The 402 "
+              "challenge states the terms the service will "
+              "settle on."},
+    {"n": 3, "name": "RECORD RECOMPUTABLE",
+     "predicate": "The service exports its transaction records "
+                  "so anyone can recompute its history's verdict "
+                  "and terminal anchor locally, with a published "
+                  "verifier. A server-asserted verdict alone "
+                  "does not satisfy this predicate.",
+     "check": "Fetch the export, run the published verifier, "
+              "and compare the recomputed verdict and terminal "
+              "anchor against the published ones."},
+    {"n": 4, "name": "PROVENANCE DISCLOSED",
+     "predicate": "What settled, what was refused, and what "
+                  "failed is in the record. Insider activity is "
+                  "distinguishable from external customers. A "
+                  "bare hash is not a record.",
+     "check": "Read the record's disposition and settlement "
+              "composition; settled entries carry transaction "
+              "hashes that spot-verify on-chain."},
+    {"n": 5, "name": "THE TEST IS SYMMETRIC",
+     "predicate": "The same evaluation runs against any "
+                  "announced service, the announcer's included; "
+                  "the announcer passes it in public, on the "
+                  "same terms as everyone else.",
+     "check": "Run these same steps against any other announced "
+              "service and compare like with like."},
+    {"n": 6, "name": "CLAIMS SCOPED TO THE RECORD",
+     "predicate": "Nothing is announced beyond what the "
+                  "recompute shows; where the record does not "
+                  "support a claim, the surface says so.",
+     "check": "Set each public claim beside the recompute. A "
+              "claim the record does not support is marked not "
+              "supported on the surface itself."}]
+
+STANDARD_HOW_TO = [
+    "Start at the address's root document and read its declared "
+    "surfaces.",
+    "Probe a resource without paying and read the terms from "
+    "the challenge.",
+    "Fetch the transaction-record export the root and "
+    "well-known documents name.",
+    "Run the published verifier and compare the recomputed "
+    "verdict and terminal anchor with the published ones.",
+    "Set the service's public claims beside the recompute: "
+    "what settled, what was refused, what failed, and whose "
+    "activity it was."]
+
+STANDARD_FIELD_TEST = (
+    "On 2026-11-19, four independent LLM assessments (Claude, "
+    "Grok, Gemini, Codex) evaluated this address against these "
+    "predicates. Every finding they raised was cured, corrected "
+    "on the record, or named in the record as a future "
+    "extension; the arc is carried in "
+    "MACHINE__ECONOMY__ENTRY__SUITE GEN 13.")
+
+
+def standard_document():
+    """The standard in machine-readable form, with 8374's
+    standing as its first instance computed live at request
+    time (the same reads /inspect performs)."""
+    doc = inspect_document()
+    rc = doc["receipt_chain"]
+    se = doc["settlement_evidence"]
+    return {
+        "document": "STANDARD__8374",
+        "title": "The 8374 Standard \u2014 anyone may evaluate",
+        "service": doc["service"],
+        "generated_at": now(),
+        "framing": "An announcement under this standard is an "
+                   "invitation to evaluate it. The evaluator "
+                   "needs nothing but the address itself: no "
+                   "account, no permission, no cooperation from "
+                   "the announcer.",
+        "predicates": STANDARD_PREDICATES,
+        "how_to_evaluate": STANDARD_HOW_TO,
+        "first_instance": {
+            "standing_at_page_time": {
+                "receipt_pairs": rc["pairs"],
+                "chain_entries": rc["entries"],
+                "replay_verdict": rc["replay_verdict"],
+                "terminal_anchor": rc["terminal_anchor"],
+                "by_disposition":
+                    CHAIN.totals()["by_disposition"],
+                "settled_pairs": len(se["settled_pairs"]),
+                "pairs_with_settlement_pending":
+                    rc["pairs_with_settlement_pending"],
+                "chain_export":
+                    "https://8374.stegverse.org/chain/"
+                    "export.ndjson",
+                "chain_verifier":
+                    "https://8374.stegverse.org/chain/verifier.py",
+                "verify_any_row":
+                    "https://8374.stegverse.org/verify"},
+            "honest_lines": [
+                "Every crossing on this chain to date is an "
+                "insider specimen, run by the operator to build "
+                "and prove the mechanism.",
+                "External demand is NOT established; the first "
+                "external crossing is the open item."],
+            "not_supported": doc["determination"]["not_supported"],
+            "first_field_test": STANDARD_FIELD_TEST},
+        "patent_pending": STANDARD_PATENT_LINE}
+
+
+def standard_html(doc):
+    st = doc["first_instance"]["standing_at_page_time"]
+    preds = "".join(
+        f"<li><strong>{p['name']}</strong> \u2014 "
+        f"{_e(p['predicate'])}<br><em>The check:</em> "
+        f"{_e(p['check'])}</li>"
+        for p in doc["predicates"])
+    steps = "".join(f"<li>{_e(s)}</li>"
+                    for s in doc["how_to_evaluate"])
+    honest = "".join(f"<li>{_e(h)}</li>"
+                     for h in doc["first_instance"]["honest_lines"])
+    notsup = "".join(
+        f"<li>NOT SUPPORTED \u2014 {_e(d['claim'])} "
+        f"(check: {_e(d['check'])})</li>"
+        for d in doc["first_instance"]["not_supported"])
+    body = (
+        "<h1>The 8374 Standard \u2014 anyone may evaluate</h1>"
+        f"<p>{_e(doc['framing'])}</p>"
+        "<p>8374 \u00b7 StegVerse LLC \u00b7 generated "
+        f"{_e(doc['generated_at'])} \u00b7 "
+        "<a href='/standard?format=json'>JSON</a></p>"
+        f"<h2>The predicates</h2><ol>{preds}</ol>"
+        f"<h2>How to evaluate \u2014 the five-minute path</h2>"
+        f"<ol>{steps}</ol>"
+        "<h2>First instance \u2014 8374's standing</h2>"
+        f"<p>At page time: {st['receipt_pairs']} receipt pairs "
+        f"\u00b7 {st['chain_entries']} chain entries \u00b7 "
+        f"replay {st['replay_verdict']} \u00b7 terminal anchor "
+        f"{st['terminal_anchor']} \u00b7 dispositions "
+        f"{_e(json.dumps(st['by_disposition']))} \u00b7 "
+        f"{st['settled_pairs']} settled pairs \u00b7 settlement "
+        f"pending on {st['pairs_with_settlement_pending']} "
+        "pairs. Recompute it yourself: the "
+        "<a href='/chain/export.ndjson'>chain export</a> and "
+        "the <a href='/chain/verifier.py'>standalone "
+        "verifier</a>; check any row, ours included, at "
+        "<a href='/verify'>/verify</a>.</p>"
+        f"<ul>{honest}{notsup}</ul>"
+        "<h2>First field test</h2>"
+        f"<p>{_e(doc['first_instance']['first_field_test'])}</p>"
+        f"<p>{_e(doc['patent_pending'])}</p>")
+    return _page_shell("The 8374 Standard \u2014 anyone may "
+                       "evaluate", body)
+
+
 # ---------------- HTTP surface ----------------
 class H(BaseHTTPRequestHandler):
     def log_message(self, *a):
@@ -3161,6 +3341,30 @@ class H(BaseHTTPRequestHandler):
                 self._json(503, {"error": "compare unavailable",
                                  "failure_code": "COMPARE_UNAVAILABLE",
                                  "detail": str(e)[:200]})
+            return
+        if _split.path == "/standard":
+            # The anyone-may-evaluate standard (STANDARD-01,
+            # 2026-11-19): the predicates, the evaluation path,
+            # and 8374's live standing as first instance. JSON
+            # via ?format=json or an application/json Accept;
+            # otherwise the HTML page (same negotiation as
+            # /inspect).
+            try:
+                doc = standard_document()
+            except Exception as e:
+                self._json(503, {"error": "standard unavailable",
+                                 "failure_code":
+                                     "STANDARD_UNAVAILABLE",
+                                 "detail": str(e)[:200]})
+                return
+            want_json = urllib.parse.parse_qs(
+                _split.query).get("format") == ["json"] \
+                or "application/json" in (
+                    self.headers.get("Accept") or "")
+            if want_json:
+                self._json(200, doc)
+            else:
+                self._html(200, standard_html(doc))
             return
         if self.path == "/health":
             self._json(200, {"status": "ok", "service": CONFIG["service"],

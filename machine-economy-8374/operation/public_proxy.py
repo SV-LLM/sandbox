@@ -114,6 +114,10 @@ VERIFY_UPSTREAM_PORT = int(os.environ.get("ME_VERIFY_UPSTREAM_PORT",
 # read-only and serves only the four documents in ALLOWED below.
 CHAIN_UPSTREAM_PORT = int(os.environ.get("ME_CHAIN_UPSTREAM_PORT",
                                          "8799"))
+# The anyone-may-evaluate standard (STANDARD-01, 2026-11-19) is
+# served by the governed endpoint itself, like /compare and
+# /conformance; /standard routes to the endpoint with the
+# ?format= twin and page content negotiation.
 PORT = int(os.environ.get("ME_PROXY_PORT", "8796"))
 ALLOWED = {("GET", "/health"), ("GET", "/offer"), ("POST", "/crossing"),
            ("GET", "/crossing"), ("HEAD", "/crossing"),
@@ -122,6 +126,7 @@ ALLOWED = {("GET", "/health"), ("GET", "/offer"), ("POST", "/crossing"),
            ("GET", "/inspect"),
            ("GET", "/"), ("GET", "/frozen-test"),
            ("GET", "/conformance"), ("GET", "/compare"),
+           ("GET", "/standard"),
            ("POST", "/router/register"), ("GET", "/router/catalog"),
            ("GET", "/router/provenance"), ("GET", "/router/quote"),
            ("POST", "/router/route"),
@@ -137,11 +142,12 @@ ALLOWED = {("GET", "/health"), ("GET", "/offer"), ("POST", "/crossing"),
 # included. PAGE_ROUTES additionally negotiate their own
 # Content-Type (HTML / markdown), passed through verbatim below.
 QUERY_ROUTES = {"/inspect", "/frozen-test", "/conformance", "/",
+                "/standard",
                 "/router/catalog", "/router/provenance",
                 "/router/quote", "/router/discovery/resources",
                 "/verify/check", "/chain/export.ndjson"}
 PAGE_ROUTES = {"/inspect", "/", "/frozen-test", "/conformance",
-               "/compare", "/verify"}
+               "/compare", "/verify", "/standard"}
 # Routes whose upstream Content-Type is part of their form (the
 # NDJSON export, the verifier script) and is passed through
 # verbatim, like the PAGE_ROUTES negotiation above.

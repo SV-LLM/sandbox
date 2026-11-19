@@ -176,8 +176,8 @@
   "size": 2072
  },
  "operation/endpoint.py": {
-  "sha256": "abc9b6e013b0b5971dea32d4090aefadbd41bc7b7ce1b4cec93093d7601b4bf2",
-  "size": 195097
+  "sha256": "96c604b13bd2c8e8428b08476ff9f433ca52c2922060bd2445a31b32c81eea1f",
+  "size": 204943
  },
  "operation/funds.py": {
   "sha256": "274ec65f04669aeec7a67fdf7a87fef6a23e59bb3ebee6ba26a0378dd64f7a51",
@@ -192,8 +192,8 @@
   "size": 20107
  },
  "operation/public_proxy.py": {
-  "sha256": "9992846786ae4e961921c98a27ae165102ce65e94936dc2819a563d246e27608",
-  "size": 25155
+  "sha256": "24b4329e281700bb03bdcdb2afd6104553efab69c063dc5a0c3a17c1af7ec6bb",
+  "size": 25458
  },
  "operation/relayer_setup.py": {
   "sha256": "c7cbf9076bd9d8d1c551dc92d210bcc5817f03d0eb47faf742ff1285cfe21ee9",
