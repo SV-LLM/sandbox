@@ -17,7 +17,7 @@
    "resource": "governed-evaluation"
   },
   {
-   "description": "Issuance of a dual-recorded receipt pair for a governed crossing: receipts attach to transitions, not transactions, and one boundary crossing yields one matched pair \u2014 two records, one per side of the crossing, hash-chained \u2014 constituting a portable settlement proof: the pair is verifiable by either side against the chain's anchors without trusting the other party's internal log. Independent retention of the pair by the customer is not yet demonstrated; it is the subject of BUILD-Q-44. A refused or fail-closed attempt likewise produces a receipt: the refusal record.",
+   "description": "Issuance of a dual-recorded receipt pair for a governed crossing: receipts attach to transitions, not transactions, and one boundary crossing yields one matched pair \u2014 two records, one per side of the crossing, hash-chained \u2014 constituting a portable settlement proof: the pair is verifiable by either side against the chain's anchors without trusting the other party's internal log. Retention is stated as two separately dated statuses in this offer's retention_status: bundle delivery is LIVE (every crossing response carries the caller's retention bundle today), and independent retention of the pair by a customer is NOT DEMONSTRATED (BUILD-Q-44). A refused or fail-closed attempt likewise produces a receipt: the refusal record.",
    "evaluation_depths": [
     "receipt-only",
     "full-evaluation"
@@ -186,6 +186,18 @@
   "role": "service provider \u2014 governance and receipting over machine-economy transactions already flowing on existing rails"
  },
  "status": "PUBLISHED AS SUITE MEMBER \u2014 offer publication is part of the entry build. The negotiating identity 8374 is registered (BUILD-Q-17) and the receptor settlement values are declared as the 2026-11-17 operating configuration (revisable); the endpoint verifies payment authorizations cryptographically and submits settlement on Base via its own gas-only relayer (Gate 2, live 2026-11-17) \u2014 no facilitator is used. The production SKAP custody signing path is SETTLED (BUILD-Q-14) and signing is live via POST /sign; the interim intent-signing ruling landed 2026-11-16 \u2014 intent signing is not a lesser act at this time. The per-transaction fee tiers were ratified by the principal on 2026-11-17 (00:42 CST); their figures are unchanged from GEN 04. This is version 07 of the offer document, issued 2026-11-18 under BUILD-Q-43: the ratified tier amounts are the GOVERNANCE FEE ALONE (the principal's settlement-gas determination, 2026-11-18); settlement gas is an additional charge on the crossing, quoted at challenge time from live Base gas conditions and the live ETH/USD rate, and the total a payer authorizes is governance fee + settlement charge. The exact governance-fee amounts and the active pricing mode are stated in the offer itself, and the receipt-independence and ALLOW-boundary claims are scoped to what is demonstrated.",
+ "retention_status": {
+  "bundle_delivery": {
+   "status": "LIVE",
+   "status_date": "2026-11-19",
+   "statement": "What a crossing response carries today: the caller's retention bundle (RETENTION_BUNDLE/1, BUILD-Q-44 issuance) — the receipt pair, its chain anchors, and the offline verifier form — delivered in the crossing response itself. Delivery is a property of the response, demonstrated by every issued pair."
+  },
+  "independent_retention_demonstration": {
+   "status": "NOT DEMONSTRATED",
+   "status_date": "2026-11-19",
+   "statement": "No customer has yet retained a bundle independently, in their own custody, and reproduced its verification against the chain from that custody. The independent-retention demonstration remains open under BUILD-Q-44; bundle delivery (above) is not that demonstration."
+  }
+ },
  "suite": "MACHINE__ECONOMY__ENTRY__SUITE GEN 05 (as filed); live offer document version 06, issued by the endpoint 2026-11-17 under BUILD-Q-42",
  "terms": {
   "compute_unit": "Metering counts receipt pairs: 1 receipt pair is a unit of compute, ALLOW or NON-ALLOW (compute-assignment SLOT A, landed by the principal 2026-11-16). An ALLOW crossing's matched pair and a NON-ALLOW attempt's refusal record pair each constitute exactly one unit; the unit is disposition-independent.",
@@ -194,7 +206,7 @@
   "fees": "The fee is paid either way, under a selectable pricing mode: (a) the fee follows all dispositions, or (b) the ALLOW disposition price covers all dispositions. The fee is a posted, non-negotiable toll \u2014 negotiation concerns the work and the terms of the crossing, never the governance fee. See pricing.pricing_mode and pricing.fee_position. Settlement gas is not included in the governance fee: it is charged additionally on each crossing, quoted at challenge time from live Base gas conditions and the live ETH/USD rate (principal determination, 2026-11-18, BUILD-Q-43; see pricing.settlement_charge).",
   "no_credentials": "This offer holds no credentials and requests none; any signing capability operates under the principal's own custody doctrine (SKAP), never as a stored key in this service.",
   "posture_revisability": "The fee position (pricing.fee_position) and the intent-signing ruling (activation_gate) are CURRENT POSTURE: capable of being changed in the near future if the market sees things differently, supersedeable only by a later principal determination arriving as a new generation of this suite. Neither is an invariant of the endpoint's design.",
-  "receipts": "Receipts attach to transitions, not transactions: each governed crossing produces one dual-recorded, hash-chained matched pair (two records, one per side); the pair \u2014 verifiable by either side against the chain's anchors, not dependent on either party's internal log \u2014 is the record of the crossing. Independent retention of the pair by the customer is not yet demonstrated (BUILD-Q-44). A refused or fail-closed attempt also produces a receipt \u2014 the refusal record \u2014 while moving nothing."
+  "receipts": "Receipts attach to transitions, not transactions: each governed crossing produces one dual-recorded, hash-chained matched pair (two records, one per side); the pair \u2014 verifiable by either side against the chain's anchors, not dependent on either party's internal log \u2014 is the record of the crossing. Retention is stated as two separately dated statuses in retention_status: the retention bundle is delivered in the crossing response today (bundle delivery LIVE); independent retention by a customer is NOT DEMONSTRATED (BUILD-Q-44). A refused or fail-closed attempt also produces a receipt \u2014 the refusal record \u2014 while moving nothing."
  },
  "version": "07"
 }

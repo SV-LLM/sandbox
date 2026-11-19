@@ -196,6 +196,11 @@ def _project_offer(offer):
     out["identity"] = {"designation": "8374", "form": "@8374",
                        "namespace": "8374@StegVerse.ai"}
     out["patent_pending"] = PATENT_PENDING
+    if "retention_status" in offer:
+        # The two separately dated retention statuses (bundle
+        # delivery vs independent-retention demonstration,
+        # GEN 14 / ChatGPT R05) are public terms.
+        out["retention_status"] = offer["retention_status"]
     prov = offer.get("provider") or {}
     out["provider"] = {k: prov[k] for k in ("legal_name", "role")
                        if k in prov}

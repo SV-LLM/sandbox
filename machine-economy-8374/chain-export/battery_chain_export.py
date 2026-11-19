@@ -53,6 +53,11 @@ def get(url, want_status=False):
     try:
         body = fetch_url_full(url)
         return (200, body) if want_status else body
+    except ValueError:
+        # a transport-leg flake (the completeness-checked fetch
+        # could not complete): record it as a failed fetch for
+        # this route instead of aborting the whole battery
+        return (0, b"") if want_status else b""
     except urllib.error.HTTPError as e:
         try:
             body = e.read()
@@ -97,6 +102,45 @@ def main():
     check("a5 served verifier hash == manifest pin",
           hashlib.sha256(served_verifier).hexdigest()
           == manifest["verifier"]["sha256"])
+
+    # (a+) manifest hardening (GEN 14, Claude F-08): per-segment
+    # sha256 + byte size, the export's content length, and a
+    # generation timestamp -- additive fields, rules unchanged.
+    details = manifest.get("segment_details") or []
+    gen_at = manifest.get("generated_at") or ""
+    try:
+        from datetime import datetime
+        datetime.fromisoformat(gen_at)
+        gen_ok = True
+    except Exception:
+        gen_ok = False
+    check("a6 manifest carries generated_at (ISO, parseable)",
+          gen_ok, f"generated_at={gen_at}")
+    check("a7 export_bytes == the served export's byte length",
+          manifest.get("export_bytes") == len(export),
+          f"manifest {manifest.get('export_bytes')} vs served "
+          f"{len(export)}")
+    seg_ok = [d.get("name") for d in details] \
+        == manifest.get("segments") \
+        and sum(d.get("entries", 0) for d in details) \
+        == live_entries \
+        and sum(d.get("bytes", 0) for d in details) \
+        == len(export)
+    if seg_ok:
+        pos = 0
+        for d in details:
+            n = d["entries"]
+            seg_lines = lines[pos:pos + n]
+            pos += n
+            seg_bytes = b"".join(l.encode() + b"\n"
+                                 for l in seg_lines)
+            if len(seg_bytes) != d["bytes"] or \
+                    hashlib.sha256(seg_bytes).hexdigest() \
+                    != d["sha256"]:
+                seg_ok = False
+    check("a8 per-segment details cover every segment and each "
+          "sha256/bytes recomputes from the export", seg_ok,
+          f"{len(details)} segment(s)")
 
     # (b) public recompute -----------------------------------------
     r = run_verifier(PUBLIC + "/chain")
@@ -147,7 +191,7 @@ def main():
     # (d) public surface sweep --------------------------------------
     expect200 = ["/", "/health", "/offer", "/inspect", "/verify",
                  "/compare", "/conformance", "/frozen-test",
-                 "/openapi.json", "/.well-known/x402",
+                 "/standard", "/openapi.json", "/.well-known/x402",
                  "/router", "/router/catalog",
                  # provenance's documented form carries ?origin=
                  # (a bare request is a 400 by the router's own

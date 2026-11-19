@@ -20,15 +20,98 @@ build's specimen seller on 8902):
      code -- never a crash);
   f. health.
 """
-import json, os, re, subprocess, sys, time
+import json, os, re, subprocess, sys, threading, time
 import urllib.error, urllib.parse, urllib.request
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROUTER_DIR = os.path.expanduser("~/workspace/router-8374")
-VPORT, SPORT = 8901, 8902
+VPORT, SPORT, MPORT = 8901, 8902, 8903
 VBASE = f"http://127.0.0.1:{VPORT}"
 SELLER_ORIGIN = f"http://127.0.0.1:{SPORT}"
+MCP_ORIGIN = f"http://127.0.0.1:{MPORT}"
 RESULTS = []
+
+
+class _McpFixture(BaseHTTPRequestHandler):
+    """A bounded MCP-shaped fixture: /mcp-neg answers every POST
+    with 406 (protocol negotiation, no paid-capability signal);
+    /mcp-tools requires the MCP handshake (initialize -> a
+    session id -> tools/list carrying it) and its tool names a
+    payment_manifest link; /mcp-open refuses the handshake
+    (404) but answers a bare tools/list; the manifest declares
+    x402 terms."""
+
+    SESSION = "fixture-session-1"
+
+    def log_message(self, *a):
+        pass
+
+    def _send(self, status, obj, headers=None):
+        b = json.dumps(obj).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(b)))
+        for k, v in (headers or {}).items():
+            self.send_header(k, v)
+        self.end_headers()
+        self.wfile.write(b)
+
+    def _tools(self, req_id):
+        return {"jsonrpc": "2.0", "id": req_id,
+                "result": {"tools": [{
+                    "name": "paid_lookup",
+                    "description": "x402 paid lookup",
+                    "payment_manifest":
+                        MCP_ORIGIN + "/payment-manifest.json"}]}}
+
+    def do_GET(self):
+        if self.path == "/payment-manifest.json":
+            self._send(200, {"accepts": [{
+                "scheme": "exact", "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x" + "22" * 20,
+                "maxAmountRequired": "4000"}]})
+        else:
+            self._send(200, {"name": "fixture-mcp"})
+
+    def do_POST(self):
+        n = int(self.headers.get("Content-Length") or 0)
+        raw = self.rfile.read(n) if n else b""
+        try:
+            req = json.loads(raw)
+        except Exception:
+            req = {}
+        method = req.get("method")
+        if self.path == "/mcp-neg":
+            self._send(406, {"error": "not acceptable"})
+        elif self.path == "/mcp-tools":
+            if method == "initialize":
+                self._send(200, {"jsonrpc": "2.0",
+                                 "id": req.get("id"),
+                                 "result": {
+                                     "protocolVersion":
+                                         "2025-03-26",
+                                     "capabilities": {},
+                                     "serverInfo": {
+                                         "name": "fixture",
+                                         "version": "1"}}},
+                           headers={"Mcp-Session-Id": self.SESSION})
+            elif method == "notifications/initialized":
+                self._send(202, {})
+            elif method == "tools/list" and \
+                    self.headers.get("Mcp-Session-Id") \
+                    == self.SESSION:
+                self._send(200, self._tools(req.get("id")))
+            else:
+                self._send(400, {"error": "handshake required"})
+        elif self.path == "/mcp-open":
+            if method == "tools/list":
+                self._send(200, self._tools(req.get("id")))
+            else:
+                self._send(404, {"error": "no handshake here"})
+        else:
+            self._send(200, {})
 
 
 def check(name, ok, detail=""):
@@ -96,9 +179,31 @@ def unit_section():
           V._chain_content({"transactions": [{"tx_hash": zero}]})
           is None)
     check("u4: replay doc, verdict MATCH + 64-hex anchor -> "
-          "verified",
+          "asserted (a well-formed summary is an assertion, "
+          "never a recompute)",
           state_of({"verdict": "MATCH", "pairs": 62,
-                    "terminal_anchor": anchor}) == "verified")
+                    "terminal_anchor": anchor}) == "asserted")
+    # The five parser inputs from the ChatGPT cycle-2 recheck
+    # (R01), verbatim:
+    check("u4a: ChatGPT input -- MATCH, pairs=1, anchor "
+          "'aaaa...' -> asserted",
+          state_of({"verdict": "MATCH", "pairs": 1,
+                    "terminal_anchor": "aa" * 32}) == "asserted")
+    check("u4b: ChatGPT input -- MATCH, pairs=-1, all-zero "
+          "anchor -> validation_failed",
+          state_of({"verdict": "MATCH", "pairs": -1,
+                    "terminal_anchor": "00" * 32})
+          == "validation_failed")
+    check("u4c: MATCH + all-zero anchor (0x form) -> "
+          "validation_failed (a placeholder is not an anchor)",
+          state_of({"verdict": "MATCH", "pairs": 3,
+                    "terminal_anchor": zero})
+          == "validation_failed")
+    check("u4d: MATCH + string pair count -> validation_failed "
+          "(not a nonnegative integer)",
+          state_of({"verdict": "MATCH", "pairs": "62",
+                    "terminal_anchor": anchor})
+          == "validation_failed")
     check("u5: replay doc, verdict MATCH + malformed anchor -> "
           "validation_failed",
           state_of({"verdict": "MATCH", "pairs": 62,
@@ -147,13 +252,30 @@ def unit_section():
           "(discovered over validation_failed)",
           st["record_state"] == "discovered",
           f"{st}")
+    st = {"record_state": "none"}
+    V._merge_record_state(st, {"state": "validation_failed"})
+    V._merge_record_state(st, {"state": "asserted"})
+    V._merge_record_state(st, {"state": "discovered"})
+    V._merge_record_state(st, {"state": "asserted"})
+    check("u14: state merge ranks asserted over "
+          "validation_failed and discovered over asserted",
+          st["record_state"] == "discovered",
+          f"{st}")
+    check("u15: every state names its method (Item 1b)",
+          all(V._STATE_METHOD[s] for s in
+              ("verified", "asserted", "discovered",
+               "validation_failed", "none"))
+          and "not recomputed" in V._STATE_METHOD["asserted"]
+          and "recomputed" in V._STATE_METHOD["verified"]
+          and "discovered in the published document"
+          in V._STATE_METHOD["discovered"])
 
 
 def main():
     unit_section()
     env = dict(os.environ)
     env["VERIFY_PORT"] = str(VPORT)
-    env["VERIFY_FIXTURE_ORIGINS"] = SELLER_ORIGIN
+    env["VERIFY_FIXTURE_ORIGINS"] = SELLER_ORIGIN + "," + MCP_ORIGIN
     vproc = subprocess.Popen(
         [sys.executable, os.path.join(HERE, "verify.py")],
         env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -164,6 +286,8 @@ def main():
         [sys.executable, os.path.join(ROUTER_DIR, "seller.py")],
         cwd=ROUTER_DIR, env=senv,
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    mcpd = ThreadingHTTPServer(("127.0.0.1", MPORT), _McpFixture)
+    threading.Thread(target=mcpd.serve_forever, daemon=True).start()
     try:
         ok = wait_health(VBASE)
         check("setup: verify service healthy on throwaway port", ok)
@@ -200,6 +324,11 @@ def main():
               (d or {}).get("terms", {}).get("payTo")
               == "0x7721aB66161e60fCcA59CCe2A86817cbdd9b16Be",
               f"terms={(d or {}).get('terms')}")
+        check("a: own row names its method -- recomputed "
+              "(Item 1b)",
+              p.get("method") == "recomputed from the exported "
+              "records at request time",
+              f"method={p.get('method')}")
 
         # (b) specimen seller -- no proof publications
         code, d = get_json(VBASE + "/verify/check?url=" +
@@ -223,6 +352,18 @@ def main():
               "seller)",
               ((d or {}).get("terms") or {}).get("amount") == "3000",
               f"terms={(d or {}).get('terms')}")
+        check("b: negative result is bounded -- "
+              "NOT_FOUND_IN_CHECKED_LOCATIONS with method + "
+              "bounds (R04)",
+              p.get("negative_result")
+              == "NOT_FOUND_IN_CHECKED_LOCATIONS"
+              and "NOT_FOUND_IN_CHECKED_LOCATIONS"
+              in ((d or {}).get("verdict") or "")
+              and bool(p.get("bounds"))
+              and p.get("method", "").startswith("no record "
+                                                 "presented"),
+              f"negative_result={p.get('negative_result')}, "
+              f"method={p.get('method')}")
 
         # (c) non-x402 URL
         code, d = get_json(VBASE + "/verify/check?url=" +
@@ -265,11 +406,84 @@ def main():
         check("e: every rendered row returns a check verdict",
               all_ok, " | ".join(details))
 
+        # (g) MCP probe coverage (Item 4 / R04)
+        code, d = get_json(VBASE + "/verify/check?url=" +
+                           urllib.parse.quote(
+                               MCP_ORIGIN + "/mcp-neg", safe=""))
+        p = (d or {}).get("proof") or {}
+        chk = " ".join(c.get("result", "")
+                       for c in p.get("checked") or [])
+        check("g1: MCP 406 is a negotiation outcome, never an "
+              "absence finding",
+              code == 200 and d is not None
+              and d.get("terms") is None
+              and "protocol-negotiation outcome" in chk
+              and "does not determine whether paid capability "
+                  "exists" in (d.get("verdict") or "")
+              and "publishes no replayable" not in
+                  (d.get("verdict") or ""),
+              f"http={code}, verdict={(d or {}).get('verdict')}")
+        check("g1: MCP-neg negative is bounded "
+              "(NOT_FOUND_IN_CHECKED_LOCATIONS)",
+              p.get("negative_result")
+              == "NOT_FOUND_IN_CHECKED_LOCATIONS",
+              f"negative_result={p.get('negative_result')}")
+        code, d = get_json(VBASE + "/verify/check?url=" +
+                           urllib.parse.quote(
+                               MCP_ORIGIN + "/mcp-tools", safe=""))
+        p = (d or {}).get("proof") or {}
+        chk = " ".join(c.get("result", "")
+                       for c in p.get("checked") or [])
+        ev = " ".join(p.get("evidence") or [])
+        check("g2: MCP tools/list probe runs and reads the "
+              "tools",
+              code == 200 and "MCP tools/list answered" in chk
+              and "paid_lookup" in ev,
+              f"http={code}, checked={chk[:160]}")
+        check("g2: payment_manifest link followed; its declared "
+              "terms recorded",
+              ((d or {}).get("terms") or {}).get("amount")
+              == "4000"
+              and "payment manifest" in ev,
+              f"terms={(d or {}).get('terms')}, ev={ev[:200]}")
+        check("g2: the handshake path was used (initialize "
+              "answered with a session id)",
+              "MCP initialize answered HTTP 200" in chk,
+              f"checked={chk[:200]}")
+        code, d = get_json(VBASE + "/verify/check?url=" +
+                           urllib.parse.quote(
+                               MCP_ORIGIN + "/mcp-open", safe=""))
+        p = (d or {}).get("proof") or {}
+        chk = " ".join(c.get("result", "")
+                       for c in p.get("checked") or [])
+        check("g3: no-handshake server -- bare tools/list "
+              "fallback answers",
+              code == 200 and "MCP tools/list answered" in chk
+              and ((d or {}).get("terms") or {}).get("amount")
+              == "4000",
+              f"http={code}, checked={chk[:200]}")
+
+        # (h) static discoverability (Item 7): the API path, the
+        # probe specification and the pinned source are in the
+        # static body -- no script execution needed
+        code, page = get(VBASE + "/verify")
+        check("h: static page carries the alternate-API link, "
+              "the explicit API path, the probe specification "
+              "and the commit-pinned source",
+              code == 200
+              and 'rel="alternate"' in page
+              and "/verify/check?url=" in page
+              and "tools/list" in page
+              and "NOT_FOUND_IN_CHECKED_LOCATIONS" in page
+              and "github.com/SV-LLM/sandbox/blob/" in page,
+              f"http={code}")
+
         # (f) health
         code, d = get_json(VBASE + "/health", timeout=10)
         check("f: health", code == 200
               and (d or {}).get("status") == "ok", f"http={code}")
     finally:
+        mcpd.shutdown()
         for proc in (vproc, sproc):
             proc.terminate()
             try:

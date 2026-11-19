@@ -2287,6 +2287,8 @@ DECLARED_SURFACES = [
     ("/router/quote", "a routed-crossing quote"),
     ("/router/register", "free self-serve seller registration "
                          "(POST)"),
+    ("/router/route", "route a call through a registered seller "
+                      "(POST; two-leg governed crossing)"),
     ("/router/discovery/resources", "the Bazaar-schema discovery "
                                     "feed, generated live from "
                                     "the registry"),
@@ -2569,13 +2571,19 @@ def conformance_document():
     doc = inspect_document()
     pointers = doc["pointers"]
     suite = dict(pointers.get("suite") or {})
+    # The generation citation (self-check result, member count,
+    # record date) is carriage data: it is read from the pointers
+    # file, which is updated when a new generation is filed, so
+    # citing a new generation never requires a code change. The
+    # literals below are the last-resort fallback only.
     suite.update({
         "conformance": "CONFORMANT — CONFORMANCE__PROOF__01.json "
                        "is a hashed member of the suite's own "
                        "manifest; elements E1–E5 PASS",
-        "self_check": "55 PASS / 0 FAIL",
-        "members": 23,
-        "record_date": PAGES_RECORD_DATE})
+        "self_check": suite.get("self_check") or "55 PASS / 0 FAIL",
+        "members": suite.get("members") or 23,
+        "record_date": suite.get("record_date")
+                       or PAGES_RECORD_DATE})
     return {
         "document": "CONFORMANCE__8374",
         "generated_at": now(),
@@ -2731,13 +2739,18 @@ def _settlement_arc_text(pid, born, settled, failed):
     return "; ".join(bits)
 
 
-def _compare_rows(seg_dir=SEG_DIR):
-    """The reference-result rows for /compare. EVERY label is
-    derived here, at page time, from the evidence its row cites —
-    the live chain in seg_dir and the frozen-test record document.
-    PASS only when the cited evidence supports the claim; FAIL
-    when the evidence affirmatively contradicts it; UNVERIFIED
-    when the evidence is missing. No label is a literal."""
+def _compare_sections(seg_dir=SEG_DIR):
+    """The reference-result sections for /compare: the shared
+    step rows, the FROZEN cohort (the frozen test's own
+    references) and the WITNESS cohort (the production pair-first
+    witnesses), each cohort with its own rows and its own outcome
+    line. EVERY label is derived here, at page time, from the
+    evidence its row cites — the live chain in seg_dir and the
+    frozen-test record document. PASS only when the cited
+    evidence supports the claim; FAIL when the evidence
+    affirmatively contradicts it; UNVERIFIED when the evidence
+    is missing. No label is a literal, and no label spans
+    cohorts."""
     entries = read_entries(seg_dir)
     crossings = {}
     rpc_down = []
@@ -2754,6 +2767,7 @@ def _compare_rows(seg_dir=SEG_DIR):
     rec_present, batt_ok, nonce_ok = _frozen_record()
     rep = replay(seg_dir)
     rows = []
+    frozen_rows, witness_rows = [], []
 
     # 1. Authorization obtained — battery authorizations per the
     # frozen-test record; production specimens on the live chain.
@@ -2798,8 +2812,12 @@ def _compare_rows(seg_dir=SEG_DIR):
             "SETTLEMENT_RPC_UNREACHABLE; the battery blackhole "
             "rests on the frozen-test record alone"))
 
-    # 3. Crossing presented offline — the cited production
-    # crossings must exist and have been born PENDING.
+    # F3. Crossing presented offline — FROZEN COHORT. The frozen
+    # test's own reference crossings (PAIR-000049, PAIR-000054),
+    # scored as their own cohort: each cohort carries its own
+    # outcome line, and no label spans cohorts (cycle-2 cure,
+    # ChatGPT R03: step 3 scored the frozen references while
+    # step 5's PASS was evaluated on different witnesses).
     cited3 = ("PAIR-000049", "PAIR-000054")
     born_bits, label3 = [], "PASS"
     for pid in cited3:
@@ -2813,8 +2831,9 @@ def _compare_rows(seg_dir=SEG_DIR):
         born_bits.append(f"{pid} born {bs} at {born.get('ts')}")
         if bs != "PENDING":
             label3 = "FAIL"
-    rows.append((
-        "3. Crossing presented offline", label3,
+    frozen_rows.append((
+        "F3. Crossing presented offline (frozen references)",
+        label3,
         "Crossing completed offline; pair written PENDING — "
         "battery crossings ALLOW (record), and on the production "
         "pair-first path: " + "; ".join(born_bits)
@@ -2840,43 +2859,86 @@ def _compare_rows(seg_dir=SEG_DIR):
             "PAYMENT_NONCE_REUSED refusal at page time; no "
             "production-chain nonce refusal is cited"))
 
-    # 5. Network restored — settlement. The claim is exactly-once
-    # settlement of the reference crossings whose arcs the chain
-    # supports: PAIR-000045 (born into the RPC-unreachable
-    # window, failed attempts receipted, then settled) and
-    # PAIR-000054 (born PENDING, settled by PAIR-000055).
-    # PAIR-000049 — cited as settled in the frozen-test record —
-    # is reported from the chain, not from the record: at page
-    # time it has NO settled record, and this row does not claim
-    # it settled.
-    claimed5 = ("PAIR-000045", "PAIR-000054")
-    label5, arc_bits = "PASS", []
-    for pid in claimed5:
-        born = crossings.get(pid)
-        arc_bits.append(_settlement_arc_text(pid, born, settled,
+    # 5. Network restored — settlement, scored PER COHORT. The
+    # frozen cohort is the frozen test's own references
+    # (PAIR-000049, PAIR-000054) as the frozen test ran them;
+    # the witness cohort is the production pair-first witnesses
+    # whose complete arcs the chain supports (PAIR-000045, born
+    # into the RPC-unreachable window, failed attempts receipted,
+    # then settled; PAIR-000054). Each cohort's label and outcome
+    # line derive only from its own crossings: a witness PASS
+    # cannot relabel the frozen cohort, and the frozen cohort's
+    # gap cannot dim the witnesses.
+    def cohort_settlement(pids):
+        label, fail, missing, bits = "PASS", False, False, []
+        for pid in pids:
+            born = crossings.get(pid)
+            bits.append(_settlement_arc_text(pid, born, settled,
                                              failed))
-        if born is None:
-            label5 = "UNVERIFIED"
-        elif len(settled.get(pid) or []) != 1:
-            label5 = "FAIL"  # settles zero times or more than once
-    arc49 = _settlement_arc_text("PAIR-000049",
-                                 crossings.get("PAIR-000049"),
-                                 settled, failed)
-    preface5 = "Settled exactly once: " if label5 == "PASS" \
-        else "Exactly-once settlement not established: "
+            if born is None:
+                missing = True
+            elif len(settled.get(pid) or []) != 1:
+                fail = True  # settles zero times or more than once
+        if fail:
+            label = "FAIL"
+        elif missing:
+            label = "UNVERIFIED"
+        preface = "Settled exactly once: " if label == "PASS" \
+            else "Exactly-once settlement not established: "
+        return label, preface + "; ".join(bits)
+
+    def cohort_outcome(pids):
+        label, fail, missing, bits = "PASS", False, False, []
+        for pid in pids:
+            born = crossings.get(pid)
+            if born is None:
+                bits.append(f"{pid}: no crossing record in the "
+                            "live chain at page time")
+                missing = True
+                continue
+            n = len(settled.get(pid) or [])
+            if n == 1:
+                bits.append(f"{pid} settled exactly once "
+                            f"(by {settled[pid][0]['pair_id']})")
+            else:
+                bits.append(f"{pid} NOT SETTLED on the record — "
+                            f"settled {n} time(s)")
+                fail = True
+        if fail:
+            label = "FAIL"
+        elif missing:
+            label = "UNVERIFIED"
+        return label, "; ".join(bits)
+
+    frozen_label5, frozen_ev5 = cohort_settlement(cited3)
+    frozen_rows.append((
+        "F5. Network restored — settlement (frozen references)",
+        frozen_label5, frozen_ev5))
+    frozen_out_label, frozen_out_bits = cohort_outcome(cited3)
     if settled.get("PAIR-000049"):
-        tail49 = (" — reported from the live chain at page "
-                  "time, as is every figure on this row")
+        frozen_out_tail = (
+            ". The frozen document's settled claim for "
+            "PAIR-000049 is supported by the live chain at page "
+            "time")
     else:
-        tail49 = (" — the record document's settled claim for "
-                  "PAIR-000049 is not supported by the live "
-                  "chain, and this page follows the chain (all "
-                  "read live at page time)")
-    rows.append((
-        "5. Network restored — settlement", label5,
-        preface5 + "; ".join(arc_bits)
-        + ". Disclosed against the frozen-test record: " + arc49
-        + tail49))
+        frozen_out_tail = (
+            ". The frozen document's settled claim for "
+            "PAIR-000049 is NOT SUPPORTED by the chain; the "
+            "correction of record is <a href='https://drive."
+            "google.com/file/d/1mFCeEssHr7SwIdwzn7y1LeCRD9d8XD-6"
+            "/view'>CORRECTION__RECORD__FROZEN__TEST__01</a> "
+            "(Ecosystem KV, Drive "
+            "1mFCeEssHr7SwIdwzn7y1LeCRD9d8XD-6) — the frozen "
+            "document itself is unedited")
+    frozen_outcome = (frozen_out_label,
+                      frozen_out_bits + frozen_out_tail)
+
+    witness_ids = ("PAIR-000045", "PAIR-000054")
+    witness_label5, witness_ev5 = cohort_settlement(witness_ids)
+    witness_rows.append((
+        "W5. Network restored — settlement (witness cohort)",
+        witness_label5, witness_ev5))
+    witness_outcome = cohort_outcome(witness_ids)
 
     # 5b. Full record replay/recompute — derived from a replay
     # computed at page time.
@@ -2907,14 +2969,32 @@ def _compare_rows(seg_dir=SEG_DIR):
             f"Replay at page time: {verdict} "
             f"({len(rep.get('problems') or [])} problem(s) "
             "reported by the recompute)"))
-    return rows
+    return {"steps": rows, "frozen_rows": frozen_rows,
+            "frozen_outcome": frozen_outcome,
+            "witness_rows": witness_rows,
+            "witness_outcome": witness_outcome}
+
+
+def _compare_rows(seg_dir=SEG_DIR):
+    """All reference-result rows, flattened (steps + both
+    cohorts) — the derivation lives in _compare_sections."""
+    s = _compare_sections(seg_dir)
+    return s["steps"] + s["frozen_rows"] + s["witness_rows"]
 
 
 def compare_html():
-    ref_rows = _compare_rows()
+    sections = _compare_sections()
     ref_html = "".join(
         f"<tr><td>{_e(a)}</td><td>{_e(b)}</td><td>{c}</td></tr>"
-        for a, b, c in ref_rows)
+        for a, b, c in sections["steps"])
+    frozen_html = "".join(
+        f"<tr><td>{_e(a)}</td><td>{_e(b)}</td><td>{c}</td></tr>"
+        for a, b, c in sections["frozen_rows"])
+    witness_html = "".join(
+        f"<tr><td>{_e(a)}</td><td>{_e(b)}</td><td>{c}</td></tr>"
+        for a, b, c in sections["witness_rows"])
+    fo_label, fo_text = sections["frozen_outcome"]
+    wo_label, wo_text = sections["witness_outcome"]
     steps = ["1. Authorization obtained",
              "2. Network cut (egress to chain/facilitator "
              "confirmed down)",
@@ -2946,9 +3026,34 @@ def compare_html():
         "frozen-test record: a row whose cited evidence is "
         "missing prints UNVERIFIED, and a row whose evidence "
         "contradicts the claim prints FAIL. No label is a "
-        "literal.</p>"
+        "literal. Settlement is scored per cohort — the frozen "
+        "cohort (the frozen test's own references) and the "
+        "witness cohort (production pair-first witnesses) each "
+        "carry their own outcome line, and no label spans "
+        "cohorts.</p>"
         "<table border='1'><tr><th>step</th><th>result</th>"
         f"<th>evidence</th></tr>{ref_html}</table>"
+        "<h2>Frozen cohort — the frozen test as run</h2>"
+        "<p>The frozen test's own reference crossings, "
+        "PAIR-000049 and PAIR-000054, scored as the cohort the "
+        "frozen document reports. This outcome stands on these "
+        "references alone; no other crossing's result relabels "
+        "it.</p>"
+        "<table border='1'><tr><th>step</th><th>result</th>"
+        f"<th>evidence</th></tr>{frozen_html}</table>"
+        f"<p><strong>Frozen cohort outcome: {_e(fo_label)}"
+        f"</strong> — {fo_text}</p>"
+        "<h2>Witness cohort — production pair-first witnesses</h2>"
+        "<p>PAIR-000045 and PAIR-000054: production crossings "
+        "whose complete settlement arcs — born PENDING or into "
+        "the RPC-unreachable window, failed attempts receipted, "
+        "settled — are on the live chain. This cohort's PASS is "
+        "its own; it does not confirm the frozen cohort's "
+        "references.</p>"
+        "<table border='1'><tr><th>step</th><th>result</th>"
+        f"<th>evidence</th></tr>{witness_html}</table>"
+        f"<p><strong>Witness cohort outcome: {_e(wo_label)}"
+        f"</strong> — {wo_text}</p>"
         "<h2>Report yours</h2>"
         "<p>Run the frozen test against your own framework, your "
         "own funds, testnet or mainnet — state which, and state "

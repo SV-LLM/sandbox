@@ -54,6 +54,7 @@ and reads only the receipts directory and its own verifier file.
 Stdlib only. Binds localhost; the public proxy provides the edge.
 """
 import hashlib, json, os, urllib.parse
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 PORT = int(os.environ.get("CHAIN_EXPORT_PORT", "8799"))
@@ -116,20 +117,39 @@ def read_chain(offset=0, limit=None):
     pair_ids = set()
     anchor = "GENESIS"
     torn_total = 0
+    segment_details = []
+    total_bytes = 0
     for n in names:
         lines, torn = scan_segment(os.path.join(RECEIPTS_DIR, n))
         torn_total += torn
+        seg_bytes = bytearray()
+        seg_entries = 0
         for raw in lines:
+            seg_bytes += raw
             if entries >= offset and (limit is None
                                       or entries < offset + limit):
                 body += raw
             e = json.loads(raw)
             entries += 1
+            seg_entries += 1
             anchor = e["hash"]
             pid = (e.get("content") or {}).get("pair_id")
             if pid:
                 pair_ids.add(pid)
-    return bytes(body), {"segments": names, "entries": entries,
+        # Per-segment integrity (additive, GEN 14): the sha256 and
+        # byte size of the segment's EXPORTED bytes (its complete
+        # lines, verbatim) let a reader detect truncation of a
+        # segment before recomputing the chain.
+        segment_details.append({
+            "name": n, "entries": seg_entries,
+            "bytes": len(seg_bytes),
+            "sha256": hashlib.sha256(bytes(seg_bytes)).hexdigest(),
+            "torn_tail_bytes": torn})
+        total_bytes += len(seg_bytes)
+    return bytes(body), {"segments": names,
+                         "segment_details": segment_details,
+                         "export_bytes": total_bytes,
+                         "entries": entries,
                          "pairs": len(pair_ids),
                          "terminal_anchor": anchor,
                          "torn_tail_bytes": torn_total}
@@ -159,6 +179,9 @@ def manifest():
                       "content.pair_anchor equals the first "
                       "member's entry hash"),
         "segments": fields["segments"],
+        "segment_details": fields["segment_details"],
+        "export_bytes": fields["export_bytes"],
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "entries": fields["entries"],
         "pairs": fields["pairs"],
         "terminal_anchor": fields["terminal_anchor"],

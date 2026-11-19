@@ -48,12 +48,12 @@
   "size": 3043
  },
  "chain-export/battery_chain_export.py": {
-  "sha256": "1fcdb2f2e5288a24179efb385ad54c03ee62a1019c8bc29d8a11f48538351f09",
-  "size": 8277
+  "sha256": "e646054768bbd6b2d81a0bed4e08a1f5d92f61aacecc42d4846ff1090ad35c19",
+  "size": 10151
  },
  "chain-export/chain_export.py": {
-  "sha256": "b212c2234cad9298f9861376abef2e8c31b557c263b46550475026836ae9f8d4",
-  "size": 14333
+  "sha256": "f7a9708c90a92d9fd3a5430eca28e488340e86a60c7c6c3a514f8a6b42ebc9d5",
+  "size": 15343
  },
  "chain-export/install.sh": {
   "sha256": "ef828583f2afa44f5a10a92ae6ae4d8a5f8788126b13afafbdea60200aea4b89",
@@ -164,8 +164,8 @@
   "size": 18378
  },
  "operation/compare_battery.py": {
-  "sha256": "09f4c1db69e256a5bbd5acd8ab041263f2bf8b2bf040174100338c004dc743ac",
-  "size": 8817
+  "sha256": "7fb4e6d77551fb2a8fe5fef79b6e6e8b8df806bf9b7e42f789d933dee62617bf",
+  "size": 12640
  },
  "operation/config.template.json": {
   "sha256": "4ac19f8b023a9b298fbcf46e84cedfe86060654941df4801cd15e9a4efcb88f2",
@@ -176,8 +176,8 @@
   "size": 2072
  },
  "operation/endpoint.py": {
-  "sha256": "96c604b13bd2c8e8428b08476ff9f433ca52c2922060bd2445a31b32c81eea1f",
-  "size": 204943
+  "sha256": "6361910e125ef577d4e01b6866137e8d941dde9b6153f8f43d56913e36a26dd3",
+  "size": 210025
  },
  "operation/funds.py": {
   "sha256": "274ec65f04669aeec7a67fdf7a87fef6a23e59bb3ebee6ba26a0378dd64f7a51",
@@ -188,12 +188,12 @@
   "size": 2597
  },
  "operation/offer.base.json": {
-  "sha256": "2b18d98c8a3b8601c1703f1352a9a0e4646c79d5c85e37dc4e9989e49a7392b2",
-  "size": 20107
+  "sha256": "a384b92632789aa72430a0285bf390ee4619659f763c56da6951d0e16dcfeb8e",
+  "size": 21239
  },
  "operation/public_proxy.py": {
-  "sha256": "24b4329e281700bb03bdcdb2afd6104553efab69c063dc5a0c3a17c1af7ec6bb",
-  "size": 25458
+  "sha256": "2be7af5e9e67d45a8714666dacdf683ad6e71b55679d717c81727d3b52582974",
+  "size": 25725
  },
  "operation/relayer_setup.py": {
   "sha256": "c7cbf9076bd9d8d1c551dc92d210bcc5817f03d0eb47faf742ff1285cfe21ee9",
@@ -268,11 +268,11 @@
   "size": 353
  },
  "verify-page/battery_verify.py": {
-  "sha256": "9a52e88777382641307e4a1a058c01eab76f500842bdcd3c35318352550b6038",
-  "size": 12156
+  "sha256": "77ea51147ba48b4d91ccef5d61fb90e1a3f7903d20c2c5aead339d677323ddc1",
+  "size": 22028
  },
  "verify-page/verify.py": {
-  "sha256": "95075f0ff5125798f295f90070df116b106efcf1d4a78de5af7c9bce836cc5c5",
-  "size": 45293
+  "sha256": "3be9b9cff4be6156659a3681811da3b5e49a46f8d71833a63eb351cf306f341f",
+  "size": 65434
  }
 }
