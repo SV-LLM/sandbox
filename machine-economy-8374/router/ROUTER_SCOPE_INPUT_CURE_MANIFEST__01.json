@@ -1,0 +1,38 @@
+{
+  "schema": "stegverse.router-scope-source-cure/v1",
+  "status": "SOURCE_CANDIDATE_NOT_INTEGRATED",
+  "authority": "NONE",
+  "source_predecessor": "09790ed51a7de1d7a57d9f142d43e892ccd26fbd",
+  "finding": "R-GEN12-SCOPE-TYPE-01",
+  "claim": "https://github.com/StegVerse-Labs/.github/issues/3472#issuecomment-7022629829",
+  "manifest_excludes": [
+    "machine-economy-8374/router/ROUTER_SCOPE_INPUT_CURE_MANIFEST__01.json"
+  ],
+  "files": [
+    {
+      "path": "machine-economy-8374/router/router.py",
+      "bytes": 128777,
+      "sha256": "1c902d60cef62fdae8efca52f6385a2cf4bed6a7367801db8716cb0b3a4bde89"
+    },
+    {
+      "path": "machine-economy-8374/router/test_scope_type_refusal.py",
+      "bytes": 4914,
+      "sha256": "370bfcf9dfe02cf38b34fce3b3c86f6660e4bd9deeca5e5d5ff2158841e8fbc9"
+    },
+    {
+      "path": "machine-economy-8374/router/ROUTER_SCOPE_INPUT_MIRROR_HANDOFF.md",
+      "bytes": 2924,
+      "sha256": "17f31f5ec427f75d88a4f31483840dc84494143540478c9b768f85495ced8648"
+    },
+    {
+      "path": "machine-economy-8374/router/README.md",
+      "bytes": 13238,
+      "sha256": "8287763723c997c4e653881c84451ed4144f6d48b43468d42535740455615343"
+    },
+    {
+      "path": "machine-economy-8374/README.md",
+      "bytes": 7713,
+      "sha256": "5f68de6bd8bc78d82a2d9991e4dcc6ad04ecd511030205891a340e16f68dfc2d"
+    }
+  ]
+}

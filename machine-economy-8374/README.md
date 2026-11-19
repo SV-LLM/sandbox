@@ -138,3 +138,8 @@ Coordination/build record only — distinct from authenticated admission,
 runtime execution, sovereign KV writes, and independently verified
 completion. Queue anchors: BUILD-Q-24…Q-27, Q-32/Q-35, Q-49, Q-50
 (StegVerse-Labs/.github #3443; pairing #3472).
+
+
+## Router scope-input repair candidate
+
+The source candidate rejects non-string route scopes through the existing six-field FAIL_CLOSED refusal and receipt writer, before dictionary hashing. It preserves missing/default and normal string behavior. Regression command: `python3 router/test_scope_type_refusal.py` (also run with `-O`). Continuation: `router/ROUTER_SCOPE_INPUT_MIRROR_HANDOFF.md`. Source tests do not establish central adoption, deployment or paid execution.

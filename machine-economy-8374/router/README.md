@@ -225,3 +225,8 @@ feed; `?limit=` / `?offset=` pagination),
    the BUILD-Q-54 rule — the candidate is battery-proven
    off-production; the carry is a separate act, and production
    v1 is not edited in place before it.
+
+
+## Scope-shape refusal repair candidate
+
+Non-string `scope` values now produce a six-field `SCOPE_TYPE_INVALID` refusal with a receipt pair; missing scope still defaults to `receipt-only`. This closes R-GEN12-SCOPE-TYPE-01's unreceipted TypeError. Run `python3 test_scope_type_refusal.py` and `python3 -O test_scope_type_refusal.py` for isolated local HTTP/function/replay controls. No payment, pricing, scope-admission or settlement policy changes. See `ROUTER_SCOPE_INPUT_MIRROR_HANDOFF.md` for pending owner integration and independent acceptance.

@@ -1924,8 +1924,11 @@ def do_route(body, headers=None):
     mode = body.get("settlement", "relay")
     if mode not in ("relay", "settle"):
         mode = "relay"
-    tier = {"receipt-only": "receipt-only",
-            "ME-EVAL-01": "full-evaluation"}.get(scope_req, scope_req)
+    # Defer invalid scope shapes to the receipted refusal below. Never hash
+    # an unvalidated caller value (lists/dicts are unhashable).
+    tier = ({"receipt-only": "receipt-only",
+             "ME-EVAL-01": "full-evaluation"}.get(scope_req, scope_req)
+            if isinstance(scope_req, str) else None)
     crossing = {"counterparty": counterparty, "action": "evaluate",
                 "scope_ref": "ME-EVAL-01", "tier": tier,
                 "router": ROUTING_NAME, "seller_origin": seller_origin,
@@ -1949,6 +1952,14 @@ def do_route(body, headers=None):
             "settlement": {"mode": mode, "state": "NOT_SUBMITTED"}}
 
     with ROUTE_LOCK:
+        if not isinstance(scope_req, str):
+            return refuse("FAIL_CLOSED", six_field(
+                "SCOPE_TYPE_INVALID",
+                "the requested scope is a string naming the evaluation scope",
+                "present scope as a string (receipt-only or ME-EVAL-01), "
+                "or omit it to use receipt-only",
+                "POST /router/route",
+                "caller presents a string scope"))
         used = used_payment_nonces()
         # Registry predicates.
         entry = REGISTRY.get(seller_origin) if seller_origin else None
