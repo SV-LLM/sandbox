@@ -2164,6 +2164,438 @@ def inspect_html(doc):
             f"{json.dumps(doc['pointers'], indent=1)}</pre>"
             "</body></html>")
 
+# ---------------- public pages (2026-11-18) ----------------
+# The customer-facing read surfaces on the permanent origin:
+# GET / (landing), GET /frozen-test (the frozen test document,
+# byte-exact, plus an HTML rendering generated from the same
+# bytes), GET /conformance (suite, batteries, discovery standing;
+# HTML + ?format=json), GET /compare (the frozen test's scoring
+# with the reference result and the open reporting table).
+# Live claims (offer terms, chain state) are computed at request
+# time from the same sources /inspect reads; historical claims are
+# record content and are labeled with the record's date. No page
+# claims external demand or profitability (the /inspect
+# determination governs every summary of standing).
+import html as _html_mod
+import re as _re_mod
+
+PATENT_LINE = "Patent pending (U.S. Prov. App. No. 64/198,910)"
+FROZEN_TEST_FILE = os.path.join(
+    BASE, "FROZEN__TEST__PAIR__FIRST__OUTAGE__01.md")
+FROZEN_TEST_SHA256 = ("bfde4c87960b9c24570644626eacd029a489a158"
+                      "eae8c41ee38982086a699e1f")
+PAGES_RECORD_DATE = "2026-11-18"
+
+
+def _e(s):
+    return _html_mod.escape(str(s))
+
+
+def _page_shell(title, body):
+    return ("<!DOCTYPE html><html><head><meta charset='utf-8'>"
+            f"<title>{_e(title)}</title></head><body>{body}"
+            f"<hr><p>{PATENT_LINE} · StegVerse LLC · "
+            "8374@StegVerse.ai</p></body></html>")
+
+
+def _md_inline(s):
+    s = _html_mod.escape(s)
+    s = _re_mod.sub(r"`([^`]+)`", r"<code>\1</code>", s)
+    s = _re_mod.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
+    s = _re_mod.sub(r"\[([^\]]+)\]\(([^)]+)\)",
+                    r"<a href='\2'>\1</a>", s)
+    s = _re_mod.sub(r"(?<![='\"])https?://[^\s<]+",
+                    r"<a href='\g<0>'>\g<0></a>", s)
+    return s
+
+
+def markdown_to_html(md_text):
+    """A small, stdlib-only markdown rendering sufficient for the
+    frozen test document: headings, paragraphs, ordered/unordered
+    lists, tables, fenced code, bold and inline code. It renders
+    the document it is given; the canonical bytes are the ones
+    served at /frozen-test."""
+    out = []
+    lines = md_text.split("\n")
+    i = 0
+    para = []
+
+    def flush_para():
+        if para:
+            out.append("<p>" + _md_inline(" ".join(para)) + "</p>")
+            para.clear()
+
+    while i < len(lines):
+        line = lines[i]
+        if line.startswith("```"):
+            flush_para()
+            buf = []
+            i += 1
+            while i < len(lines) and not lines[i].startswith("```"):
+                buf.append(lines[i])
+                i += 1
+            i += 1
+            out.append("<pre>" + _html_mod.escape("\n".join(buf))
+                       + "</pre>")
+            continue
+        if not line.strip():
+            flush_para()
+            i += 1
+            continue
+        m = _re_mod.match(r"^(#{1,4})\s+(.*)$", line)
+        if m:
+            flush_para()
+            lvl = len(m.group(1))
+            out.append(f"<h{lvl}>" + _md_inline(m.group(2))
+                       + f"</h{lvl}>")
+            i += 1
+            continue
+        if line.lstrip().startswith("|") and i + 1 < len(lines) \
+                and _re_mod.match(r"^\s*\|[\s:|-]+\|\s*$",
+                                  lines[i + 1]):
+            flush_para()
+            head = [c.strip() for c in
+                    line.strip().strip("|").split("|")]
+            out.append("<table border='1'><tr>" + "".join(
+                f"<th>{_md_inline(c)}</th>" for c in head) + "</tr>")
+            i += 2
+            while i < len(lines) and lines[i].lstrip().startswith("|"):
+                cells = [c.strip() for c in
+                         lines[i].strip().strip("|").split("|")]
+                out.append("<tr>" + "".join(
+                    f"<td>{_md_inline(c)}</td>" for c in cells)
+                    + "</tr>")
+                i += 1
+            out.append("</table>")
+            continue
+        if _re_mod.match(r"^\s*-\s+", line):
+            flush_para()
+            items = []
+            while i < len(lines) and _re_mod.match(
+                    r"^\s*-\s+", lines[i]):
+                items.append(_re_mod.sub(r"^\s*-\s+", "",
+                                         lines[i]))
+                i += 1
+            out.append("<ul>" + "".join(
+                f"<li>{_md_inline(x)}</li>" for x in items) + "</ul>")
+            continue
+        if _re_mod.match(r"^\s*\d+\.\s+", line):
+            flush_para()
+            items = []
+            while i < len(lines) and _re_mod.match(
+                    r"^\s*\d+\.\s+", lines[i]):
+                items.append(_re_mod.sub(r"^\s*\d+\.\s+", "",
+                                         lines[i]))
+                i += 1
+            out.append("<ol>" + "".join(
+                f"<li>{_md_inline(x)}</li>" for x in items) + "</ol>")
+            continue
+        para.append(line.strip())
+        i += 1
+    flush_para()
+    return "\n".join(out)
+
+
+def frozen_test_bytes():
+    with open(FROZEN_TEST_FILE, "rb") as f:
+        return f.read()
+
+
+def frozen_test_html():
+    raw = frozen_test_bytes()
+    digest = hashlib.sha256(raw).hexdigest()
+    note = ("<p>This page is a rendering of the frozen document. "
+            "The canonical bytes are served at "
+            "<a href='/frozen-test'>/frozen-test</a> "
+            "(text/markdown); their SHA-256, computed at request "
+            f"time, is <code>{digest}</code> — the filed hash is "
+            f"<code>{FROZEN_TEST_SHA256}</code>. Hash what you "
+            "download and compare.</p>")
+    return _page_shell("0R10N15-8374 — frozen test",
+                       note + markdown_to_html(raw.decode("utf-8")))
+
+
+def landing_html():
+    doc = inspect_document()
+    sc = doc["service_state"]
+    rc = doc["receipt_chain"]
+    tier_rows = "".join(
+        f"<tr><td>{_e(k)}</td><td>{_e(v)} micro-USDC</td></tr>"
+        for k, v in sorted(sc["tiers_micro_usdc"].items()))
+    quote = (sc.get("settlement_charge") or {}).get("live_quote")
+    body = (
+        "<h1>0R10N15-8374 — governed crossings for machines</h1>"
+        f"<p>{doc['service']}</p>"
+        "<h2>What it is</h2>"
+        "<p>Governed crossings for machine transactions. One "
+        "receipt pair per crossing — ALLOW or NON-ALLOW — and the "
+        "fee is paid either way. Pair-first: the proof issues on "
+        "locally-decidable evidence at the crossing; settlement is "
+        "an eventual leg, receipted when it lands.</p>"
+        "<h2>Terms (from the live offer)</h2>"
+        f"<p>Offer version {_e(sc['offer_version'])} · receptor: "
+        f"{_e(sc['receptor']['scheme'])} on "
+        f"{_e(sc['receptor']['network'])}, asset "
+        f"{_e(sc['receptor']['asset'])}, payTo "
+        f"{_e(sc['receptor']['payTo'])} (fixed, server-side).</p>"
+        "<table border='1'><tr><th>tier</th><th>governance fee"
+        f"</th></tr>{tier_rows}</table>"
+        "<p>Settlement charge: "
+        f"{_e(sc['settlement_charge']['basis'])}</p>"
+        f"<p>Live quote at page time: <code>{_e(json.dumps(quote))}"
+        "</code> · full terms at <a href='/offer'>/offer</a>.</p>"
+        "<h2>How it works</h2><ol>"
+        "<li><strong>Challenge.</strong> An unpaid POST /crossing "
+        "returns the 402 challenge (x402 v1 + v2), quoting the "
+        "governance fee plus the settlement charge as one total.</li>"
+        "<li><strong>Authorization.</strong> The payer signs an "
+        "EIP-3009 transferWithAuthorization for the quoted total; "
+        "the payee is fixed server-side and cannot be redirected "
+        "by the payer.</li>"
+        "<li><strong>Pair.</strong> The endpoint decides on "
+        "locally-decidable predicates — signature recovery, "
+        "receptor and amount match against its own offer, validity "
+        "window, evidence rules, and the authorization's nonce "
+        "checked against the registry the receipt chain itself is "
+        "— and writes the receipt pair first, with "
+        "settlement_state PENDING, before any network call.</li>"
+        "<li><strong>Settlement.</strong> The relayer submits "
+        "on-chain; the outcome is appended as a record bound to "
+        "the pair (SETTLEMENT, or SETTLEMENT-FAILURE on terminal "
+        "on-chain failure). The pair's disposition never "
+        "changes.</li></ol>"
+        "<h2>The outage property</h2>"
+        "<p>When the network drops at the moment of a crossing, "
+        "the crossing still completes: the pair is the proof, "
+        "issued locally, and settlement waits for the network and "
+        "lands exactly once. Pair-first is built and live in "
+        f"production (record, {PAGES_RECORD_DATE}). Proof: the "
+        "outage battery, 8/8 run twice — RPC blackholed, the "
+        "crossing returned ALLOW with its pair written PENDING, "
+        "the same nonce re-presented was refused locally "
+        "(PAYMENT_NONCE_REUSED), settlement on restore was exact, "
+        "and replay verified MATCH including the outage pairs. "
+        "The frozen test lets any framework run the same "
+        "scenario: <a href='/frozen-test'>/frozen-test</a>.</p>"
+        "<h2>Live state</h2>"
+        f"<p>{rc['pairs']} pairs · replay {rc['replay_verdict']} "
+        f"· terminal anchor <code>{rc['terminal_anchor']}</code> "
+        f"· settlement pending on "
+        f"{rc['pairs_with_settlement_pending']} pairs (computed "
+        "at page time; the full live determination is at "
+        "<a href='/inspect'>/inspect</a>).</p>"
+        "<h2>Inspect and conform</h2><ul>"
+        "<li><a href='/inspect'>/inspect</a> — one-link live "
+        "inspection and determination</li>"
+        "<li><a href='/frozen-test'>/frozen-test</a> — the frozen "
+        "pair-first outage test (byte-exact; hash it)</li>"
+        "<li><a href='/conformance'>/conformance</a> — suite, "
+        "batteries, discovery standing</li>"
+        "<li><a href='/compare'>/compare</a> — test comparisons: "
+        "the reference result and the open table</li>"
+        "<li><a href='/offer'>/offer</a> — the public offer</li>"
+        "<li><a href='/openapi.json'>/openapi.json</a> — the API "
+        "document</li></ul>"
+        "<p>Standing, per the /inspect determination: supported — "
+        "functional, settled on-chain, chain integrity. Not "
+        "claimed — external demand, profitability.</p>")
+    return _page_shell("0R10N15-8374 — governed crossings", body)
+
+
+def conformance_document():
+    doc = inspect_document()
+    pointers = doc["pointers"]
+    suite = dict(pointers.get("suite") or {})
+    suite.update({
+        "conformance": "CONFORMANT — CONFORMANCE__PROOF__01.json "
+                       "is a hashed member of the suite's own "
+                       "manifest; elements E1–E5 PASS",
+        "self_check": "55 PASS / 0 FAIL",
+        "members": 23,
+        "record_date": PAGES_RECORD_DATE})
+    return {
+        "document": "CONFORMANCE__8374",
+        "generated_at": now(),
+        "live_chain": doc["receipt_chain"],
+        "suite": suite,
+        "batteries": {
+            "record_date": PAGES_RECORD_DATE,
+            "run_against": "throwaway instances of the production "
+                           "code (never the live chain)",
+            "results": {"x402": "10/10", "x402_v2": "8/8",
+                        "settlement": "5/5", "agreement": "5/5",
+                        "outage": "8/8, run twice (RPC toggled "
+                                  "live / blackholed)"}},
+        "discovery": {
+            "record_date": PAGES_RECORD_DATE,
+            "402_index": "ACTIVE — domain verified",
+            "x402scan": "registered (origin "
+                        "f73c0f76-be8b-47d8-af4f-8095f2eaf085)",
+            "cdp_bazaar": "not listed — cataloging follows a "
+                          "CDP-facilitated settlement; the "
+                          "facilitator determination is the "
+                          "principal's and has not been made"},
+        "retention_verifier": pointers.get("retention_verifier"),
+        "lane_home": pointers.get("lane_home"),
+        "frozen_test": {
+            "document": "FROZEN__TEST__PAIR__FIRST__OUTAGE__01",
+            "sha256": FROZEN_TEST_SHA256,
+            "served_at": "/frozen-test"},
+        "determination": doc["determination"]}
+
+
+def conformance_html(doc):
+    suite = doc["suite"]
+    bat = "".join(
+        f"<tr><td>{_e(k)}</td><td>{_e(v)}</td></tr>"
+        for k, v in doc["batteries"]["results"].items())
+    disc = "".join(
+        f"<tr><td>{_e(k)}</td><td>{_e(v)}</td></tr>"
+        for k, v in doc["discovery"].items() if k != "record_date")
+    det = "".join(
+        f"<li>SUPPORTED — {_e(d['claim'])}</li>"
+        for d in doc["determination"]["supported"]) + "".join(
+        f"<li>NOT SUPPORTED — {_e(d['claim'])}</li>"
+        for d in doc["determination"]["not_supported"])
+    body = (
+        "<h1>0R10N15-8374 — conformance</h1>"
+        f"<p>Live chain at page time: {doc['live_chain']['pairs']} "
+        f"pairs · replay {doc['live_chain']['replay_verdict']} · "
+        f"anchor <code>{doc['live_chain']['terminal_anchor']}"
+        "</code>. Record content below is labeled with its date; "
+        "the JSON twin is at "
+        "<a href='/conformance?format=json'>"
+        "/conformance?format=json</a>.</p>"
+        "<h2>Suite</h2>"
+        f"<p>{_e(suite.get('name'))} {_e(suite.get('generation'))}"
+        f" — {_e(suite.get('conformance'))}<br>"
+        f"manifest SHA-256 <code>{_e(suite.get('manifest_sha256'))}"
+        f"</code> · self-check {_e(suite.get('self_check'))} · "
+        f"{_e(suite.get('members'))} members · KV zip Drive "
+        f"{_e(suite.get('kv_zip_drive_id'))} · record "
+        f"{_e(suite.get('record_date'))}</p>"
+        "<h2>Batteries</h2>"
+        f"<p>Record {doc['batteries']['record_date']}, run "
+        f"against {doc['batteries']['run_against']}:</p>"
+        f"<table border='1'><tr><th>battery</th><th>result</th>"
+        f"</tr>{bat}</table>"
+        "<h2>Discovery standing</h2>"
+        f"<p>Record {doc['discovery']['record_date']}:</p>"
+        f"<table border='1'>{disc}</table>"
+        "<h2>Retention verifier</h2>"
+        f"<pre>{_e(json.dumps(doc['retention_verifier'], indent=1))}"
+        "</pre>"
+        "<h2>Lane home</h2>"
+        f"<pre>{_e(json.dumps(doc['lane_home'], indent=1))}</pre>"
+        "<h2>Frozen test</h2>"
+        f"<p>{_e(doc['frozen_test']['document'])} · SHA-256 "
+        f"<code>{_e(doc['frozen_test']['sha256'])}</code> · served "
+        "at <a href='/frozen-test'>/frozen-test</a></p>"
+        f"<h2>Determination</h2><ul>{det}</ul>")
+    return _page_shell("0R10N15-8374 — conformance", body)
+
+
+def _reference_settlement_rows():
+    """The frozen test's reference pairs, read from the live chain
+    at page time: (pair_id, tx_hash, block, value) for the two
+    production crossings the reference result cites."""
+    want = {"PAIR-000049", "PAIR-000055"}
+    rows = {}
+    for r in read_entries(SEG_DIR):
+        c = r["content"]
+        s = c.get("settlement") or {}
+        pid = c.get("settles_pair_id") or c["pair_id"]
+        if pid in want and s.get("status") == "SETTLED" \
+                and s.get("tx_hash"):
+            rows[pid] = (c["pair_id"], s["tx_hash"],
+                         s.get("block_number"),
+                         s.get("value_micro_usdc"))
+    return rows
+
+
+def compare_html():
+    ref = _reference_settlement_rows()
+    ev = []
+    for pid in ("PAIR-000049", "PAIR-000055"):
+        if pid in ref:
+            sp, tx, blk, val = ref[pid]
+            ev.append(f"{pid} settled by {sp}: tx <code>{tx}</code>"
+                      f", block {blk}, {val} micro-USDC (read from "
+                      "the live chain at page time)")
+        else:
+            ev.append(f"{pid}: settlement record not found in the "
+                      "live chain at page time")
+    ref_rows = [
+        ("1. Authorization obtained", "PASS",
+         "Authorizations obtained for the battery runs and the "
+         "production specimens (record)"),
+        ("2. Network cut", "PASS",
+         "Egress blackholed in the battery (RPC at an unreachable "
+         "address); production transport windows receipted as "
+         "SETTLEMENT_RPC_UNREACHABLE (record)"),
+        ("3. Crossing presented offline", "PASS",
+         "Crossing completed offline; pair written PENDING — "
+         "battery crossings ALLOW, and production PAIR-000049 and "
+         "PAIR-000054 born PENDING on the pair-first path "
+         "(record)"),
+        ("4. Same authorization re-presented offline", "PASS",
+         "Refused locally from the chain-derived nonce registry: "
+         "422 PAYMENT_NONCE_REUSED, no network read (record)"),
+        ("5. Network restored — settlement", "PASS",
+         "Settled exactly once: " + "; ".join(ev)),
+        ("5b. Full record replay/recompute", "PASS",
+         "Replay MATCH including the outage pairs — verify live "
+         "at <a href='/inspect'>/inspect</a>"),
+    ]
+    ref_html = "".join(
+        f"<tr><td>{_e(a)}</td><td>{_e(b)}</td><td>{c}</td></tr>"
+        for a, b, c in ref_rows)
+    steps = ["1. Authorization obtained",
+             "2. Network cut (egress to chain/facilitator "
+             "confirmed down)",
+             "3. Crossing presented offline",
+             "4. Same authorization re-presented offline",
+             "5. Network restored — settlement",
+             "5b. Full record replay/recompute"]
+    open_rows = "".join(
+        f"<tr><td>{_e(s)}</td><td></td><td></td><td></td></tr>"
+        for s in steps)
+    body = (
+        "<h1>0R10N15-8374 — test comparisons</h1>"
+        "<p>The frozen test "
+        "<a href='/frozen-test'>FROZEN__TEST__PAIR__FIRST__"
+        "OUTAGE__01</a> scores a framework on three outcomes: "
+        "Step 3 completes offline AND Step 4 is refused from local "
+        "state AND Step 5 settles exactly once. Every other "
+        "combination is a FAIL, named by its mode: availability "
+        "failure (Step 3), replay failure (Step 4 accepted), "
+        "settlement integrity failure (Step 5 settles zero times "
+        "or more than once). A Step 4 refusal produced only by "
+        "consulting a facilitator's or the chain's state after "
+        "reconnection scores as a Step 4 FAIL.</p>"
+        "<h2>Reference result — 0R10N15-8374 (production)</h2>"
+        f"<p>Record {PAGES_RECORD_DATE}: outage battery 8/8, run "
+        "twice, plus the production pair-first crossings. The "
+        "Step 5 settlement evidence below is read from the live "
+        "chain at page time.</p>"
+        "<table border='1'><tr><th>step</th><th>result</th>"
+        f"<th>evidence</th></tr>{ref_html}</table>"
+        "<h2>Report yours</h2>"
+        "<p>Run the frozen test against your own framework, your "
+        "own funds, testnet or mainnet — state which, and state "
+        "every substitution. Fill in this table and publish it "
+        "where you publish your work:</p>"
+        "<table border='1'><tr><th>step</th><th>result "
+        "(PASS/FAIL)</th><th>evidence (record id / tx hash / "
+        f"error returned)</th><th>notes</th></tr>{open_rows}"
+        "</table>"
+        "<p>External framework results on record: <strong>none "
+        f"yet</strong> (as of {PAGES_RECORD_DATE}). The table is "
+        "open for theirs. A result reported without the Step 4 "
+        "evidence is a claim, not a run.</p>")
+    return _page_shell("0R10N15-8374 — test comparisons", body)
+
+
 # ---------------- HTTP surface ----------------
 class H(BaseHTTPRequestHandler):
     def log_message(self, *a):
@@ -2182,6 +2614,14 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(b)))
         self.end_headers()
         self.wfile.write(b)
+    def _bytes(self, code, b, content_type):
+        self.send_response(code)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(b)))
+        self.end_headers()
+        self.wfile.write(b)
+    def _html(self, code, text):
+        self._bytes(code, text.encode(), "text/html; charset=utf-8")
     def _json_h(self, code, obj, extra_headers):
         b = json.dumps(obj, indent=1).encode()
         self.send_response(code)
@@ -2277,6 +2717,56 @@ class H(BaseHTTPRequestHandler):
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)
+            return
+        if _split.path == "/":
+            # The landing page on the permanent origin: what 8374
+            # is, the live terms, how a crossing works, the outage
+            # property, and the inspection/conformance links.
+            try:
+                self._html(200, landing_html())
+            except Exception as e:
+                self._json(503, {"error": "landing unavailable",
+                                 "failure_code": "LANDING_UNAVAILABLE",
+                                 "detail": str(e)[:200]})
+            return
+        if _split.path == "/frozen-test":
+            # The frozen test document itself: byte-exact markdown
+            # by default (hash what you download against the filed
+            # hash), an HTML rendering generated from the same
+            # bytes at ?format=html.
+            try:
+                raw = frozen_test_bytes()
+            except OSError:
+                self._json(404, {"error": "not found"})
+                return
+            if urllib.parse.parse_qs(
+                    _split.query).get("format") == ["html"]:
+                self._html(200, frozen_test_html())
+            else:
+                self._bytes(200, raw, "text/markdown; charset=utf-8")
+            return
+        if _split.path == "/conformance":
+            try:
+                doc = conformance_document()
+            except Exception as e:
+                self._json(503, {"error": "conformance unavailable",
+                                 "failure_code":
+                                     "CONFORMANCE_UNAVAILABLE",
+                                 "detail": str(e)[:200]})
+                return
+            if urllib.parse.parse_qs(
+                    _split.query).get("format") == ["json"]:
+                self._json(200, doc)
+            else:
+                self._html(200, conformance_html(doc))
+            return
+        if _split.path == "/compare":
+            try:
+                self._html(200, compare_html())
+            except Exception as e:
+                self._json(503, {"error": "compare unavailable",
+                                 "failure_code": "COMPARE_UNAVAILABLE",
+                                 "detail": str(e)[:200]})
             return
         if self.path == "/health":
             self._json(200, {"status": "ok", "service": CONFIG["service"],

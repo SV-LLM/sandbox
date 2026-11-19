@@ -12,6 +12,17 @@ The public surface is exactly these operations:
                        settlement evidence, resolving pointers, and
                        the compact determination block; HTML by
                        default, JSON at /inspect?format=json
+    GET  /          -> the landing page (2026-11-18): what 8374
+                       is, the live terms, how a crossing works,
+                       the outage property, and the links below
+    GET  /frozen-test -> the frozen pair-first outage test,
+                       byte-exact markdown (HTML rendering at
+                       /frozen-test?format=html)
+    GET  /conformance -> suite, battery and discovery conformance
+                       (HTML; JSON at /conformance?format=json)
+    GET  /compare   -> test comparisons: the frozen test's
+                       reference result and the open reporting
+                       table for other frameworks
 
 Everything else -- every other path, every other method -- is refused
 here with a static 404 and never reaches the endpoint. In particular
@@ -53,7 +64,16 @@ ALLOWED = {("GET", "/health"), ("GET", "/offer"), ("POST", "/crossing"),
            ("GET", "/crossing"), ("HEAD", "/crossing"),
            ("GET", "/openapi.json"), ("GET", "/.well-known/x402"),
            ("GET", "/.well-known/402index-verify.txt"),
-           ("GET", "/inspect")}
+           ("GET", "/inspect"),
+           ("GET", "/"), ("GET", "/frozen-test"),
+           ("GET", "/conformance"), ("GET", "/compare")}
+# GET routes whose query string is part of their form (a ?format=
+# twin); every other route keeps the exact-match rule, query
+# included. PAGE_ROUTES additionally negotiate their own
+# Content-Type (HTML / markdown), passed through verbatim below.
+QUERY_ROUTES = {"/inspect", "/frozen-test", "/conformance"}
+PAGE_ROUTES = {"/inspect", "/", "/frozen-test", "/conformance",
+               "/compare"}
 MAX_BODY = 64 * 1024
 RATE_PER_MIN = 30
 RATE_BURST = 10
@@ -219,12 +239,13 @@ class H(BaseHTTPRequestHandler):
 
     def _handle(self):
         path_only = self.path.split("?", 1)[0]
-        # /inspect is the one route whose query string is part of
-        # its form (the JSON twin at /inspect?format=json); every
-        # other route keeps the exact-match rule, query included.
+        # The QUERY_ROUTES carry a ?format= twin, so for them the
+        # query string is part of the form; every other route keeps
+        # the exact-match rule, query included.
         if (self.command, self.path) not in ALLOWED \
                 and not (self.command == "GET"
-                         and path_only == "/inspect"):
+                         and path_only in QUERY_ROUTES
+                         and (self.command, path_only) in ALLOWED):
             self._refuse()
             return
         body = None
@@ -317,9 +338,10 @@ class H(BaseHTTPRequestHandler):
         # PAYMENT-RESPONSE on settled crossings.
         try:
             self.send_response(status)
-            # /inspect negotiates its own type (HTML page or JSON
-            # twin); every other verbatim response is JSON.
-            if path_only == "/inspect" and resp_ct:
+            # The page routes negotiate their own type (HTML page,
+            # markdown document, or JSON twin); every other
+            # verbatim response is JSON.
+            if path_only in PAGE_ROUTES and resp_ct:
                 self.send_header("Content-Type", resp_ct)
             else:
                 self.send_header("Content-Type", "application/json")
