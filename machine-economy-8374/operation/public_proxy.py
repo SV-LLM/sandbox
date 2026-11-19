@@ -15,9 +15,10 @@ The public surface is exactly these operations:
     GET  /          -> the landing page (2026-11-18): what 8374
                        is, the live terms, how a crossing works,
                        the outage property, and the links below
-    GET  /frozen-test -> the frozen pair-first outage test,
-                       byte-exact markdown (HTML rendering at
-                       /frozen-test?format=html)
+    GET  /frozen-test -> the frozen pair-first outage test page:
+                       the HTML rendering of the frozen document
+                       by default (and at ?format=html), the
+                       byte-exact markdown at ?format=text
     GET  /conformance -> suite, battery and discovery conformance
                        (HTML; JSON at /conformance?format=json)
     GET  /compare   -> test comparisons: the frozen test's

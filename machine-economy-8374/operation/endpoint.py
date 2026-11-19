@@ -2166,9 +2166,10 @@ def inspect_html(doc):
 
 # ---------------- public pages (2026-11-18) ----------------
 # The customer-facing read surfaces on the permanent origin:
-# GET / (landing), GET /frozen-test (the frozen test document,
-# byte-exact, plus an HTML rendering generated from the same
-# bytes), GET /conformance (suite, batteries, discovery standing;
+# GET / (landing), GET /frozen-test (the frozen test page: an
+# HTML rendering of the frozen document by default, the byte-
+# exact document itself at ?format=text), GET /conformance
+# (suite, batteries, discovery standing;
 # HTML + ?format=json), GET /compare (the frozen test's scoring
 # with the reference result and the open reporting table).
 # Live claims (offer terms, chain state) are computed at request
@@ -2214,7 +2215,7 @@ def markdown_to_html(md_text):
     frozen test document: headings, paragraphs, ordered/unordered
     lists, tables, fenced code, bold and inline code. It renders
     the document it is given; the canonical bytes are the ones
-    served at /frozen-test."""
+    served at /frozen-test?format=text."""
     out = []
     lines = md_text.split("\n")
     i = 0
@@ -2306,13 +2307,35 @@ def frozen_test_html():
     digest = hashlib.sha256(raw).hexdigest()
     note = ("<p>This page is a rendering of the frozen document. "
             "The canonical bytes are served at "
-            "<a href='/frozen-test'>/frozen-test</a> "
-            "(text/markdown); their SHA-256, computed at request "
-            f"time, is <code>{digest}</code> — the filed hash is "
+            "<a href='/frozen-test?format=text'>/frozen-test"
+            "?format=text</a> (text/markdown); their SHA-256, "
+            "computed at request time, is "
+            f"<code>{digest}</code> — the filed hash is "
             f"<code>{FROZEN_TEST_SHA256}</code>. Hash what you "
             "download and compare.</p>")
+    frozen_block = (
+        "<div style='border:2px solid #444;"
+        "padding:0 1em 1em 1em'>"
+        "<p><strong>FROZEN DOCUMENT — "
+        "FROZEN__TEST__PAIR__FIRST__OUTAGE__01</strong> · "
+        f"SHA-256 <code>{digest}</code></p>"
+        + markdown_to_html(raw.decode("utf-8"))
+        + "<p><strong>— END OF FROZEN DOCUMENT —</strong></p>"
+        "</div>")
+    submit = (
+        "<h2>Submit your result</h2>"
+        "<p>If you run it: link the test page in your published "
+        "results. Posting on LinkedIn? Link StegVerse — "
+        "<a href='https://www.linkedin.com/company/stegverse/'>"
+        "https://www.linkedin.com/company/stegverse/</a>. And "
+        "send a link to your published work to "
+        "<!--email_off--><a href='mailto:stegverse@stegverse.org'>"
+        "stegverse@stegverse.org</a><!--/email_off--> — results "
+        "sent in get added to the comparison table at "
+        "<a href='https://8374.stegverse.org/compare'>"
+        "https://8374.stegverse.org/compare</a>.</p>")
     return _page_shell("0R10N15-8374 — frozen test",
-                       note + markdown_to_html(raw.decode("utf-8")))
+                       note + frozen_block + submit)
 
 
 def landing_html():
@@ -2746,20 +2769,25 @@ class H(BaseHTTPRequestHandler):
                                  "detail": str(e)[:200]})
             return
         if _split.path == "/frozen-test":
-            # The frozen test document itself: byte-exact markdown
-            # by default (hash what you download against the filed
-            # hash), an HTML rendering generated from the same
-            # bytes at ?format=html.
+            # The frozen test page: the HTML rendering of the
+            # frozen document by default (and at ?format=html) —
+            # the frozen text rendered and delimited as the frozen
+            # document, its SHA-256 stated, the byte-exact form
+            # linked, and the result-submission paragraph carried
+            # as page furniture after the frozen block. The frozen
+            # bytes themselves are served unchanged at
+            # ?format=text (hash what you download against the
+            # filed hash).
             try:
                 raw = frozen_test_bytes()
             except OSError:
                 self._json(404, {"error": "not found"})
                 return
             if urllib.parse.parse_qs(
-                    _split.query).get("format") == ["html"]:
-                self._html(200, frozen_test_html())
-            else:
+                    _split.query).get("format") == ["text"]:
                 self._bytes(200, raw, "text/markdown; charset=utf-8")
+            else:
+                self._html(200, frozen_test_html())
             return
         if _split.path == "/conformance":
             try:
