@@ -47,8 +47,11 @@ as an appended record bound to the pair (SETTLEMENT pair on
 success, SETTLEMENT-FAILURE pair on terminal on-chain failure);
 the pair's disposition never changes. Under an outage the
 settlement charge serves its last successful quote with
-quote_stale: true; the charge leg fails closed only when no quote
-has ever been obtained. Stdlib only. Binds localhost.
+quote_stale: true, up to a maximum staleness bound of
+SETTLEMENT_QUOTE_MAX_STALE_SECONDS; beyond the bound the charge
+leg fails closed (SETTLEMENT_QUOTE_STALE_BEYOND_BOUND), and it
+also fails closed when no quote has ever been obtained. Stdlib
+only. Binds localhost.
 """
 import base64, hashlib, json, os, threading, time
 import urllib.error, urllib.request
@@ -834,15 +837,35 @@ for _t in CONFIG["pricing"]["tiers"]:
 # the verification of their answer are priced on the same quote.
 # If no live quote can be produced, the endpoint fails closed: no
 # paid challenge is issued (SETTLEMENT_CHARGE_QUOTE_UNAVAILABLE)
-# rather than the gas being silently absorbed.
+# rather than the gas being silently absorbed. A stale quote may
+# be served flagged (quote_stale: true) only within the maximum
+# staleness bound (SETTLEMENT_QUOTE_MAX_STALE_SECONDS, cure of
+# 2026-11-19 for Gemini finding F-8374-02: a stale quote was
+# observed served at 118s against the 45s TTL during a public-RPC
+# outage, with no bound at all); beyond the bound the challenge
+# fails closed with SETTLEMENT_QUOTE_STALE_BEYOND_BOUND. The
+# bound governs challenge issuance and payment verification only;
+# pair-first receipting of a crossing is untouched by it.
 SETTLEMENT_GAS_UNITS_BASIS = 86679
 SETTLEMENT_QUOTE_TTL_SECONDS = 45
+SETTLEMENT_QUOTE_MAX_STALE_SECONDS = 300
 SETTLEMENT_QUOTE_FAILURE = "SETTLEMENT_CHARGE_QUOTE_UNAVAILABLE"
+SETTLEMENT_QUOTE_STALE_BEYOND_BOUND = "SETTLEMENT_QUOTE_STALE_BEYOND_BOUND"
 _quote_cache = {"at": 0.0, "quote": None}
 _quote_lock = threading.Lock()
 
 class SettlementQuoteUnavailable(Exception):
     pass
+
+class SettlementQuoteStaleBeyondBound(SettlementQuoteUnavailable):
+    """The live quote read failed and the last successful quote is
+    older than SETTLEMENT_QUOTE_MAX_STALE_SECONDS: serving it would
+    price a crossing on a quote the bound no longer admits."""
+    def __init__(self, age_seconds):
+        super().__init__(
+            f"last successful quote is {age_seconds}s old; maximum "
+            f"staleness bound is {SETTLEMENT_QUOTE_MAX_STALE_SECONDS}s")
+        self.age_seconds = age_seconds
 
 def _eth_usd_spot():
     """Live ETH/USD spot (Coinbase) over the discovered egress
@@ -911,8 +934,10 @@ def settlement_charge_quote():
     (challenge -> payment) is priced on a single quote. Pair-first
     (BUILD-Q-45): when the live read fails, the LAST SUCCESSFUL
     quote is served with quote_stale: true (and persisted across
-    restarts); the charge leg fails closed only when no quote has
-    ever been obtained."""
+    restarts) — but only within the maximum staleness bound
+    (SETTLEMENT_QUOTE_MAX_STALE_SECONDS); beyond the bound this
+    raises SettlementQuoteStaleBeyondBound, and the charge leg
+    also fails closed when no quote has ever been obtained."""
     now = time.time()
     with _quote_lock:
         q = _quote_cache["quote"]
@@ -935,6 +960,12 @@ def settlement_charge_quote():
         stale = _serve_stale_quote(
             f"live quote read failed: {type(e).__name__}: {e}")
         if stale is not None:
+            age = int(time.time()) - int(stale.get("quoted_at_unix", 0))
+            if age > SETTLEMENT_QUOTE_MAX_STALE_SECONDS:
+                raise SettlementQuoteStaleBeyondBound(age)
+            stale["stale_age_seconds"] = age
+            stale["quote_max_stale_seconds"] = \
+                SETTLEMENT_QUOTE_MAX_STALE_SECONDS
             return stale
         if isinstance(e, SettlementQuoteUnavailable):
             raise
@@ -971,7 +1002,25 @@ def crossing_total_micro(tier):
     return (X402_TIERS_MICRO[tier]
             + quote["settlement_charge_micro_usdc"]), quote
 
-def _quote_fail_detail():
+def _quote_fail_detail(exc=None):
+    if isinstance(exc, SettlementQuoteStaleBeyondBound):
+        return six_field(
+            SETTLEMENT_QUOTE_STALE_BEYOND_BOUND,
+            "a settlement-charge quote served to a paid challenge "
+            "is no older than the maximum staleness bound "
+            f"({SETTLEMENT_QUOTE_MAX_STALE_SECONDS}s): the live "
+            f"quote read failed and the last successful quote is "
+            f"{exc.age_seconds}s old",
+            "no challenge is issued on a quote beyond the bound "
+            "(the settlement charge is never absorbed silently, "
+            "principal determination, 2026-11-18, BUILD-Q-43): "
+            "retry the crossing when the Base RPC / ETH-USD reads "
+            "recover over the node's egress proxy and a fresh "
+            "quote can be produced",
+            "POST /crossing (retry)",
+            "caller retries the crossing; no authorization was "
+            "consumed and no pair was written",
+            owning=OWNING_GOAL_Q18)
     return six_field(
         SETTLEMENT_QUOTE_FAILURE,
         "a live settlement-charge quote (Base fee basis + ETH/USD) "
@@ -1431,8 +1480,8 @@ def verify_x402_payment_v2(header_b64, tier):
                     "echo the accepted entry from the 402 challenge's accepts[] as `accepted`")
     try:
         required, _quote = crossing_total_micro(tier)
-    except SettlementQuoteUnavailable:
-        return None, _quote_fail_detail()
+    except SettlementQuoteUnavailable as e:
+        return None, _quote_fail_detail(e)
     try:
         accepted_amount = int(acc.get("amount"))
     except (TypeError, ValueError):
@@ -1512,8 +1561,8 @@ def _verify_payment_dict(payload, tier, retry_entrypoint):
                     "present value/validAfter/validBefore as integers")
     try:
         required, quote = crossing_total_micro(tier)
-    except SettlementQuoteUnavailable:
-        return None, _quote_fail_detail()
+    except SettlementQuoteUnavailable as e:
+        return None, _quote_fail_detail(e)
     if value != required:
         return fail(
             "PAYMENT_VALUE_INSUFFICIENT" if value < required
@@ -2191,6 +2240,75 @@ FROZEN_TEST_SHA256 = ("bfde4c87960b9c24570644626eacd029a489a158"
 PAGES_RECORD_DATE = "2026-11-18"
 
 
+# The declared public surface (Part 5, principal-directed
+# 2026-11-19): every PUBLIC route on this origin, named in the
+# root document — machine-readable in the root JSON and visible
+# in the root HTML. Public routes ONLY: operator routes
+# (/settle-pair, /funds, /replay and the router's operator
+# routes) are never declared. Every route named here is
+# exercised live at each declaration change; a dead route is
+# never declared.
+DECLARED_SURFACES = [
+    ("/", "this landing document: what 8374 is, the live terms, "
+          "and this declared-surfaces index"),
+    ("/health", "service liveness and identity"),
+    ("/offer", "the public offer: terms, tiers, and the declared "
+               "receptor"),
+    ("/crossing", "the governed-crossing receptor: POST a crossing "
+                  "(unpaid requests return the x402 402 challenge)"),
+    ("/openapi.json", "the OpenAPI document for the crossing"),
+    ("/.well-known/x402", "the x402 resource list for directories, "
+                          "with the chain-export references"),
+    ("/inspect", "one-link live inspection and determination"),
+    ("/compare", "the frozen test's comparison page: the reference "
+                 "result and the open reporting table"),
+    ("/conformance", "suite, batteries, and discovery standing"),
+    ("/frozen-test", "the frozen pair-first outage test document "
+                     "(byte-exact; hash it)"),
+    ("/verify", "verify any x402 row: its terms and whether it "
+                "publishes a replayable record"),
+    ("/verify/check", "the verify check API (JSON; ?url=<resource>)"),
+    ("/chain", "the public chain export page: the receipt chain "
+               "for independent recompute"),
+    ("/chain/export.ndjson", "the production receipt chain, "
+                             "exported live as NDJSON"),
+    ("/chain/manifest.json", "the chain export manifest: counts, "
+                             "terminal anchor, file hashes"),
+    ("/chain/verifier.py", "the standalone chain verifier: "
+                           "recompute the replay verdict locally"),
+    ("/router", "the router service document and route contract"),
+    ("/router/catalog", "the router catalog: registered sellers "
+                        "and their provenance"),
+    ("/router/provenance", "provenance for a registered origin, "
+                           "recomputed from its record"),
+    ("/router/quote", "a routed-crossing quote"),
+    ("/router/register", "free self-serve seller registration "
+                         "(POST)"),
+    ("/router/discovery/resources", "the Bazaar-schema discovery "
+                                    "feed, generated live from "
+                                    "the registry"),
+    ("/router/openapi.json", "the router's OpenAPI document"),
+]
+
+
+def root_document():
+    """The root document in machine-readable form: identity, the
+    live chain summary, and the declared public surfaces."""
+    doc = inspect_document()
+    rc = doc["receipt_chain"]
+    return {
+        "document": "ROOT__8374",
+        "service": doc["service"],
+        "generated_at": now(),
+        "receipt_chain": {"pairs": rc["pairs"],
+                          "replay_verdict": rc["replay_verdict"],
+                          "terminal_anchor": rc["terminal_anchor"]},
+        "declared_surfaces": [
+            {"path": p, "purpose": purpose}
+            for p, purpose in DECLARED_SURFACES],
+        "patent_pending": PATENT_LINE}
+
+
 def _e(s):
     return _html_mod.escape(str(s))
 
@@ -2423,6 +2541,17 @@ def landing_html():
         "<li><a href='/offer'>/offer</a> — the public offer</li>"
         "<li><a href='/openapi.json'>/openapi.json</a> — the API "
         "document</li></ul>"
+        "<h2>Declared surfaces</h2>"
+        "<p>The complete public surface of this origin. Every "
+        "route named here is live; operator routes are not "
+        "declared. The same index is carried in the root "
+        "document's JSON form.</p>"
+        "<table border='1'><tr><th>route</th><th>purpose</th></tr>"
+        + "".join(
+            f"<tr><td><a href='{_e(p)}'>{_e(p)}</a></td>"
+            f"<td>{_e(purpose)}</td></tr>"
+            for p, purpose in DECLARED_SURFACES)
+        + "</table>"
         "<p>Standing, per the /inspect determination: supported — "
         "functional, settled on-chain, chain integrity. Not "
         "claimed — external demand, profitability.</p>"
@@ -2894,10 +3023,10 @@ class H(BaseHTTPRequestHandler):
             total, quote = crossing_total_micro(tier)
             v1 = payment_requirements(tier, total, quote)
             v2 = payment_required_v2(tier, total, quote)
-        except SettlementQuoteUnavailable:
+        except SettlementQuoteUnavailable as e:
             self._json(503, {"disposition": "FAIL_CLOSED",
                              "executed": False,
-                             **_quote_fail_detail()})
+                             **_quote_fail_detail(e)})
             return
         self._json_h(402, v1, {"PAYMENT-REQUIRED": _b64_json(v2)})
     def _json_crossing(self, code, obj):
@@ -2970,9 +3099,20 @@ class H(BaseHTTPRequestHandler):
         if _split.path == "/":
             # The landing page on the permanent origin: what 8374
             # is, the live terms, how a crossing works, the outage
-            # property, and the inspection/conformance links.
+            # property, and the inspection/conformance links. The
+            # root document also has a machine-readable form (the
+            # same negotiation as /inspect): ?format=json or an
+            # application/json Accept returns root_document(),
+            # which carries the declared-surfaces index as data.
             try:
-                self._html(200, landing_html())
+                want_json = urllib.parse.parse_qs(
+                    _split.query).get("format") == ["json"] \
+                    or "application/json" in (
+                        self.headers.get("Accept") or "")
+                if want_json:
+                    self._json(200, root_document())
+                else:
+                    self._html(200, landing_html())
             except Exception as e:
                 self._json(503, {"error": "landing unavailable",
                                  "failure_code": "LANDING_UNAVAILABLE",

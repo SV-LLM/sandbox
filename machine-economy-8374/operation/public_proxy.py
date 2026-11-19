@@ -136,7 +136,7 @@ ALLOWED = {("GET", "/health"), ("GET", "/offer"), ("POST", "/crossing"),
 # twin); every other route keeps the exact-match rule, query
 # included. PAGE_ROUTES additionally negotiate their own
 # Content-Type (HTML / markdown), passed through verbatim below.
-QUERY_ROUTES = {"/inspect", "/frozen-test", "/conformance",
+QUERY_ROUTES = {"/inspect", "/frozen-test", "/conformance", "/",
                 "/router/catalog", "/router/provenance",
                 "/router/quote", "/router/discovery/resources",
                 "/verify/check", "/chain/export.ndjson"}
@@ -441,6 +441,12 @@ class H(BaseHTTPRequestHandler):
             # The endpoint's own document is unchanged; the router
             # catalog URL is appended here, at the public surface,
             # in the same projection posture as /offer above.
+            # Canonical-URL cure (2026-11-19, Codex finding F06):
+            # the published resources name the canonical HTTPS
+            # origin https://8374.stegverse.org — the bore tunnel
+            # remains a fallback transport, not the published
+            # canonical. Only the resource URLs' host changes; the
+            # document structure is identical.
             try:
                 doc = json.loads(data)
                 resources = list(doc.get("resources") or [])
@@ -453,13 +459,16 @@ class H(BaseHTTPRequestHandler):
                     + "/router/catalog"
                 if catalog_url not in resources:
                     resources.append(catalog_url)
+                canonical = "https://8374.stegverse.org"
+                resources = [
+                    canonical + r[r.index("/", r.index("://") + 3):]
+                    if isinstance(r, str) and "://" in r else r
+                    for r in resources]
                 doc["resources"] = resources
                 # Additive chain-export references (CHAIN-EXPORT-01,
                 # 2026-11-19): the receipt chain behind /crossing,
-                # exported for independent recompute. The new
-                # references are stated against the canonical HTTPS
-                # origin (the resources above still carry the
-                # endpoint's own origin, a separate known item).
+                # exported for independent recompute, stated against
+                # the canonical HTTPS origin.
                 doc["chain_export"] = {
                     "rules": "receipt-chain-rules/1",
                     "export_url":

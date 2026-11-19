@@ -43,6 +43,30 @@
   "sha256": "16cd5f4b7b6230b9065dfcd09f6c555a00b4d473d36bcbb34d431a5de5f61d34",
   "size": 10200
  },
+ "chain-export/README.md": {
+  "sha256": "6a9786d0d2f7c14d1ca4db28b719261d4956aa57e52a2c48be9a17e3ceab128f",
+  "size": 3043
+ },
+ "chain-export/battery_chain_export.py": {
+  "sha256": "1fcdb2f2e5288a24179efb385ad54c03ee62a1019c8bc29d8a11f48538351f09",
+  "size": 8277
+ },
+ "chain-export/chain_export.py": {
+  "sha256": "b212c2234cad9298f9861376abef2e8c31b557c263b46550475026836ae9f8d4",
+  "size": 14333
+ },
+ "chain-export/install.sh": {
+  "sha256": "ef828583f2afa44f5a10a92ae6ae4d8a5f8788126b13afafbdea60200aea4b89",
+  "size": 325
+ },
+ "chain-export/systemd/chain-export.service": {
+  "sha256": "6caf83440f8a49a057d342e3f9b956d2a95989d3e3f36b69821cdb1197ca891f",
+  "size": 487
+ },
+ "chain-export/verify_chain.py": {
+  "sha256": "24669106d134b607dc7b707568c303e368ff99018d2c5ed7c45dab67a4dffe25",
+  "size": 15515
+ },
  "components/README.md": {
   "sha256": "21a9fc35a4364c96341bb9396ec273f9e664c9aca5c69cfa34f5ee4bb278e72e",
   "size": 2193
@@ -139,6 +163,10 @@
   "sha256": "277b16bdeccdddb7db89e2b416748515f3954f14eb3ad1cd046348afcffadcd5",
   "size": 18378
  },
+ "operation/compare_battery.py": {
+  "sha256": "09f4c1db69e256a5bbd5acd8ab041263f2bf8b2bf040174100338c004dc743ac",
+  "size": 8817
+ },
  "operation/config.template.json": {
   "sha256": "4ac19f8b023a9b298fbcf46e84cedfe86060654941df4801cd15e9a4efcb88f2",
   "size": 6098
@@ -148,8 +176,8 @@
   "size": 2072
  },
  "operation/endpoint.py": {
-  "sha256": "24c4db734259d4c1f5d77d37ad8480f21a2ffec618280cb9a8e85d46b6cc46ea",
-  "size": 154243
+  "sha256": "abc9b6e013b0b5971dea32d4090aefadbd41bc7b7ce1b4cec93093d7601b4bf2",
+  "size": 195097
  },
  "operation/funds.py": {
   "sha256": "274ec65f04669aeec7a67fdf7a87fef6a23e59bb3ebee6ba26a0378dd64f7a51",
@@ -164,8 +192,8 @@
   "size": 20107
  },
  "operation/public_proxy.py": {
-  "sha256": "018a844f162fa08181ad5a7f75b1dd0e89303fadae34a963ec7ea0faa9124c1c",
-  "size": 15213
+  "sha256": "9992846786ae4e961921c98a27ae165102ce65e94936dc2819a563d246e27608",
+  "size": 25155
  },
  "operation/relayer_setup.py": {
   "sha256": "c7cbf9076bd9d8d1c551dc92d210bcc5817f03d0eb47faf742ff1285cfe21ee9",
@@ -182,6 +210,10 @@
  "operation/settlement.py": {
   "sha256": "b0c78d08a224ed9a91fe7949972af6e1ae9e299a45c9279ce041d9c81918ad28",
   "size": 25691
+ },
+ "operation/staleness_battery.py": {
+  "sha256": "e2f2493068e8de0ad6531b75cd67b1f567465f63b2d8eeec45d933b74a40b80d",
+  "size": 7282
  },
  "operation/tunnel_supervisor.py": {
   "sha256": "b7007e3377f057737dc4b61f066439c38840bd81ab020cf6b080b15161a3b045",
@@ -234,5 +266,13 @@
  "systemd/{{PREFIX}}-tunnel.service.tmpl": {
   "sha256": "f92c2045a9cd2475e3da4f1b66cfa529d8ac80cf0f5f38d2a1e250c986869169",
   "size": 353
+ },
+ "verify-page/battery_verify.py": {
+  "sha256": "9a52e88777382641307e4a1a058c01eab76f500842bdcd3c35318352550b6038",
+  "size": 12156
+ },
+ "verify-page/verify.py": {
+  "sha256": "95075f0ff5125798f295f90070df116b106efcf1d4a78de5af7c9bce836cc5c5",
+  "size": 45293
  }
 }
