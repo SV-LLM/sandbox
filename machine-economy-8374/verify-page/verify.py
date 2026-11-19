@@ -14,7 +14,17 @@ aggregator feeds is a claim; this page turns each row into a check.
                               fallback source).
     GET /verify/check?url= -> the check (JSON):
         {resource, origin, terms, proof: {publishes_replayable_
-        record, evidence[], checked[]}, verdict}
+        record, record_state, evidence[], checked[]}, verdict}
+        record_state distinguishes discovery from validation:
+        verified (a published replay document with verdict MATCH
+        and a well-formed 64-hex terminal anchor), discovered (a
+        record structure whose entries carry valid, non-zero tx
+        hashes, with no replay validation published),
+        validation_failed (a replay document is published but its
+        verdict is not MATCH and/or its anchor is malformed -- the
+        record does NOT validate), or none. Entry-level evidence
+        counts only valid, non-zero tx hashes: an empty entry or
+        an all-zero hash is not evidence.
     GET /health            -> {"status": "ok", ...}
 
 Probe set for a resource (the checked list names every location
@@ -95,6 +105,38 @@ RATE_BURST = 30
 UA = ("Mozilla/5.0 (compatible; 8374Verify/1.0; "
       "+https://8374.stegverse.org/verify)")
 TX_RE = re.compile(r"0x[0-9a-fA-F]{64}")
+HASH64_RE = re.compile(r"^0x[0-9a-fA-F]{64}$")
+ANCHOR_RE = re.compile(r"^(0x)?[0-9a-fA-F]{64}$")
+ZERO_TX_HASH = "0x" + "0" * 64
+
+
+def _valid_tx_hash(v):
+    """A syntactically valid AND non-zero transaction hash. The
+    all-zero hash is a placeholder, not evidence of a settlement."""
+    return isinstance(v, str) and bool(HASH64_RE.match(v)) \
+        and v.lower() != ZERO_TX_HASH
+
+
+def _entry_tx_hash(entry):
+    """The valid non-zero tx hash an entry carries in a hash field
+    (tx_hash / txHash / transaction_hash / hash), in a nested
+    settlement object, or as the entry itself; None when the entry
+    carries none. An empty object, or an entry whose only hash is
+    the all-zero placeholder, carries NO evidence."""
+    if isinstance(entry, str):
+        return entry if _valid_tx_hash(entry) else None
+    if isinstance(entry, dict):
+        containers = [entry]
+        s = entry.get("settlement")
+        if isinstance(s, dict):
+            containers.append(s)
+        for cont in containers:
+            for k, v in cont.items():
+                kl = k.lower()
+                if (("tx" in kl and "hash" in kl) or kl == "hash") \
+                        and _valid_tx_hash(v):
+                    return v
+    return None
 PROOF_PATH_RE = re.compile(
     r"(replay|provenance|receipt|inspect|proof|verify)", re.I)
 METADATA_HOSTS = {"metadata.google.internal", "metadata.google",
@@ -356,39 +398,85 @@ def _named_proof_urls(doc, origin):
     return out[:3]
 
 
+# Record validation states. Discovery (finding a record
+# structure) and validation (the record's own published replay
+# checks out) are different findings and are reported differently:
+#   verified          -- a replay document whose published verdict
+#                        is MATCH and whose terminal anchor is a
+#                        well-formed 64-hex hash;
+#   discovered        -- a record structure whose entries carry
+#                        valid, non-zero tx hashes, but which
+#                        publishes no replay validation;
+#   validation_failed -- a replay document is published, but its
+#                        verdict is not MATCH and/or its terminal
+#                        anchor is not a 64-hex hash: the record
+#                        does NOT validate.
+_STATE_RANK = {"none": 0, "validation_failed": 1, "discovered": 2,
+               "verified": 3}
+
+
+def _merge_record_state(state, finding):
+    if finding and _STATE_RANK[finding["state"]] \
+            > _STATE_RANK[state["record_state"]]:
+        state["record_state"] = finding["state"]
+
+
 def _chain_content(doc):
     """Does this JSON document itself present a transaction record?
-    Returns a factual description string, or None."""
+    Returns {"description", "state", "verdict"} or None. Entry-level
+    evidence counts only entries carrying a syntactically valid,
+    non-zero tx hash in a hash field (or as the entry itself): an
+    empty entry, or one carrying only the all-zero hash, is not
+    evidence. A bare hash somewhere in a document (an identity
+    registration, a schema example) is NOT a replayable record of
+    the resource's transactions and never counts here."""
     if not isinstance(doc, dict):
         return None
-    text = json.dumps(doc)
-    txs = TX_RE.findall(text)
     verdict = doc.get("verdict") or doc.get("replay_verdict")
     pairs = doc.get("pairs")
     anchor = doc.get("terminal_anchor")
-    settled = None
-    se = doc.get("settlement_evidence")
-    if isinstance(se, dict) and isinstance(se.get("settled_pairs"),
-                                           list):
-        settled = se["settled_pairs"]
-    if settled:
-        return (f"settlement evidence: {len(settled)} settled pairs "
-                f"with tx hashes")
     if verdict and pairs is not None and anchor:
-        return (f"receipt-chain replay document: {pairs} pairs, "
-                f"verdict {verdict}, terminal anchor {anchor}")
-    # Structural only: a list under a record-named key whose entries
-    # carry tx hashes. A bare hash somewhere in a document (an
-    # identity registration, a schema example) is NOT a replayable
-    # record of the resource's transactions and never counts here.
+        anchor_ok = isinstance(anchor, str) \
+            and bool(ANCHOR_RE.match(anchor))
+        if verdict == "MATCH" and anchor_ok:
+            return {"description":
+                    f"receipt-chain replay document: {pairs} "
+                    f"pairs, verdict MATCH, terminal anchor "
+                    f"{anchor} (anchor well-formed; published "
+                    "replay validates)",
+                    "state": "verified", "verdict": verdict}
+        why = []
+        if verdict != "MATCH":
+            why.append(f"published replay verdict is {verdict}, "
+                       "not MATCH")
+        if not anchor_ok:
+            why.append("terminal anchor is not a 64-hex hash")
+        return {"description":
+                f"receipt-chain replay document: {pairs} pairs, "
+                f"verdict {verdict}, terminal anchor {anchor} "
+                f"-- replay does NOT validate ({'; '.join(why)})",
+                "state": "validation_failed", "verdict": verdict}
+    se = doc.get("settlement_evidence")
+    if isinstance(se, dict) \
+            and isinstance(se.get("settled_pairs"), list) \
+            and se["settled_pairs"]:
+        settled = se["settled_pairs"]
+        n = sum(1 for e in settled if _entry_tx_hash(e))
+        if n:
+            return {"description":
+                    f"settlement evidence: {n} of {len(settled)} "
+                    "settled pair entries carry valid tx hashes",
+                    "state": "discovered", "verdict": None}
     for key in ("receipts", "settled_pairs", "settlements",
                 "transactions", "pairs"):
         val = doc.get(key)
         if isinstance(val, list) and val:
-            n = sum(1 for e in val if TX_RE.search(json.dumps(e)))
+            n = sum(1 for e in val if _entry_tx_hash(e))
             if n:
-                return (f"'{key}' list: {n} entr(ies) carrying tx "
-                        f"hashes")
+                return {"description":
+                        f"'{key}' list: {n} of {len(val)} entr(ies) "
+                        "carrying valid tx hashes",
+                        "state": "discovered", "verdict": None}
     return None
 
 
@@ -444,8 +532,8 @@ def _scan_doc(doc, label, origin, checked, evidence, state):
             "metadata; not a transaction record)")
     found = _chain_content(doc)
     if found:
-        evidence.append(f"{label}: {found}")
-        state["record"] = True
+        evidence.append(f"{label}: {found['description']}")
+        _merge_record_state(state, found)
     else:
         note = _loose_tx_note(doc)
         if note:
@@ -460,7 +548,7 @@ def check_generic(url):
     p = validate_target(url)
     origin = _origin_of(url)
     checked, evidence = [], []
-    state = {"record": False, "named": []}
+    state = {"record_state": "none", "named": []}
     terms = None
 
     # 1. the resource itself, unpaid
@@ -539,27 +627,42 @@ def check_generic(url):
         if doc is not None:
             found = _chain_content(doc)
             if found:
-                evidence.append(f"GET {u}: {found}")
-                state["record"] = True
+                evidence.append(f"GET {u}: {found['description']}")
+                _merge_record_state(state, found)
             else:
                 note = _loose_tx_note(doc)
                 if note:
                     evidence.append(f"GET {u} {note}")
 
-    proof = {"publishes_replayable_record": bool(state["record"]),
+    rs = state["record_state"]
+    proof = {"publishes_replayable_record":
+             rs in ("verified", "discovered"),
+             "record_state": rs,
              "evidence": evidence, "checked": checked}
-    if terms and state["record"]:
-        verdict = ("x402 resource; publishes a replayable "
-                   "transaction record (see evidence)")
+    if rs == "verified":
+        core = ("publishes a replayable transaction record -- "
+                "its published replay validates (verdict MATCH, "
+                "well-formed terminal anchor) (see evidence)")
+    elif rs == "discovered":
+        core = ("publishes a transaction record whose entries "
+                "carry valid tx hashes, but publishes no replay "
+                "validation for it -- record discovered, not "
+                "verified (see evidence)")
+    elif rs == "validation_failed":
+        core = ("publishes a transaction record whose replay "
+                "does NOT validate -- it is not a verified "
+                "replayable record (see evidence)")
+    else:
+        core = None
+    if terms and core:
+        verdict = "x402 resource; " + core
     elif terms:
         verdict = ("x402 resource; publishes no replayable "
                    "transaction record -- the locations under "
                    "'checked' were probed and none presented one")
-    elif state["record"]:
+    elif core:
         verdict = ("no x402 terms found at this URL (no 402 "
-                   "challenge answered); a transaction record is "
-                   "published at a location named by its documents "
-                   "(see evidence)")
+                   "challenge answered); " + core)
     else:
         verdict = ("no x402 terms found at this URL (no 402 "
                    "challenge answered); publishes no replayable "
@@ -634,10 +737,11 @@ def check_own(url):
     evidence.append(
         f"receipt chain replays {verdict_replay}: {pairs} pairs, "
         f"terminal anchor {anchor} (recomputed at request time)")
+    n_settled_valid = sum(1 for e in settled if _entry_tx_hash(e))
     evidence.append(
-        f"settlement evidence: {len(settled)} settled pairs with "
-        "tx hashes, published at "
-        f"{OWN_ORIGIN}/inspect")
+        f"settlement evidence: {n_settled_valid} settled pairs "
+        f"with valid tx hashes (of {len(settled)} published), "
+        f"published at {OWN_ORIGIN}/inspect")
     prov_block = prov.get("provenance") or {}
     if prov_block:
         evidence.append(
@@ -647,6 +751,8 @@ def check_own(url):
             f"{prov_block.get('status')}")
     proof = {"publishes_replayable_record":
              verdict_replay == "MATCH",
+             "record_state": "verified" if verdict_replay == "MATCH"
+             else "validation_failed",
              "replay": {"pairs": pairs,
                         "entries": replay.get("entries"),
                         "verdict": verdict_replay,
@@ -814,8 +920,20 @@ function termsText(t) {{
   return esc(t.scheme) + ' / ' + esc(t.network) + ' / amount ' +
     esc(t.amount) + ' / payTo ' + esc(t.payTo);
 }}
+function recordStateText(p) {{
+  if (!p) return 'no';
+  var rs = p.record_state;
+  if (rs === 'verified') return 'yes -- verified (replay validates)';
+  if (rs === 'discovered') return 'record found -- discovered, no replay validation published';
+  if (rs === 'validation_failed') return 'record found -- replay FAILED validation';
+  return p.publishes_replayable_record ? 'yes' : 'no';
+}}
 function showResult(el, d) {{
   var h = '<p><strong>' + esc(d.verdict) + '</strong></p>';
+  if (d.proof) {{
+    h += '<p>record state: <strong>' +
+      esc(recordStateText(d.proof)) + '</strong></p>';
+  }}
   if (d.proof && d.proof.replay) {{
     h += '<p>receipt chain: ' + esc(d.proof.replay.pairs) +
       ' pairs, replay ' + esc(d.proof.replay.verdict) +
@@ -853,8 +971,7 @@ ROWS.forEach(function(u) {{
     .then(function(d) {{
       tr.querySelector('.terms').textContent = termsText(d.terms);
       tr.querySelector('.proof').textContent =
-        d.proof && d.proof.publishes_replayable_record
-        ? 'yes' : 'no';
+        recordStateText(d.proof);
       tr.querySelector('.verdict').textContent = d.verdict || '';
     }})
     .catch(function(e) {{

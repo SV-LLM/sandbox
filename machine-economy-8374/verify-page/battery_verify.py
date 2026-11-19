@@ -65,7 +65,92 @@ def wait_health(base, tries=40):
     return False
 
 
+def unit_section():
+    """Classifier regression cases (in-process, no network): the
+    three external-assessment inputs that previously produced a
+    clean pass from malformed evidence, plus genuine-document
+    controls. A record finding now carries a validation state:
+    verified / discovered / validation_failed."""
+    sys.path.insert(0, HERE)
+    import verify as V
+
+    real = "0x" + "9f" * 32
+    zero = "0x" + "00" * 32
+    anchor = "ab" * 32
+
+    def state_of(doc):
+        f = V._chain_content(doc)
+        return f["state"] if f else None
+
+    check("u1: replay doc, verdict MISMATCH + non-hash anchor -> "
+          "validation_failed (not a clean pass)",
+          state_of({"verdict": "MISMATCH", "pairs": 5,
+                    "terminal_anchor": "not-a-hash"})
+          == "validation_failed")
+    check("u2: settlement_evidence settled_pairs [{}] -> no "
+          "record finding",
+          V._chain_content({"settlement_evidence":
+                            {"settled_pairs": [{}]}}) is None)
+    check("u3: transactions entry carrying only the all-zero "
+          "hash -> no record finding",
+          V._chain_content({"transactions": [{"tx_hash": zero}]})
+          is None)
+    check("u4: replay doc, verdict MATCH + 64-hex anchor -> "
+          "verified",
+          state_of({"verdict": "MATCH", "pairs": 62,
+                    "terminal_anchor": anchor}) == "verified")
+    check("u5: replay doc, verdict MATCH + malformed anchor -> "
+          "validation_failed",
+          state_of({"verdict": "MATCH", "pairs": 62,
+                    "terminal_anchor": "not-a-hash"})
+          == "validation_failed")
+    check("u6: replay doc, verdict MISMATCH + valid anchor -> "
+          "validation_failed",
+          state_of({"verdict": "MISMATCH", "pairs": 62,
+                    "terminal_anchor": anchor})
+          == "validation_failed")
+    f = V._chain_content({"settlement_evidence":
+                          {"settled_pairs": [{"tx_hash": real}]}})
+    check("u7: settlement evidence, one entry with a real tx "
+          "hash -> discovered, counted 1 of 1",
+          f is not None and f["state"] == "discovered"
+          and "1 of 1" in f["description"],
+          f"{f}")
+    f = V._chain_content({"settlement_evidence":
+                          {"settled_pairs": [{},
+                                             {"tx_hash": real}]}})
+    check("u8: settlement evidence, empty + real entries -> "
+          "discovered, counted 1 of 2",
+          f is not None and f["state"] == "discovered"
+          and "1 of 2" in f["description"],
+          f"{f}")
+    check("u9: transactions list, entry with a real tx hash -> "
+          "discovered",
+          state_of({"transactions": [{"tx_hash": real}]})
+          == "discovered")
+    check("u10: bare registration hash, no record structure -> "
+          "no finding (a hash is not a record)",
+          V._chain_content({"registration_hash": "0x" + "cd" * 32})
+          is None)
+    check("u11: settled_pairs entry that IS a real hash string "
+          "-> discovered",
+          state_of({"settled_pairs": ["0x" + "ef" * 32]})
+          == "discovered")
+    check("u12: settled_pairs entry that is the all-zero hash "
+          "string -> no finding",
+          V._chain_content({"settled_pairs": [zero]}) is None)
+    st = {"record_state": "none"}
+    V._merge_record_state(st, {"state": "validation_failed"})
+    V._merge_record_state(st, {"state": "discovered"})
+    V._merge_record_state(st, {"state": "validation_failed"})
+    check("u13: state merge keeps the strongest state "
+          "(discovered over validation_failed)",
+          st["record_state"] == "discovered",
+          f"{st}")
+
+
 def main():
+    unit_section()
     env = dict(os.environ)
     env["VERIFY_PORT"] = str(VPORT)
     env["VERIFY_FIXTURE_ORIGINS"] = SELLER_ORIGIN
@@ -98,9 +183,11 @@ def main():
         rp = p.get("replay") or {}
         check("a: 8374 /crossing publishes_replayable_record TRUE",
               code == 200 and p.get("publishes_replayable_record")
-              is True and rp.get("verdict") == "MATCH",
+              is True and rp.get("verdict") == "MATCH"
+              and p.get("record_state") == "verified",
               f"http={code}, record="
-              f"{p.get('publishes_replayable_record')}, replay "
+              f"{p.get('publishes_replayable_record')}, record_state="
+              f"{p.get('record_state')}, replay "
               f"verdict={rp.get('verdict')}")
         check("a: pairs + anchor equal the independent /replay read",
               rp.get("pairs") == replay.get("pairs")
@@ -123,8 +210,10 @@ def main():
                         for c in p.get("checked") or [])
         check("b: specimen seller publishes_replayable_record FALSE",
               code == 200
-              and p.get("publishes_replayable_record") is False,
-              f"http={code}, verdict={(d or {}).get('verdict')}")
+              and p.get("publishes_replayable_record") is False
+              and p.get("record_state") == "none",
+              f"http={code}, record_state={p.get('record_state')}, "
+              f"verdict={(d or {}).get('verdict')}")
         check("b: checked list covers challenge + well-known + "
               "openapi",
               "/resource" in locs and "/.well-known/x402" in locs
