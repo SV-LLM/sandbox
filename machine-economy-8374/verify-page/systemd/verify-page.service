@@ -1,0 +1,16 @@
+[Unit]
+Description=Machine Economy 8374 verify-any-row page (VERIFY-PAGE-01) — what proof does an x402 resource publish
+After=network.target machine-economy-endpoint.service machine-economy-router.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/hatch/workspace/verify-page
+ExecStart=/usr/bin/python3 /home/hatch/workspace/verify-page/verify.py
+Restart=always
+RestartSec=3
+MemoryMax=256M
+Environment=VERIFY_PORT=8798
+Environment=HOME=/home/hatch
+
+[Install]
+WantedBy=multi-user.target
