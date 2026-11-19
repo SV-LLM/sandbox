@@ -1,0 +1,16 @@
+[Unit]
+Description=Machine Economy 8374 public chain export (CHAIN-EXPORT-01) — the receipt chain exported for independent recompute
+After=network.target machine-economy-endpoint.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/hatch/workspace/chain-export
+ExecStart=/usr/bin/python3 /home/hatch/workspace/chain-export/chain_export.py
+Restart=always
+RestartSec=3
+MemoryMax=256M
+Environment=CHAIN_EXPORT_PORT=8799
+Environment=HOME=/home/hatch
+
+[Install]
+WantedBy=multi-user.target
