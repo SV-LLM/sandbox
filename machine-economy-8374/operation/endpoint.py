@@ -2128,6 +2128,9 @@ def inspect_document():
                           "determination is made"}]}}
 
 def inspect_html(doc):
+    doc = {**doc, "service": doc["service"].replace(
+        "8374@StegVerse.ai",
+        "<!--email_off-->8374@StegVerse.ai<!--/email_off-->")}
     sc = doc["service_state"]
     rc = doc["receipt_chain"]
     se = doc["settlement_evidence"]
@@ -2196,7 +2199,8 @@ def _page_shell(title, body):
     return ("<!DOCTYPE html><html><head><meta charset='utf-8'>"
             f"<title>{_e(title)}</title></head><body>{body}"
             f"<hr><p>{PATENT_LINE} · StegVerse LLC · "
-            "8374@StegVerse.ai</p></body></html>")
+            "<!--email_off-->8374@StegVerse.ai<!--/email_off-->"
+            "</p></body></html>")
 
 
 def _md_inline(s):
@@ -2348,7 +2352,7 @@ def landing_html():
     quote = (sc.get("settlement_charge") or {}).get("live_quote")
     body = (
         "<h1>0R10N15-8374 — governed crossings for machines</h1>"
-        f"<p>{doc['service']}</p>"
+        f"<p>{doc['service'].replace('8374@StegVerse.ai', '<!--email_off-->8374@StegVerse.ai<!--/email_off-->')}</p>"
         "<h2>What it is</h2>"
         "<p>Governed crossings for machine transactions. One "
         "receipt pair per crossing — ALLOW or NON-ALLOW — and the "
