@@ -1,0 +1,17 @@
+[Unit]
+Description=SKAP sign-under-seal operation (BUILD-Q-14) — custody-grade signing for machine-economy identity 8374
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/hatch/workspace/skap-signing
+ExecStart=/usr/bin/python3 /home/hatch/workspace/skap-signing/skap_signing.py
+Restart=always
+RestartSec=3
+MemoryMax=512M
+Environment=SKAP_SIGNING_PORT=8795
+Environment=HOME=/home/hatch
+Environment=PYTHONPATH=/home/hatch/.local/lib/python3.12/site-packages
+
+[Install]
+WantedBy=multi-user.target
