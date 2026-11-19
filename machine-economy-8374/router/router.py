@@ -70,7 +70,7 @@ State (all inside the router's own dir, overridable by env):
   ROUTER_REGISTRY_PATH registry JSON (default ./registry.json)
   ROUTER_PORT         listen port (default config port / 8797)
 """
-import base64, hashlib, json, os, re, threading, time
+import base64, hashlib, http.client, json, os, re, threading, time
 import urllib.error, urllib.parse, urllib.request
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -1176,6 +1176,79 @@ def _opener_for(url, proxy):
     return urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
+def _read_full_body(r):
+    """Read a response body completely, with an explicit loop.
+
+    A single .read() delegates to http.client's _safe_read, which
+    raises IncompleteRead the first time the underlying stream
+    returns fewer bytes than asked — and through intermediated
+    paths (CONNECT proxies, tunnels, TLS record boundaries) a
+    stream may legitimately return short counts without being at
+    EOF. One such return converts a fully sent response into a
+    false truncation (2026-11-19 clean-room acceptance: a settled
+    routed call receipted AMBIGUOUS on IncompleteRead(177152
+    bytes read, 64198 more expected)). This loop reads bounded
+    chunks until the stream itself ends, so a body is complete
+    whenever the sender sent it completely. When the stream
+    genuinely EOFs short of the promised Content-Length it
+    raises http.client.IncompleteRead carrying the exact
+    accounting (bytes received, bytes still expected) — callers
+    surface that as ambiguous, never as delivered: the honesty
+    rule is unchanged, only false ambiguity is cured."""
+    expected = None
+    hdrs = getattr(r, "headers", None)
+    if hdrs is not None and getattr(r, "_method", None) != "HEAD":
+        try:
+            cl = hdrs.get("Content-Length")
+            expected = int(cl) if cl is not None else None
+        except (TypeError, ValueError):
+            expected = None
+    chunks = []
+    received = 0
+    while True:
+        try:
+            chunk = r.read(65536)
+        except http.client.IncompleteRead as e:
+            # A chunked body cut mid-chunk: what arrived is
+            # partial by construction. Re-raise with the running
+            # accounting so the receipt names the true shortfall.
+            partial = e.partial or b""
+            chunks.append(partial)
+            received += len(partial)
+            raise http.client.IncompleteRead(
+                b"".join(chunks),
+                (expected - received) if expected is not None
+                else None)
+        if not chunk:
+            break
+        chunks.append(chunk)
+        received += len(chunk)
+        if expected is not None and received >= expected:
+            break
+    body = b"".join(chunks)
+    if expected is not None and received < expected:
+        raise http.client.IncompleteRead(body, expected - received)
+    return body
+
+
+def _write_all(wfile, data):
+    """Write ALL of data to a response stream. A single write()
+    on a socket stream may accept fewer bytes than given and
+    merely return the short count; ignoring it silently drops
+    the remainder while the already-sent Content-Length still
+    promises it — the mirror image of the relay-read truncation.
+    Loop on the unwritten remainder until every byte is handed
+    to the socket (or the write fails loudly)."""
+    view = memoryview(data)
+    while len(view):
+        n = wfile.write(view)
+        if n is None:
+            return
+        if n <= 0:
+            raise BrokenPipeError("response write made no progress")
+        view = view[n:]
+
+
 def http_fetch(url, method="GET", body=None, headers=None, timeout=25):
     """One logical HTTP call. Returns (status, headers, raw_bytes)
     for ANY completed HTTP response. Raises TransportError on
@@ -1204,10 +1277,10 @@ def http_fetch(url, method="GET", body=None, headers=None, timeout=25):
         try:
             with _opener_for(url, proxy).open(req, timeout=timeout) as r:
                 return r.status, {k.lower(): v for k, v in
-                                  r.headers.items()}, r.read()
+                                  r.headers.items()}, _read_full_body(r)
         except urllib.error.HTTPError as e:
             try:
-                raw = e.read()
+                raw = _read_full_body(e)
             except Exception as read_exc:
                 raise AmbiguousTransport(
                     f"HTTP {e.code} response body unreadable: {read_exc}")
@@ -1259,10 +1332,10 @@ def _relay(url, body, payment_header, timeout=30,
     try:
         with _opener_for(url, proxy).open(req, timeout=timeout) as r:
             return r.status, {k.lower(): v for k, v in r.headers.items()}, \
-                r.read()
+                _read_full_body(r)
     except urllib.error.HTTPError as e:
         try:
-            raw = e.read()
+            raw = _read_full_body(e)
         except Exception as read_exc:
             raise AmbiguousTransport(
                 f"HTTP {e.code} response body unreadable: {read_exc}")
@@ -2561,7 +2634,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(raw)))
         self.end_headers()
-        self.wfile.write(raw)
+        _write_all(self.wfile, raw)
 
     def _body(self):
         n = int(self.headers.get("Content-Length") or 0)

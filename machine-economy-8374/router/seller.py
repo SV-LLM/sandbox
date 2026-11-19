@@ -9,9 +9,18 @@ self-serve registrant.
 
 Env: SELLER_PORT (default 8898), SELLER_PAYTO (required),
 SELLER_PRICE (micro-USDC, default 3000), SELLER_MODE
-(normal | drop — in drop mode a PAID request is read in full and
-the connection is then closed with no response: the mid-route
-ambiguity specimen).
+(normal | drop | big | dropmid — in drop mode a PAID request is
+read in full and the connection is then closed with no response:
+the mid-route ambiguity specimen; in big mode a paid request is
+answered with a body of exactly BIG_TARGET bytes — the
+large-response specimen of battery 7; in dropmid mode the big
+body's headers and first BIG_DROP_AFTER bytes are sent and the
+connection then dies mid-body: the genuine-truncation specimen),
+SELLER_PUBLIC_ORIGIN (the origin advertised in discovery
+documents when this seller is fronted by another listener, e.g.
+the public proxy in battery 7; default: its own listen origin),
+SELLER_RESOURCE_PATH (default /resource; battery 7's proxied
+case uses /crossing, the public proxy's allowlisted paid path).
 
 The seller verifies presented authorizations cryptographically
 (x402kit), tracks its own single-use nonce registry in memory,
@@ -20,7 +29,7 @@ settles nothing itself in these batteries: in relay mode the
 authorization it received remains submittable by it; in settle
 mode the router's relayer submits it.
 """
-import json, os, socket, threading, time
+import hashlib, json, os, socket, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import x402kit
@@ -29,10 +38,14 @@ PORT = int(os.environ.get("SELLER_PORT", "8898"))
 PAYTO = os.environ.get("SELLER_PAYTO", "")
 PRICE = int(os.environ.get("SELLER_PRICE", "3000"))
 MODE = os.environ.get("SELLER_MODE", "normal")
-RESOURCE_PATH = "/resource"
+RESOURCE_PATH = os.environ.get("SELLER_RESOURCE_PATH", "/resource")
+PUBLIC_ORIGIN = os.environ.get("SELLER_PUBLIC_ORIGIN", "")
+BIG_TARGET = 241350
+BIG_DROP_AFTER = 100000
 
 STATS = {"requests": 0, "paid_requests": 0, "challenges": 0,
-         "served": 0}
+         "served": 0, "big_body_len": 0, "big_pad_sha256": "",
+         "dropped_mid_after": 0}
 NONCES = set()
 LOCK = threading.Lock()
 
@@ -51,6 +64,26 @@ def challenge(origin):
                                         "(ROUTER-V1 battery seller)"}]}
 
 
+def big_body(payer):
+    """The large-response specimen body: a JSON document of
+    exactly BIG_TARGET bytes. The pad's SHA-256 travels inside
+    the document, so a receiver can prove the body arrived
+    intact (hash the body both sides) — a truncated read cannot
+    parse, and a complete read must reproduce the pad hash."""
+    doc = {"resource": "specimen-resource",
+           "data": "the specimen seller's paid payload (large "
+                   "response specimen, battery 7)",
+           "paid": True, "amount_micro_usdc": PRICE,
+           "payer": payer, "pad": "", "pad_sha256": "0" * 64}
+    base = json.dumps(doc, sort_keys=True).encode()
+    pad = "x" * (BIG_TARGET - len(base))
+    doc["pad"] = pad
+    doc["pad_sha256"] = hashlib.sha256(pad.encode()).hexdigest()
+    raw = json.dumps(doc, sort_keys=True).encode()
+    assert len(raw) == BIG_TARGET, len(raw)
+    return raw
+
+
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
@@ -65,8 +98,15 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(raw)
 
+    def _send_raw(self, code, raw):
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(raw)))
+        self.end_headers()
+        self.wfile.write(raw)
+
     def _origin(self):
-        return f"http://127.0.0.1:{PORT}"
+        return PUBLIC_ORIGIN or f"http://127.0.0.1:{PORT}"
 
     def do_GET(self):
         if self.path == "/.well-known/x402":
@@ -144,6 +184,35 @@ class Handler(BaseHTTPRequestHandler):
                 return
             NONCES.add(ev["nonce"])
             STATS["served"] += 1
+        if MODE == "big":
+            raw = big_body(ev["from"])
+            with LOCK:
+                STATS["big_body_len"] = len(raw)
+                STATS["big_pad_sha256"] = json.loads(
+                    raw)["pad_sha256"]
+            self._send_raw(200, raw)
+            return
+        if MODE == "dropmid":
+            # Headers promise the full big body; the connection
+            # dies after BIG_DROP_AFTER bytes — a genuinely
+            # truncated response, whose only honest receipt is
+            # AMBIGUOUS.
+            raw = big_body(ev["from"])
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(raw)))
+            self.end_headers()
+            self.wfile.write(raw[:BIG_DROP_AFTER])
+            self.wfile.flush()
+            with LOCK:
+                STATS["dropped_mid_after"] = BIG_DROP_AFTER
+            try:
+                self.connection.shutdown(socket.SHUT_RDWR)
+            except Exception:
+                pass
+            self.connection.close()
+            self.close_connection = True
+            return
         self._send(200, {"resource": "specimen-resource",
                          "data": "the specimen seller's paid payload",
                          "paid": True, "amount_micro_usdc": PRICE,

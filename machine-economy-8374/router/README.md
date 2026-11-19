@@ -140,7 +140,7 @@ standard header-presented x402 payload as
 | `x402kit.py` | x402 exact-scheme toolkit: EIP-712/EIP-3009 digests, signing, recovery, header construction, the shared verification core |
 | `settlement.py` | vendored production settlement leg (Gate 2): gas-only relayer submission of verified authorizations, RPC failover |
 | `keccak_pure.py` | vendored pure-Python Keccak-256 |
-| `seller.py` | specimen third-party x402 seller (battery support; normal + connection-drop modes) |
+| `seller.py` | specimen third-party x402 seller (battery support; normal, connection-drop, big-body, and drop-mid-body modes) |
 | `router_testkit.py` | battery support: throwaway instances, chain reads, replay runs, on-chain funding helpers |
 | `battery1_registry.py` | registry / crawl / catalog / provenance — 8 checks |
 | `battery2_relay.py` | relay-mode route — 5 checks |
@@ -148,6 +148,7 @@ standard header-presented x402 payload as
 | `battery4_failclosed.py` | garbled payment / missing evidence / replayed nonce / mid-route drop — 5 checks |
 | `battery5_discovery.py` | Bazaar discovery feed: registry→feed schema fidelity, self-entry real accepts + harvested bazaar block, freshness — 12 checks |
 | `battery6_dialects.py` | payment dialects (v1/v2 × header/body/object), v2 settle on-chain, garbage fail-closed, published contract + live provenance assertions — 12 checks |
+| `battery7_large_response.py` | large seller responses: 241,350-byte body DELIVERED intact (pad hash both sides), drop-mid-body AMBIGUOUS with one relay attempt, big body behind the public proxy — 4 checks |
 | `replay_router.py` | chain replay CLI (production replay.py pattern) |
 | `setup_dev.py` | generates the dev instance's throwaway relayer key + config |
 | `router_config.json` | dev config (throwaway payTo — see carry checklist) |
@@ -160,6 +161,16 @@ including on-chain settlement of both legs with exact balance
 movement and chain replay MATCH on every battery chain.
 Route-contract cure re-run (2026-11-19): **B1–B4 28/28,
 B5 12/12, B6 12/12** on the cured code.
+Relay-read cure re-run (2026-11-19): **B1–B4 28/28, B5 12/12,
+B6 12/12, B7 4/4** on the cured code. The cure: the relay reads
+seller responses with an explicit completion loop
+(`_read_full_body` — a single .read() mistook a short stream
+return for EOF and receipted a settled routed call AMBIGUOUS),
+and every large-body write in the serving stack loops until
+complete (`_write_all` — a single write() on a timeout socket
+may silently drop a body's remainder while its Content-Length
+still promises it). Genuine truncation still receipts
+AMBIGUOUS (battery 7, dropmid case).
 
 ## Run the dev instance
 

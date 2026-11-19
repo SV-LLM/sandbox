@@ -124,9 +124,14 @@ def make_router_instance(tmp, port, payto, relayer_priv):
     return proc, base, env, relayer
 
 
-def start_seller(port, payto, price=3000, mode="normal"):
+def start_seller(port, payto, price=3000, mode="normal",
+                 public_origin="", resource_path=""):
     env = {"SELLER_PORT": str(port), "SELLER_PAYTO": payto,
            "SELLER_PRICE": str(price), "SELLER_MODE": mode}
+    if public_origin:
+        env["SELLER_PUBLIC_ORIGIN"] = public_origin
+    if resource_path:
+        env["SELLER_RESOURCE_PATH"] = resource_path
     assert_port_free(port)
     proc = start_proc([os.path.join(HERE, "seller.py")], env)
     base = f"http://127.0.0.1:{port}"
