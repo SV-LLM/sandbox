@@ -48,6 +48,14 @@ middleman pricing, built under the principal's direction of
     construction); its catalog provenance carries the live pair
     count, terminal anchor, and replay verdict read READ-ONLY
     from the production chain files.
+  - The router PUBLISHES its registry as a Bazaar-format
+    discovery feed (GET /router/discovery/resources, the CDP
+    discovery schema — items + pagination, generated live from
+    the registry): as a facilitator (relay + settle) it is a
+    source aggregators ingest, not only a service they admit.
+    Fields the registry does not know are omitted, never
+    fabricated; a seller's extensions.bazaar block is mirrored
+    verbatim from its own 402 challenge when it declares one.
 
 The chain, replay, evaluation, quote, and settlement-outcome
 constructions are vendored from the production endpoint
@@ -1234,7 +1242,11 @@ def _parse_json(raw):
 def _terms_from_challenge(chal, resource_url):
     """Recorded terms from a live 402 challenge body (v1 shape):
     accepts[0] carries scheme/network/asset/payTo and the amount
-    under maxAmountRequired (v2: amount)."""
+    under maxAmountRequired (v2: amount). Also records the
+    discovery facts the challenge itself declares — description,
+    maxTimeoutSeconds, the asset-domain extra (name/version), and
+    the extensions.bazaar block — verbatim from the challenge,
+    never synthesized (the Bazaar discovery feed mirrors them)."""
     if not isinstance(chal, dict):
         return None
     acc = (chal.get("accepts") or [{}])[0]
@@ -1245,10 +1257,32 @@ def _terms_from_challenge(chal, resource_url):
         return None
     if not acc.get("payTo"):
         return None
-    return {"scheme": acc.get("scheme"), "network": acc.get("network"),
-            "asset": acc.get("asset"), "payTo": acc.get("payTo"),
-            "amount_micro_usdc": amount, "resource": resource_url,
-            "mime_type": acc.get("mimeType")}
+    terms = {"scheme": acc.get("scheme"), "network": acc.get("network"),
+             "asset": acc.get("asset"), "payTo": acc.get("payTo"),
+             "amount_micro_usdc": amount, "resource": resource_url,
+             "mime_type": acc.get("mimeType")}
+    desc = acc.get("description")
+    if not desc and isinstance(acc.get("resource"), str) \
+            and not acc["resource"].startswith(("http://", "https://")):
+        # v1 challenges from some servers carry the description in
+        # the accepts resource field (the production endpoint does).
+        desc = acc["resource"]
+    if not desc and isinstance(chal.get("description"), str):
+        desc = chal["description"]
+    if desc:
+        terms["description"] = desc
+    mts = acc.get("maxTimeoutSeconds")
+    if isinstance(mts, int) and mts > 0:
+        terms["max_timeout_seconds"] = mts
+    extra = acc.get("extra")
+    if isinstance(extra, dict):
+        ev = {k: extra[k] for k in ("name", "version") if extra.get(k)}
+        if ev:
+            terms["extra"] = ev
+    bz = (chal.get("extensions") or {}).get("bazaar")
+    if isinstance(bz, dict) and bz:
+        terms["bazaar"] = bz
+    return terms
 
 
 def probe_resource(origin, path, method_hint=None):
@@ -1432,6 +1466,182 @@ def provenance_document(origin):
                                    "the router; it establishes itself "
                                    "in replayable records"},
             "entry": entry}
+
+
+# ---------------- Bazaar discovery feed ----------------
+# GET /router/discovery/resources — the router publishes its
+# registry in the CDP Bazaar discovery schema (grounded live
+# 2026-11-19 against api.cdp.coinbase.com/platform/v2/x402/
+# discovery/resources and facilitator.payai.network/discovery/
+# resources): {x402Version: 2, items: [...], pagination:
+# {limit, offset, total}}. Item core: resource, type "http",
+# x402Version, lastUpdated, accepts[{scheme, network, asset,
+# payTo, amount, maxTimeoutSeconds?, extra?}], plus description /
+# mimeType / extensions.bazaar when the seller's own challenge
+# declared them. Fields the registry does not know are OMITTED,
+# never fabricated (aggregator-computed fields such as CDP's
+# "quality" are not ours to state). Generated live from the
+# registry on every call; 8374's own items are built from the
+# declared receptor configuration (the local record's tier
+# resources) enriched by a live challenge harvest, because the
+# crossing total floats with the settlement quote and only the
+# endpoint's challenge states it whole.
+
+def _iso_z(iso_str):
+    """Registry timestamps (+00:00) in the feed's Z form."""
+    try:
+        dt = datetime.fromisoformat(iso_str)
+    except (TypeError, ValueError):
+        return iso_str
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    dt = dt.astimezone(timezone.utc)
+    return dt.strftime("%Y-%m-%dT%H:%M:%S.") + \
+        f"{dt.microsecond // 1000:03d}Z"
+
+
+_SELF_CHAL_CACHE = {"by_tier": {}}
+_SELF_CHAL_TTL = 120
+
+
+def _self_challenge_urls():
+    """Where 8374's own 402 challenge can be read: the
+    endpoint's local listener first (the production config
+    declares its port; localhost carriage never crosses the
+    public edge — the public origin's CDN refuses this
+    service's user agent, the same reason self-registration
+    falls back to the local record), then the public origin."""
+    urls = []
+    cfg_path = CONFIG.get("production_config_path")
+    if cfg_path and os.path.exists(cfg_path):
+        try:
+            port = json.load(open(cfg_path)).get("port")
+            if isinstance(port, int):
+                urls.append(f"http://127.0.0.1:{port}/crossing")
+        except Exception:
+            pass
+    urls.append(SELF_ORIGIN + "/crossing")
+    return urls
+
+
+def _harvest_self_challenge(tier):
+    """Best-effort live harvest of 8374's own 402 challenge for
+    one tier (the endpoint serves the live total and the
+    extensions.bazaar block there; a challenge request receipts
+    nothing). Returns the parsed challenge dict or None; cached
+    briefly so feed generation stays cheap."""
+    hit = _SELF_CHAL_CACHE["by_tier"].get(tier)
+    if hit and time.time() - hit[0] < _SELF_CHAL_TTL:
+        return hit[1]
+    body = {} if tier == "receipt-only" else {
+        "tier": "full-evaluation",
+        "counterparty": "8374-router-discovery",
+        "action": "evaluate", "scope_ref": "ME-EVAL-01"}
+    chal = None
+    for url in _self_challenge_urls():
+        try:
+            status, _h, raw = http_fetch(url, method="POST",
+                                         body=body, timeout=20)
+            if status == 402:
+                chal = _parse_json(raw)
+                if chal:
+                    break
+        except (TransportError, AmbiguousTransport):
+            continue
+    _SELF_CHAL_CACHE["by_tier"][tier] = (time.time(), chal)
+    return chal
+
+
+def _feed_item(resource_url, terms, amount_micro, last_updated,
+               bazaar=None):
+    acc = {"scheme": terms.get("scheme"),
+           "network": terms.get("network"),
+           "asset": terms.get("asset"),
+           "payTo": terms.get("payTo"),
+           "amount": str(int(amount_micro))}
+    if terms.get("max_timeout_seconds"):
+        acc["maxTimeoutSeconds"] = int(terms["max_timeout_seconds"])
+    if terms.get("extra"):
+        acc["extra"] = terms["extra"]
+    item = {"resource": resource_url, "type": "http",
+            "x402Version": 2, "lastUpdated": last_updated,
+            "accepts": [acc]}
+    if terms.get("description"):
+        item["description"] = terms["description"]
+    if terms.get("mime_type"):
+        item["mimeType"] = terms["mime_type"]
+    bz = bazaar if bazaar is not None else terms.get("bazaar")
+    if isinstance(bz, dict) and bz:
+        item["extensions"] = {"bazaar": bz}
+    return item
+
+
+def _self_feed_items(last_updated):
+    """8374's own feed items — one per tier resource of the
+    declared receptor configuration. The amount is the live
+    crossing total for the tier: harvested from the endpoint's
+    own challenge when reachable, else the router's own
+    BUILD-Q-43 quote (the same formula the crossing is priced
+    by). A tier whose total cannot be stated whole is omitted
+    rather than understated."""
+    out = []
+    for r in self_entry_from_local_record().get("resources", []):
+        terms = dict(r.get("terms") or {})
+        tier = terms.get("tier")
+        amount = None
+        bazaar = None
+        chal = _harvest_self_challenge(tier) if tier else None
+        if chal:
+            ct = _terms_from_challenge(chal, r.get("url"))
+            if ct:
+                amount = ct["amount_micro_usdc"]
+                bazaar = ct.get("bazaar")
+                for k in ("description", "max_timeout_seconds",
+                          "extra", "mime_type"):
+                    if ct.get(k) is not None:
+                        terms[k] = ct[k]
+        if amount is None and tier in TIERS_MICRO:
+            try:
+                amount, _q = fee_total_micro(tier)
+            except SettlementQuoteUnavailable:
+                amount = None
+        if amount is None:
+            continue
+        out.append(_feed_item(r.get("url"), terms, amount,
+                              last_updated, bazaar=bazaar))
+    return out
+
+
+def discovery_document(limit=20, offset=0):
+    """The Bazaar-format discovery feed, generated live from
+    the registry: every registered seller's probed resources,
+    plus 8374's own tier resources by construction."""
+    groups = []
+    entries = REGISTRY.all()
+    for origin, entry in sorted(entries.items()):
+        updated = _iso_z(entry.get("refreshed_at")
+                         or entry.get("registered_at") or now())
+        if origin == SELF_ORIGIN:
+            groups.append((origin, _self_feed_items(updated)))
+            continue
+        items = []
+        for r in entry.get("resources", []):
+            terms = r.get("terms")
+            if not terms or terms.get("amount_micro_usdc") is None:
+                continue
+            items.append(_feed_item(r.get("url"), terms,
+                                    terms["amount_micro_usdc"],
+                                    updated))
+        groups.append((origin, items))
+    if SELF_ORIGIN not in entries:
+        groups.append((SELF_ORIGIN, _self_feed_items(_iso_z(now()))))
+        groups.sort(key=lambda g: g[0])
+    items = [it for _o, g in groups for it in g]
+    total = len(items)
+    page = items[offset:offset + limit] if offset < total else []
+    return {"x402Version": 2, "items": page,
+            "pagination": {"limit": limit, "offset": offset,
+                           "total": total}}
 
 
 # ---------------- the routed crossing ----------------
@@ -1753,6 +1963,13 @@ class Handler(BaseHTTPRequestHandler):
                         "machine-readable catalog of registered "
                         "sellers/resources with probed terms and "
                         "provenance",
+                    "GET /router/discovery/resources":
+                        "Bazaar-format discovery feed (the CDP "
+                        "discovery schema): every registered "
+                        "seller's resources with their probed "
+                        "terms, generated live from the registry "
+                        "— the feed aggregators ingest; accepts "
+                        "?limit= and ?offset=",
                     "GET /router/provenance?origin=":
                         "provenance for one origin (8374: replayable "
                         "chain facts, recomputed read-only)",
@@ -1781,6 +1998,17 @@ class Handler(BaseHTTPRequestHandler):
                                   "filed November 14, 2026"})
         elif p.path == "/router/catalog":
             self._send(200, catalog_document())
+        elif p.path == "/router/discovery/resources":
+            try:
+                limit = int((qs.get("limit") or ["20"])[0])
+            except ValueError:
+                limit = 20
+            try:
+                offset = int((qs.get("offset") or ["0"])[0])
+            except ValueError:
+                offset = 0
+            self._send(200, discovery_document(
+                min(max(limit, 1), 100), max(offset, 0)))
         elif p.path == "/router/provenance":
             origin = normalize_origin((qs.get("origin") or [None])[0])
             if origin is None:

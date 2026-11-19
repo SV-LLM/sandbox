@@ -7,6 +7,33 @@ crossings"). **Production v1 is untouched**: no production code
 was edited, no production service restarted, and the router
 writes only to its own receipts/registry in this directory.
 
+**Discovery feed (added 2026-11-19, battery 5 — 12/12):** the
+router publishes its registry as a Bazaar-format discovery feed
+at `GET /router/discovery/resources` — the CDP Bazaar discovery
+schema (`{x402Version: 2, items, pagination{limit, offset,
+total}}`), grounded live against the CDP and PayAI discovery
+endpoints. Every registered seller's resources appear with their
+probed terms (accepts in the v2 representation: scheme /
+network / asset / payTo / amount, plus maxTimeoutSeconds and the
+asset-domain extra when the seller's challenge declares them);
+a seller's `extensions.bazaar` block is mirrored verbatim from
+its own 402 challenge when it declares one. 8374's own items are
+built from the declared receptor configuration — one per tier
+resource — with amounts equal to the live crossing totals,
+harvested from the endpoint's own challenge (which itself
+carries `extensions.bazaar` in the observed format) or priced by
+the router's BUILD-Q-43 quote. Fields the registry does not
+know are omitted, never fabricated (no aggregator-computed
+`quality`, no invented schemas). As a facilitator (relay +
+settle), the router is a source aggregators ingest, not only a
+service they admit. Ingestion finding: ScriptMasterLabs'
+directory ingests a fixed, curated facilitator set (cdp /
+payai / dexter / omnigate / 402proof-sidecar) — no self-serve
+discovery-feed submission exists; their free self-serve route
+is a per-service probe submission, used for 8374's /crossing
+resource. The feed serves every other present and future
+ingester regardless.
+
 ## What it is
 
 A router for machine-economy crossings with **no middleman
@@ -74,6 +101,7 @@ pricing**:
 | `battery2_relay.py` | relay-mode route — 5 checks |
 | `battery3_settle.py` | settle-mode route, on-chain, exact balance movement — 10 checks |
 | `battery4_failclosed.py` | garbled payment / missing evidence / replayed nonce / mid-route drop — 5 checks |
+| `battery5_discovery.py` | Bazaar discovery feed: registry→feed schema fidelity, self-entry real accepts + harvested bazaar block, freshness — 12 checks |
 | `replay_router.py` | chain replay CLI (production replay.py pattern) |
 | `setup_dev.py` | generates the dev instance's throwaway relayer key + config |
 | `router_config.json` | dev config (throwaway payTo — see carry checklist) |
@@ -99,6 +127,8 @@ own ports, and never touch this state).
 
 Routes: `GET /` (service document), `GET /health`,
 `POST /router/register`, `GET /router/catalog`,
+`GET /router/discovery/resources` (Bazaar-format discovery
+feed; `?limit=` / `?offset=` pagination),
 `GET /router/provenance?origin=`, `GET /router/quote?tier=`,
 `POST /router/route`, `POST /router/settle-pair`,
 `GET /router/replay`.
