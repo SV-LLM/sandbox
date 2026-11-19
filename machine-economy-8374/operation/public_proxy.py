@@ -24,6 +24,27 @@ The public surface is exactly these operations:
     GET  /compare   -> test comparisons: the frozen test's
                        reference result and the open reporting
                        table for other frameworks
+    GET  /verify, GET /verify/check
+                    -> the verify-any-row page (VERIFY-PAGE-01,
+                       2026-11-19): what proof does an x402
+                       resource publish -- the page (HTML) and its
+                       check API (JSON, ?url=), forwarded to the
+                       sibling verify service on 127.0.0.1:8798
+    GET  /chain, GET /chain/manifest.json,
+    GET  /chain/export.ndjson, GET /chain/verifier.py
+                    -> the public chain export (CHAIN-EXPORT-01,
+                       2026-11-19): the production receipt chain
+                       itself, exported live (stored segment lines
+                       verbatim, NDJSON) with its manifest and the
+                       standalone verifier, so anyone can
+                       recompute the replay verdict and terminal
+                       anchor locally without trusting this
+                       server -- forwarded to the sibling
+                       chain-export service on 127.0.0.1:8799.
+                       The public /.well-known/x402 additionally
+                       names the export, manifest and verifier
+                       URLs (appended at this surface; the
+                       endpoint document itself is unchanged).
     POST /router/register, GET /router/catalog,
     GET  /router/provenance, GET /router/quote,
     POST /router/route, GET /router/discovery/resources,
@@ -84,6 +105,15 @@ UPSTREAM_PORT = int(os.environ.get("ME_UPSTREAM_PORT", "8794"))
 # /router/replay stays localhost-only.
 ROUTER_UPSTREAM_PORT = int(os.environ.get("ME_ROUTER_UPSTREAM_PORT",
                                           "8797"))
+# The verify-any-row page (VERIFY-PAGE-01, 2026-11-19) is a sibling
+# service on its own port; /verify and /verify/check route to it.
+VERIFY_UPSTREAM_PORT = int(os.environ.get("ME_VERIFY_UPSTREAM_PORT",
+                                          "8798"))
+# The public chain export (CHAIN-EXPORT-01, 2026-11-19) is a sibling
+# service on its own port; /chain and /chain/* route to it. It is
+# read-only and serves only the four documents in ALLOWED below.
+CHAIN_UPSTREAM_PORT = int(os.environ.get("ME_CHAIN_UPSTREAM_PORT",
+                                         "8799"))
 PORT = int(os.environ.get("ME_PROXY_PORT", "8796"))
 ALLOWED = {("GET", "/health"), ("GET", "/offer"), ("POST", "/crossing"),
            ("GET", "/crossing"), ("HEAD", "/crossing"),
@@ -97,16 +127,25 @@ ALLOWED = {("GET", "/health"), ("GET", "/offer"), ("POST", "/crossing"),
            ("POST", "/router/route"),
            ("GET", "/router/discovery/resources"),
            ("GET", "/router"), ("GET", "/router/"),
-           ("GET", "/router/openapi.json")}
+           ("GET", "/router/openapi.json"),
+           ("GET", "/verify"), ("GET", "/verify/check"),
+           ("GET", "/chain"), ("GET", "/chain/manifest.json"),
+           ("GET", "/chain/export.ndjson"),
+           ("GET", "/chain/verifier.py")}
 # GET routes whose query string is part of their form (a ?format=
 # twin); every other route keeps the exact-match rule, query
 # included. PAGE_ROUTES additionally negotiate their own
 # Content-Type (HTML / markdown), passed through verbatim below.
 QUERY_ROUTES = {"/inspect", "/frozen-test", "/conformance",
                 "/router/catalog", "/router/provenance",
-                "/router/quote", "/router/discovery/resources"}
+                "/router/quote", "/router/discovery/resources",
+                "/verify/check", "/chain/export.ndjson"}
 PAGE_ROUTES = {"/inspect", "/", "/frozen-test", "/conformance",
-               "/compare"}
+               "/compare", "/verify"}
+# Routes whose upstream Content-Type is part of their form (the
+# NDJSON export, the verifier script) and is passed through
+# verbatim, like the PAGE_ROUTES negotiation above.
+PASSTHROUGH_CT_ROUTES = {"/chain/export.ndjson", "/chain/verifier.py"}
 MAX_BODY = 64 * 1024
 RATE_PER_MIN = 30
 RATE_BURST = 10
@@ -197,6 +236,28 @@ def _project_offer(offer):
     return out
 
 
+def _write_all(wfile, data):
+    """Write ALL of data to the client. This handler's sockets
+    carry a timeout, and a single write() on a timeout socket may
+    accept fewer bytes than given and merely return the short
+    count; the previous code ignored the return value, silently
+    dropping the remainder of a large body while the forwarded
+    Content-Length still promised it — the reader then EOFs
+    mid-body (2026-11-19: a 241,350-byte crossing response was
+    delivered to the 8374 router as 177,152 bytes + EOF and
+    receipted AMBIGUOUS though the crossing had settled). Loop
+    on the unwritten remainder until every byte is handed to
+    the socket (or the write fails loudly)."""
+    view = memoryview(data)
+    while len(view):
+        n = wfile.write(view)
+        if n is None:
+            return
+        if n <= 0:
+            raise BrokenPipeError("response write made no progress")
+        view = view[n:]
+
+
 class H(BaseHTTPRequestHandler):
     server_version = "machine-economy"
     sys_version = ""
@@ -224,7 +285,7 @@ class H(BaseHTTPRequestHandler):
             self.send_header("Content-Length", str(len(b)))
             self.end_headers()
             if self.command != "HEAD":
-                self.wfile.write(b)
+                _write_all(self.wfile, b)
         except (BrokenPipeError, ConnectionResetError):
             pass
 
@@ -328,9 +389,17 @@ class H(BaseHTTPRequestHandler):
                 body = self.rfile.read(n) if n else None
         headers = {k: v for k, v in self.headers.items()
                    if k.lower() not in HOP}
-        upstream_port = ROUTER_UPSTREAM_PORT \
-            if path_only == "/router" \
-            or path_only.startswith("/router/") else UPSTREAM_PORT
+        if path_only == "/chain" \
+                or path_only.startswith("/chain/"):
+            upstream_port = CHAIN_UPSTREAM_PORT
+        elif path_only == "/verify" \
+                or path_only.startswith("/verify/"):
+            upstream_port = VERIFY_UPSTREAM_PORT
+        elif path_only == "/router" \
+                or path_only.startswith("/router/"):
+            upstream_port = ROUTER_UPSTREAM_PORT
+        else:
+            upstream_port = UPSTREAM_PORT
         conn = http.client.HTTPConnection(UPSTREAM_HOST, upstream_port,
                                           timeout=UPSTREAM_TIMEOUT)
         try:
@@ -385,6 +454,25 @@ class H(BaseHTTPRequestHandler):
                 if catalog_url not in resources:
                     resources.append(catalog_url)
                 doc["resources"] = resources
+                # Additive chain-export references (CHAIN-EXPORT-01,
+                # 2026-11-19): the receipt chain behind /crossing,
+                # exported for independent recompute. The new
+                # references are stated against the canonical HTTPS
+                # origin (the resources above still carry the
+                # endpoint's own origin, a separate known item).
+                doc["chain_export"] = {
+                    "rules": "receipt-chain-rules/1",
+                    "export_url":
+                        "https://8374.stegverse.org/chain/export.ndjson",
+                    "manifest_url":
+                        "https://8374.stegverse.org/chain/manifest.json",
+                    "verifier_url":
+                        "https://8374.stegverse.org/chain/verifier.py",
+                    "note": ("the production receipt chain, exported "
+                             "live; recompute the replay verdict "
+                             "and terminal anchor locally with the "
+                             "verifier -- no trust in this server "
+                             "is required")}
             except Exception:
                 self._static(502, {"error": "upstream error",
                                    "failure_code": "PUBLIC_UPSTREAM_ERROR"})
@@ -402,7 +490,8 @@ class H(BaseHTTPRequestHandler):
             # The page routes negotiate their own type (HTML page,
             # markdown document, or JSON twin); every other
             # verbatim response is JSON.
-            if path_only in PAGE_ROUTES and resp_ct:
+            if resp_ct and (path_only in PAGE_ROUTES
+                            or path_only in PASSTHROUGH_CT_ROUTES):
                 self.send_header("Content-Type", resp_ct)
             else:
                 self.send_header("Content-Type", "application/json")
@@ -415,7 +504,7 @@ class H(BaseHTTPRequestHandler):
                     self.send_header(hname, hval)
             self.end_headers()
             if data:
-                self.wfile.write(data)
+                _write_all(self.wfile, data)
         except (BrokenPipeError, ConnectionResetError):
             pass
 
