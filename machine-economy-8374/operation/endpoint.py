@@ -2526,58 +2526,260 @@ def conformance_html(doc):
     return _page_shell("0R10N15-8374 — conformance", body)
 
 
-def _reference_settlement_rows():
-    """The frozen test's reference pairs, read from the live chain
-    at page time: (pair_id, tx_hash, block, value) for the two
-    production crossings the reference result cites."""
-    want = {"PAIR-000049", "PAIR-000055"}
-    rows = {}
-    for r in read_entries(SEG_DIR):
+def _settlement_index_by_crossing(seg_dir=SEG_DIR):
+    """Settlement records resolved BY CROSSING ID: a settlement
+    record settles the crossing named in its content's
+    settles_pair_id (the record's own pair_id is the settlement
+    record's id, never the crossing's). Returns (settled, failed):
+    settled maps crossing id -> [record contents whose settlement
+    status is SETTLED and which carry a tx hash]; failed maps
+    crossing id -> [record contents with settlement status
+    FAIL_CLOSED]. Each record is written twice on the chain
+    (endpoint side + parent anchor); entries are deduplicated by
+    record pair id."""
+    settled, failed = {}, {}
+    for r in read_entries(seg_dir):
         c = r["content"]
+        sp = c.get("settles_pair_id")
+        if not sp:
+            continue
         s = c.get("settlement") or {}
-        pid = c.get("settles_pair_id") or c["pair_id"]
-        if pid in want and s.get("status") == "SETTLED" \
-                and s.get("tx_hash"):
-            rows[pid] = (c["pair_id"], s["tx_hash"],
-                         s.get("block_number"),
-                         s.get("value_micro_usdc"))
+        if s.get("status") == "SETTLED" and s.get("tx_hash"):
+            bucket = settled.setdefault(sp, [])
+        elif s.get("status") == "FAIL_CLOSED":
+            bucket = failed.setdefault(sp, [])
+        else:
+            continue
+        if all(x["pair_id"] != c["pair_id"] for x in bucket):
+            bucket.append(c)
+    return settled, failed
+
+
+_FROZEN_RECORD_NAME = "FROZEN__TEST__PAIR__FIRST__OUTAGE__01.md"
+
+
+def _frozen_record():
+    """The frozen-test record document the reference result cites,
+    read at page time: (present, battery_8_of_8_recorded,
+    nonce_refusal_recorded)."""
+    try:
+        with open(os.path.join(BASE, _FROZEN_RECORD_NAME)) as f:
+            text = f.read()
+    except OSError:
+        return False, False, False
+    return True, "8/8" in text, "PAYMENT_NONCE_REUSED" in text
+
+
+def _settlement_arc_text(pid, born, settled, failed):
+    """One crossing's settlement arc, stated from the chain:
+    born state, failed attempts, settled records."""
+    bits = []
+    if born is None:
+        return f"{pid}: no crossing record in the live chain"
+    bs = (born.get("settlement") or {}).get("status")
+    bits.append(f"{pid} born {bs} at {born.get('ts')}")
+    fl = failed.get(pid) or []
+    if fl:
+        bits.append(
+            f"{len(fl)} failed settlement attempt(s) receipted "
+            f"({', '.join(x['pair_id'] for x in fl)}, FAIL_CLOSED, "
+            "no tx hash)")
+    sl = settled.get(pid) or []
+    if sl:
+        for x in sl:
+            s = x.get("settlement") or {}
+            bits.append(
+                f"settled by {x['pair_id']}: tx "
+                f"<code>{s.get('tx_hash')}</code>, block "
+                f"{s.get('block_number')}, "
+                f"{s.get('value_micro_usdc')} micro-USDC")
+    else:
+        bits.append("no settled record in the live chain — "
+                    "settled 0 times")
+    return "; ".join(bits)
+
+
+def _compare_rows(seg_dir=SEG_DIR):
+    """The reference-result rows for /compare. EVERY label is
+    derived here, at page time, from the evidence its row cites —
+    the live chain in seg_dir and the frozen-test record document.
+    PASS only when the cited evidence supports the claim; FAIL
+    when the evidence affirmatively contradicts it; UNVERIFIED
+    when the evidence is missing. No label is a literal."""
+    entries = read_entries(seg_dir)
+    crossings = {}
+    rpc_down = []
+    for r in entries:
+        c = r["content"]
+        if (c.get("kind") or "").startswith("RECEIPT_") \
+                and c.get("index_in_pair") == 0:
+            crossings[c["pair_id"]] = c
+            s = c.get("settlement") or {}
+            if "SETTLEMENT_RPC_UNREACHABLE" in (
+                    s.get("failure_code"), s.get("reason")):
+                rpc_down.append(c["pair_id"])
+    settled, failed = _settlement_index_by_crossing(seg_dir)
+    rec_present, batt_ok, nonce_ok = _frozen_record()
+    rep = replay(seg_dir)
+    rows = []
+
+    # 1. Authorization obtained — battery authorizations per the
+    # frozen-test record; production specimens on the live chain.
+    allow = sorted(pid for pid, c in crossings.items()
+                   if c.get("disposition") == "ALLOW")
+    if allow and batt_ok:
+        rows.append((
+            "1. Authorization obtained", "PASS",
+            "Authorizations obtained for the battery runs "
+            "(frozen-test record: outage battery 8/8, run twice) "
+            f"and the production specimens — {len(allow)} ALLOW "
+            "crossings on the live chain at page time (e.g. "
+            f"{', '.join(allow[:3])}) (record + live chain)"))
+    else:
+        miss = []
+        if not allow:
+            miss.append("no ALLOW crossing on the live chain")
+        if not batt_ok:
+            miss.append("the frozen-test record does not record "
+                        "the battery result")
+        rows.append((
+            "1. Authorization obtained", "UNVERIFIED",
+            "Cited evidence incomplete at page time: "
+            + "; ".join(miss)))
+
+    # 2. Network cut — the production chain receipts the cut
+    # directly: crossings born with SETTLEMENT_RPC_UNREACHABLE.
+    if rpc_down:
+        rows.append((
+            "2. Network cut", "PASS",
+            "Egress blackholed in the battery (RPC at an "
+            "unreachable address) (record); the production chain "
+            "receipts the cut directly — crossings born with "
+            "settlement failure code SETTLEMENT_RPC_UNREACHABLE: "
+            + ", ".join(sorted(rpc_down))
+            + " (read from the live chain at page time)"))
+    else:
+        rows.append((
+            "2. Network cut", "UNVERIFIED",
+            "No production crossing on the live chain at page "
+            "time carries settlement failure code "
+            "SETTLEMENT_RPC_UNREACHABLE; the battery blackhole "
+            "rests on the frozen-test record alone"))
+
+    # 3. Crossing presented offline — the cited production
+    # crossings must exist and have been born PENDING.
+    cited3 = ("PAIR-000049", "PAIR-000054")
+    born_bits, label3 = [], "PASS"
+    for pid in cited3:
+        born = crossings.get(pid)
+        if born is None:
+            born_bits.append(f"{pid}: no crossing record in the "
+                             "live chain at page time")
+            label3 = "UNVERIFIED"
+            continue
+        bs = (born.get("settlement") or {}).get("status")
+        born_bits.append(f"{pid} born {bs} at {born.get('ts')}")
+        if bs != "PENDING":
+            label3 = "FAIL"
+    rows.append((
+        "3. Crossing presented offline", label3,
+        "Crossing completed offline; pair written PENDING — "
+        "battery crossings ALLOW (record), and on the production "
+        "pair-first path: " + "; ".join(born_bits)
+        + " (live chain)"))
+
+    # 4. Same authorization re-presented offline — the nonce
+    # refusal is battery evidence; it stands on the frozen-test
+    # record, and the row says so.
+    if nonce_ok:
+        rows.append((
+            "4. Same authorization re-presented offline", "PASS",
+            "Refused locally from the chain-derived nonce "
+            "registry: 422 PAYMENT_NONCE_REUSED, no network read "
+            "— battery evidence, recorded in the frozen-test "
+            "record (the production chain's own refusal pairs are "
+            "value-mismatch refusals, not nonce re-presentations) "
+            "(record)"))
+    else:
+        rows.append((
+            "4. Same authorization re-presented offline",
+            "UNVERIFIED",
+            "The frozen-test record does not record a "
+            "PAYMENT_NONCE_REUSED refusal at page time; no "
+            "production-chain nonce refusal is cited"))
+
+    # 5. Network restored — settlement. The claim is exactly-once
+    # settlement of the reference crossings whose arcs the chain
+    # supports: PAIR-000045 (born into the RPC-unreachable
+    # window, failed attempts receipted, then settled) and
+    # PAIR-000054 (born PENDING, settled by PAIR-000055).
+    # PAIR-000049 — cited as settled in the frozen-test record —
+    # is reported from the chain, not from the record: at page
+    # time it has NO settled record, and this row does not claim
+    # it settled.
+    claimed5 = ("PAIR-000045", "PAIR-000054")
+    label5, arc_bits = "PASS", []
+    for pid in claimed5:
+        born = crossings.get(pid)
+        arc_bits.append(_settlement_arc_text(pid, born, settled,
+                                             failed))
+        if born is None:
+            label5 = "UNVERIFIED"
+        elif len(settled.get(pid) or []) != 1:
+            label5 = "FAIL"  # settles zero times or more than once
+    arc49 = _settlement_arc_text("PAIR-000049",
+                                 crossings.get("PAIR-000049"),
+                                 settled, failed)
+    preface5 = "Settled exactly once: " if label5 == "PASS" \
+        else "Exactly-once settlement not established: "
+    if settled.get("PAIR-000049"):
+        tail49 = (" — reported from the live chain at page "
+                  "time, as is every figure on this row")
+    else:
+        tail49 = (" — the record document's settled claim for "
+                  "PAIR-000049 is not supported by the live "
+                  "chain, and this page follows the chain (all "
+                  "read live at page time)")
+    rows.append((
+        "5. Network restored — settlement", label5,
+        preface5 + "; ".join(arc_bits)
+        + ". Disclosed against the frozen-test record: " + arc49
+        + tail49))
+
+    # 5b. Full record replay/recompute — derived from a replay
+    # computed at page time.
+    verdict = rep.get("verdict")
+    if verdict == "MATCH" and (rep.get("pairs") or 0) > 0:
+        rows.append((
+            "5b. Full record replay/recompute", "PASS",
+            f"Replay MATCH at page time including the outage "
+            f"pairs: {rep.get('pairs')} pairs, "
+            f"{rep.get('entries')} entries, terminal anchor "
+            f"<code>{rep.get('terminal_anchor')}</code> — verify "
+            "live at <a href='/inspect'>/inspect</a>"))
+    elif verdict == "MATCH":
+        rows.append((
+            "5b. Full record replay/recompute", "UNVERIFIED",
+            "Replay computed at page time covers 0 pairs — no "
+            "record to verify"))
+    elif verdict == "MATCH_WITH_TORN_TAIL":
+        rows.append((
+            "5b. Full record replay/recompute", "UNVERIFIED",
+            f"Replay at page time: MATCH_WITH_TORN_TAIL "
+            f"({rep.get('pairs')} pairs; torn tail "
+            f"{rep.get('torn_tail')}) — verified up to the last "
+            "complete entry, reported, not silently passed"))
+    else:
+        rows.append((
+            "5b. Full record replay/recompute", "FAIL",
+            f"Replay at page time: {verdict} "
+            f"({len(rep.get('problems') or [])} problem(s) "
+            "reported by the recompute)"))
     return rows
 
 
 def compare_html():
-    ref = _reference_settlement_rows()
-    ev = []
-    for pid in ("PAIR-000049", "PAIR-000055"):
-        if pid in ref:
-            sp, tx, blk, val = ref[pid]
-            ev.append(f"{pid} settled by {sp}: tx <code>{tx}</code>"
-                      f", block {blk}, {val} micro-USDC (read from "
-                      "the live chain at page time)")
-        else:
-            ev.append(f"{pid}: settlement record not found in the "
-                      "live chain at page time")
-    ref_rows = [
-        ("1. Authorization obtained", "PASS",
-         "Authorizations obtained for the battery runs and the "
-         "production specimens (record)"),
-        ("2. Network cut", "PASS",
-         "Egress blackholed in the battery (RPC at an unreachable "
-         "address); production transport windows receipted as "
-         "SETTLEMENT_RPC_UNREACHABLE (record)"),
-        ("3. Crossing presented offline", "PASS",
-         "Crossing completed offline; pair written PENDING — "
-         "battery crossings ALLOW, and production PAIR-000049 and "
-         "PAIR-000054 born PENDING on the pair-first path "
-         "(record)"),
-        ("4. Same authorization re-presented offline", "PASS",
-         "Refused locally from the chain-derived nonce registry: "
-         "422 PAYMENT_NONCE_REUSED, no network read (record)"),
-        ("5. Network restored — settlement", "PASS",
-         "Settled exactly once: " + "; ".join(ev)),
-        ("5b. Full record replay/recompute", "PASS",
-         "Replay MATCH including the outage pairs — verify live "
-         "at <a href='/inspect'>/inspect</a>"),
-    ]
+    ref_rows = _compare_rows()
     ref_html = "".join(
         f"<tr><td>{_e(a)}</td><td>{_e(b)}</td><td>{c}</td></tr>"
         for a, b, c in ref_rows)
@@ -2606,9 +2808,13 @@ def compare_html():
         "reconnection scores as a Step 4 FAIL.</p>"
         "<h2>Reference result — 0R10N15-8374 (production)</h2>"
         f"<p>Record {PAGES_RECORD_DATE}: outage battery 8/8, run "
-        "twice, plus the production pair-first crossings. The "
-        "Step 5 settlement evidence below is read from the live "
-        "chain at page time.</p>"
+        "twice, plus the production pair-first crossings. Every "
+        "result label below is derived at page time from the "
+        "evidence its row cites — the live chain and the "
+        "frozen-test record: a row whose cited evidence is "
+        "missing prints UNVERIFIED, and a row whose evidence "
+        "contradicts the claim prints FAIL. No label is a "
+        "literal.</p>"
         "<table border='1'><tr><th>step</th><th>result</th>"
         f"<th>evidence</th></tr>{ref_html}</table>"
         "<h2>Report yours</h2>"
