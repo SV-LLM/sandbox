@@ -88,6 +88,9 @@ ENDPOINT_LOCAL = os.environ.get("VERIFY_ENDPOINT_LOCAL",
                                 "http://127.0.0.1:8794").rstrip("/")
 ROUTER_LOCAL = os.environ.get("VERIFY_ROUTER_LOCAL",
                               "http://127.0.0.1:8797").rstrip("/")
+CHAIN_EXPORT_LOCAL = os.environ.get(
+    "VERIFY_CHAIN_EXPORT_LOCAL",
+    "http://127.0.0.1:8799").rstrip("/")
 SML_FEED = os.environ.get(
     "VERIFY_SML_FEED",
     "https://scriptmasterlabs.com/x402-directory.json?limit=100&offset=0")
@@ -749,6 +752,43 @@ def check_own(url):
             f"{prov_block.get('pairs')} pairs, replay verdict "
             f"{prov_block.get('replay_verdict')}, status "
             f"{prov_block.get('status')}")
+    # public chain export (CHAIN-EXPORT-01): the verdict above no
+    # longer has to be trusted -- the chain itself is published and
+    # anyone can recompute it from the export with the standalone
+    # verifier. Read the manifest live from the local surface.
+    export_manifest = fetch_local(
+        CHAIN_EXPORT_LOCAL + "/chain/manifest.json").json() or {}
+    checked.append({
+        "location": f"{OWN_ORIGIN}/chain/manifest.json",
+        "result": "public chain export manifest read live from "
+                  "the origin's local surface"})
+    chain_export = None
+    if export_manifest.get("terminal_anchor"):
+        vpin = (export_manifest.get("verifier") or {})
+        evidence.append(
+            "public chain export: "
+            f"{export_manifest.get('entries')} entries / "
+            f"{export_manifest.get('pairs')} pairs published at "
+            f"{OWN_ORIGIN}/chain/export.ndjson (stored lines "
+            "verbatim); standalone verifier at "
+            f"{OWN_ORIGIN}/chain/verifier.py (SHA-256 "
+            f"{str(vpin.get('sha256'))[:16]}... pinned in the "
+            "manifest) -- recompute this verdict from the export "
+            "without trusting the server")
+        chain_export = {
+            "export_url": f"{OWN_ORIGIN}/chain/export.ndjson",
+            "manifest_url": f"{OWN_ORIGIN}/chain/manifest.json",
+            "verifier_url": f"{OWN_ORIGIN}/chain/verifier.py",
+            "verifier_sha256": vpin.get("sha256"),
+            "entries": export_manifest.get("entries"),
+            "pairs": export_manifest.get("pairs"),
+            "terminal_anchor":
+                export_manifest.get("terminal_anchor")}
+    else:
+        evidence.append(
+            "public chain export manifest unreachable at check "
+            "time (the replay verdict above stands on the local "
+            "surfaces)")
     proof = {"publishes_replayable_record":
              verdict_replay == "MATCH",
              "record_state": "verified" if verdict_replay == "MATCH"
@@ -758,6 +798,7 @@ def check_own(url):
                         "verdict": verdict_replay,
                         "terminal_anchor": anchor},
              "settled_pairs": settled,
+             "chain_export": chain_export,
              "evidence": evidence, "checked": checked}
     if terms:
         verdict = ("x402 resource; publishes a replayable "
