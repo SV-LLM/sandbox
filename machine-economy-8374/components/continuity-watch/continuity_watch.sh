@@ -72,11 +72,15 @@ restore_unit() { # unit-name, source-file
 }
 
 # 1. Units present + active; restore the ones the host lost.
-for pair in "endpoint:$ME_PREFIX-endpoint" "signing:$ME_PREFIX-signing" \
-            "public-proxy:$ME_PREFIX-public-proxy" "tunnel:$ME_PREFIX-tunnel" \
-            "cf-tunnel:$ME_PREFIX-cf-tunnel"; do
-  src_name="${pair%%:*}"; unit="${pair##*:}"
-  src="$ME_TREE/systemd/$unit.service"
+# The unit set is the instance's OWN declared set: the units the
+# host bootstrap rendered into $ME_TREE/systemd/ for this prefix.
+# A site that runs no tunnels declares no tunnel units, and the
+# watch does not flag doors the instance never claimed (GEN 08
+# proof finding: a fixed five-unit list failed a healthy
+# tunnel-less instance on its two absent tunnel units).
+for src in "$ME_TREE"/systemd/"$ME_PREFIX"-*.service; do
+  [ -f "$src" ] || continue
+  unit="$(basename "$src" .service)"
   if unit_missing "$unit"; then
     [ -f "$src" ] && restore_unit "$unit" "$src" || bad "unit $unit missing and no source at $src"
   fi

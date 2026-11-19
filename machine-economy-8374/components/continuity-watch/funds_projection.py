@@ -63,25 +63,45 @@ for name, addr in (("relayer (gas tank)", addrs["relayer"]),
     rows.append({"name": name, "address": addr,
                  "usdc_micro": usdc(addr), "eth_wei": eth(addr)})
 
-# instance chain settlement records
-settled = []
+# instance chain settlement records. A record counts as settled
+# when it says SETTLED, or when it says SUBMITTED (broadcast
+# accepted, receipt not yet observed by the endpoint) and its
+# transaction receipt on-chain shows status 0x1 — the GEN 08 proof
+# crossing settled in exactly that form, and a projection that
+# ignored it would report the instance's own funds as missing.
+candidates = []
 seg_dir = os.path.join(TREE, "operation", "receipts")
 for n in sorted(os.listdir(seg_dir)):
     if n.startswith("segment-") and n.endswith(".jsonl"):
         for line in open(os.path.join(seg_dir, n)):
             c = json.loads(line)["content"]
             s = c.get("settlement") or {}
-            if s.get("status") == "SETTLED" and s.get("tx_hash"):
-                settled.append(s)
-settled_out = sum(s["value_micro_usdc"] for s in settled)
+            if s.get("status") in ("SETTLED", "SUBMITTED") \
+                    and s.get("tx_hash"):
+                candidates.append(s)
+settled = []
 burned = 0
 costs = []
-for s in settled:
+_seen_tx = set()
+for s in candidates:
+    if s["tx_hash"] in _seen_tx:
+        continue
+    _seen_tx.add(s["tx_hash"])
     rcpt = call("eth_getTransactionReceipt", [s["tx_hash"]])
-    cost = int(rcpt["gasUsed"], 16) * int(rcpt["effectiveGasPrice"], 16)
+    if not rcpt or rcpt.get("status") != "0x1":
+        continue
+    settled.append(s)
+    # Base (OP-stack) charges an L1 data fee on top of the L2
+    # execution fee; the receipt carries it as l1Fee. The relayer's
+    # balance falls by both, so burned accounting must include it
+    # (GEN 08 proof: omitting it left a -2,299,750,478 wei
+    # remainder against an otherwise exact reconciliation).
+    cost = int(rcpt["gasUsed"], 16) * int(rcpt["effectiveGasPrice"], 16) \
+        + int(rcpt.get("l1Fee", "0x0"), 16)
     costs.append(cost)
     if s.get("relayer", "").lower() == addrs["relayer"].lower():
         burned += cost
+settled_out = sum(s["value_micro_usdc"] for s in settled)
 
 payer_row = rows[1]; relayer_row = rows[0]
 recon = {}
