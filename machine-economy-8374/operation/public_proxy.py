@@ -24,6 +24,22 @@ The public surface is exactly these operations:
     GET  /compare   -> test comparisons: the frozen test's
                        reference result and the open reporting
                        table for other frameworks
+    POST /router/register, GET /router/catalog,
+    GET  /router/provenance, GET /router/quote,
+    POST /router/route, GET /router/discovery/resources,
+    GET  /router, GET /router/, GET /router/openapi.json
+                    -> the 8374 router layer (ROUTER-V1, BUILD-Q-54
+                       carry 2026-11-19; the Bazaar discovery feed
+                       added the same day; the service document +
+                       OpenAPI routes added by the route-contract
+                       cure, 2026-11-19), forwarded to the sibling
+                       router service on 127.0.0.1:8797. Its operator
+                       route /router/settle-pair and /router/replay
+                       are NOT public (localhost-only, as below).
+                       The public /.well-known/x402 additionally
+                       names the router catalog URL (appended at
+                       this surface; the endpoint document itself is
+                       unchanged).
 
 Everything else -- every other path, every other method -- is refused
 here with a static 404 and never reaches the endpoint. In particular
@@ -60,6 +76,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 UPSTREAM_HOST = "127.0.0.1"
 UPSTREAM_PORT = int(os.environ.get("ME_UPSTREAM_PORT", "8794"))
+# The 8374 router layer (ROUTER-V1, carried 2026-11-19 under
+# BUILD-Q-54) is a sibling service on its own port; /router/*
+# paths route to it, everything else to the governed endpoint.
+# The router's operator route /router/settle-pair is NOT in the
+# public set (same posture as the endpoint's /settle-pair), and
+# /router/replay stays localhost-only.
+ROUTER_UPSTREAM_PORT = int(os.environ.get("ME_ROUTER_UPSTREAM_PORT",
+                                          "8797"))
 PORT = int(os.environ.get("ME_PROXY_PORT", "8796"))
 ALLOWED = {("GET", "/health"), ("GET", "/offer"), ("POST", "/crossing"),
            ("GET", "/crossing"), ("HEAD", "/crossing"),
@@ -67,12 +91,20 @@ ALLOWED = {("GET", "/health"), ("GET", "/offer"), ("POST", "/crossing"),
            ("GET", "/.well-known/402index-verify.txt"),
            ("GET", "/inspect"),
            ("GET", "/"), ("GET", "/frozen-test"),
-           ("GET", "/conformance"), ("GET", "/compare")}
+           ("GET", "/conformance"), ("GET", "/compare"),
+           ("POST", "/router/register"), ("GET", "/router/catalog"),
+           ("GET", "/router/provenance"), ("GET", "/router/quote"),
+           ("POST", "/router/route"),
+           ("GET", "/router/discovery/resources"),
+           ("GET", "/router"), ("GET", "/router/"),
+           ("GET", "/router/openapi.json")}
 # GET routes whose query string is part of their form (a ?format=
 # twin); every other route keeps the exact-match rule, query
 # included. PAGE_ROUTES additionally negotiate their own
 # Content-Type (HTML / markdown), passed through verbatim below.
-QUERY_ROUTES = {"/inspect", "/frozen-test", "/conformance"}
+QUERY_ROUTES = {"/inspect", "/frozen-test", "/conformance",
+                "/router/catalog", "/router/provenance",
+                "/router/quote", "/router/discovery/resources"}
 PAGE_ROUTES = {"/inspect", "/", "/frozen-test", "/conformance",
                "/compare"}
 MAX_BODY = 64 * 1024
@@ -296,7 +328,10 @@ class H(BaseHTTPRequestHandler):
                 body = self.rfile.read(n) if n else None
         headers = {k: v for k, v in self.headers.items()
                    if k.lower() not in HOP}
-        conn = http.client.HTTPConnection(UPSTREAM_HOST, UPSTREAM_PORT,
+        upstream_port = ROUTER_UPSTREAM_PORT \
+            if path_only == "/router" \
+            or path_only.startswith("/router/") else UPSTREAM_PORT
+        conn = http.client.HTTPConnection(UPSTREAM_HOST, upstream_port,
                                           timeout=UPSTREAM_TIMEOUT)
         try:
             conn.request(self.command, self.path, body=body,
@@ -330,6 +365,31 @@ class H(BaseHTTPRequestHandler):
                                    "failure_code": "PUBLIC_UPSTREAM_ERROR"})
                 return
             self._static(200, projected)
+            return
+        if self.path == "/.well-known/x402":
+            # Additive discovery (BUILD-Q-54 carry, 2026-11-19): the
+            # public resource list also names the router catalog.
+            # The endpoint's own document is unchanged; the router
+            # catalog URL is appended here, at the public surface,
+            # in the same projection posture as /offer above.
+            try:
+                doc = json.loads(data)
+                resources = list(doc.get("resources") or [])
+                origin = ""
+                for r in resources:
+                    if isinstance(r, str) and r.endswith("/crossing"):
+                        origin = r[: -len("/crossing")]
+                        break
+                catalog_url = (origin or "https://8374.stegverse.org") \
+                    + "/router/catalog"
+                if catalog_url not in resources:
+                    resources.append(catalog_url)
+                doc["resources"] = resources
+            except Exception:
+                self._static(502, {"error": "upstream error",
+                                   "failure_code": "PUBLIC_UPSTREAM_ERROR"})
+                return
+            self._static(200, doc)
             return
         # The caller's own response, verbatim. For HEAD the
         # upstream Content-Length is preserved (the body itself is

@@ -576,6 +576,113 @@ def production_provenance():
             "problems": problems[:5]}
 
 
+def live_provenance_block():
+    """8374's provenance as published inside the contract and
+    the discovery feed: recomputed from the production endpoint
+    chain at REQUEST time (never a stored or hardcoded count),
+    with the public URLs where anyone can recompute it."""
+    prov = production_provenance()
+    return {"identity": IDENTITY,
+            "chain": "production endpoint receipt chain (8374)",
+            "status": prov.get("status"),
+            "pairs": prov.get("pairs"),
+            "entries": prov.get("entries"),
+            "terminal_anchor": prov.get("terminal_anchor"),
+            "replay_verdict": prov.get("replay_verdict"),
+            "provenance_url": SELF_ORIGIN
+                              + "/router/provenance?origin="
+                              + SELF_ORIGIN,
+            "replay_url": SELF_ORIGIN + "/inspect",
+            "catalog_url": SELF_ORIGIN + "/router/catalog",
+            "note": "recomputed read-only from the production "
+                    "chain files at request time — the proof is "
+                    "the content, not a claim about it"}
+
+
+def latest_settled_allow_pair():
+    """The most recent production endpoint-chain pair that
+    resolved ALLOW and settled on-chain, rendered from the
+    pair's own stored fields (the endpoint-side member) — the
+    worked example's real output. Read live at request time;
+    None when no such pair exists."""
+    seg_dir = CONFIG.get("production_receipts_dir")
+    if not seg_dir or not os.path.isdir(seg_dir):
+        return None
+    pairs = {}
+    order = []
+    for n in sorted(os.listdir(seg_dir)):
+        if not (n.startswith("segment-") and n.endswith(".jsonl")):
+            continue
+        entries, _torn = _scan_segment(os.path.join(seg_dir, n))
+        for r in entries:
+            c = r["content"]
+            pid = c.get("pair_id")
+            if not pid:
+                continue
+            if pid not in pairs:
+                pairs[pid] = []
+                order.append(pid)
+            pairs[pid].append((r, c))
+    for pid in reversed(order):
+        members = pairs[pid]
+        if members[0][1].get("disposition") != "ALLOW":
+            continue
+        for r, c in members:
+            s = c.get("settlement")
+            if not (isinstance(s, dict)
+                    and s.get("status") == "SETTLED"
+                    and s.get("tx_hash")):
+                continue
+            pay = c.get("payment") or {}
+            anchor = None
+            for _r2, c2 in members:
+                if c2.get("pair_anchor"):
+                    anchor = c2["pair_anchor"]
+                    break
+            return {
+                "kind": "REAL SETTLED RECEIPT PAIR — the latest "
+                        "ALLOW pair settled on the production "
+                        "endpoint chain, read live at request "
+                        "time. This is the proof object a "
+                        "crossing issues: both sides hold it, "
+                        "and anyone can recompute the chain "
+                        "that anchors it.",
+                "pair_id": pid,
+                "pair_anchor": anchor or r["hash"],
+                "disposition": "ALLOW",
+                "recorded_at": c.get("ts"),
+                "crossing": c.get("crossing"),
+                "payment": {
+                    "from": pay.get("from"),
+                    "payTo": pay.get("payTo"),
+                    "value_micro_usdc": pay.get("value_micro_usdc"),
+                    "governance_fee_micro_usdc":
+                        pay.get("governance_fee_micro_usdc"),
+                    "settlement_charge_micro_usdc":
+                        pay.get("settlement_charge_micro_usdc"),
+                    "asset": pay.get("asset"),
+                    "network": pay.get("network"),
+                    "scheme": pay.get("scheme"),
+                    "signature_verified":
+                        pay.get("signature_verified"),
+                    "authorization_digest":
+                        pay.get("authorization_digest"),
+                    "nonce": pay.get("nonce")},
+                "settlement": {
+                    "status": s.get("status"),
+                    "tx_hash": s.get("tx_hash"),
+                    "block_number": s.get("block_number"),
+                    "mode": s.get("mode"),
+                    "relayer": s.get("relayer"),
+                    "value_micro_usdc": s.get("value_micro_usdc")},
+                "verify": {
+                    "provenance_url": SELF_ORIGIN
+                                      + "/router/provenance?origin="
+                                      + SELF_ORIGIN,
+                    "replay_url": SELF_ORIGIN + "/inspect"}}
+    return None
+
+
 # ---------------- six-field dispositions + evaluation ----------------
 def six_field(failure_code, failed_predicate, repair, retry, next_attempt,
               owning=OWNING_GOAL):
@@ -1128,18 +1235,22 @@ class AmbiguousTransport(Exception):
     body). The component doctrine: surface it, never retry."""
 
 
-def _relay(url, body, payment_header, timeout=30):
+def _relay(url, body, payment_header, timeout=30,
+           header_name="X-PAYMENT"):
     """The single paid relay attempt. Exactly ONE transport
     attempt (first proxy candidate for non-local, direct for
     local): re-presenting a single-use authorization after an
-    ambiguous failure would mask the true outcome. Returns
-    (status, headers, raw) on any completed response; raises
-    TransportError / AmbiguousTransport."""
+    ambiguous failure would mask the true outcome. The payment
+    is forwarded under the header name its envelope version
+    governs (v1: X-PAYMENT, v2: PAYMENT-SIGNATURE — the
+    endpoint's rule). Returns (status, headers, raw) on any
+    completed response; raises TransportError /
+    AmbiguousTransport."""
     data = json.dumps(body).encode() if body is not None else None
     hdrs = {"User-Agent": "8374-Router/1.0 (ROUTER-V1)",
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "X-PAYMENT": payment_header}
+            header_name: payment_header}
     proxies = [None] if _is_local(url) else \
         settle_mod._proxy_candidates()[:1]
     proxy = proxies[0] if proxies else None
@@ -1585,6 +1696,11 @@ def _self_feed_items(last_updated):
     by). A tier whose total cannot be stated whole is omitted
     rather than understated."""
     out = []
+    block = live_provenance_block()
+    provenance = {"pairs": block.get("pairs"),
+                  "terminal_anchor": block.get("terminal_anchor"),
+                  "replay_url": block.get("replay_url"),
+                  "provenance_url": block.get("provenance_url")}
     for r in self_entry_from_local_record().get("resources", []):
         terms = dict(r.get("terms") or {})
         tier = terms.get("tier")
@@ -1607,8 +1723,14 @@ def _self_feed_items(last_updated):
                 amount = None
         if amount is None:
             continue
-        out.append(_feed_item(r.get("url"), terms, amount,
-                              last_updated, bazaar=bazaar))
+        item = _feed_item(r.get("url"), terms, amount,
+                          last_updated, bazaar=bazaar)
+        # 8374's own row carries its proof as content: the live
+        # provenance of its production chain. Other sellers'
+        # items are unchanged — their provenance is theirs to
+        # publish, and absence stays absence.
+        item["metadata"] = {"provenance": provenance}
+        out.append(item)
     return out
 
 
@@ -1645,19 +1767,28 @@ def discovery_document(limit=20, offset=0):
 
 
 # ---------------- the routed crossing ----------------
-def _verify_presented(header_b64, expected_payto, expected_value,
+def _verify_presented(presented, expected_payto, expected_value,
                       asset, leg):
     """Decode + verify one presented authorization. Returns
-    (evidence, None) or (None, six_field_detail). A garbled
-    header is PAYMENT_PAYLOAD_MALFORMED (production codes)."""
-    payload = x402kit.decode_payment_header(header_b64)
+    (evidence, None) or (None, six_field_detail). The presented
+    value may be a base64 string (body field or HTTP header) or
+    the decoded JSON object itself (body field), in the x402 v1
+    or v2 envelope — the dialects the governed endpoint accepts.
+    A value that is none of those is PAYMENT_PAYLOAD_MALFORMED
+    (production codes)."""
+    payload = x402kit.coerce_payment_payload(presented)
     if payload is None:
         return None, six_field(
             "PAYMENT_PAYLOAD_MALFORMED",
-            f"the {leg} payment header is a base64-encoded x402 "
-            "payment payload object",
-            "present the X-PAYMENT payload produced by an x402 "
-            "client (base64 of the payment payload JSON)",
+            f"the {leg} payment is an x402 payment payload "
+            "(v1 or v2 envelope), presented as a base64 string "
+            "or a JSON object",
+            "present the payment payload produced by an x402 "
+            "client: base64 of the payment payload JSON (in the "
+            "route body field or the X-PAYMENT / "
+            "PAYMENT-SIGNATURE header), or the payload object "
+            "itself in the body field — see GET /router for the "
+            "worked route contract",
             "POST /router/route",
             "caller presents a valid payment authorization")
     try:
@@ -1681,12 +1812,38 @@ def _nonce_reused_detail(leg):
         "caller presents a fresh authorization")
 
 
-def do_route(body):
+def do_route(body, headers=None):
     """One routed crossing. Returns (http_status, response_dict).
     The disposition resolves FIRST, from locally-decidable
     predicates only (registry, quote, signature recovery, payee,
     value, window, nonce registry, evidence rules); only on ALLOW
-    is the pair issued and the payment relayed / settled."""
+    is the pair issued and the payment relayed / settled.
+
+    Payment presentation (the published route contract, GET
+    /router): each leg's x402 payload — v1 or v2 envelope — may
+    be presented as a base64 string or the decoded JSON object
+    in its body field (`fee_payment` for the 8374 fee leg,
+    `payment` for the buyer→seller leg), or in the X-PAYMENT /
+    PAYMENT-SIGNATURE HTTP header. A header fills the seller leg
+    first (the standard x402 presentation pays the resource);
+    when the seller leg already rides in the body, a header
+    fills the fee leg. Each leg is verified against its own
+    payee and exact amount, so a payload presented for the wrong
+    leg fails that leg's precise predicate, never a generic
+    malformed."""
+    fee_presented = body.get("fee_payment")
+    seller_presented = body.get("payment")
+    header_presented = None
+    if headers:
+        # PAYMENT-SIGNATURE (v2) governs when both headers are
+        # presented — the governed endpoint's rule.
+        header_presented = headers.get("payment-signature") \
+            or headers.get("x-payment")
+    if header_presented is not None:
+        if seller_presented is None:
+            seller_presented = header_presented
+        elif fee_presented is None:
+            fee_presented = header_presented
     counterparty = body.get("counterparty")
     seller_origin = normalize_origin(body.get("seller_origin"))
     resource = body.get("resource")
@@ -1733,9 +1890,17 @@ def do_route(body):
                 "seller registers, then the caller retries"))
         resource_entry = None
         for r in entry.get("resources", []):
-            if resource in (r.get("path"), r.get("url")):
+            if resource not in (r.get("path"), r.get("url")):
+                continue
+            # A seller may list one path at several tiers (8374's
+            # own /crossing is listed per tier): prefer the entry
+            # whose terms carry the requested tier.
+            rt = (r.get("terms") or {}).get("tier")
+            if rt is None or rt == tier:
                 resource_entry = r
                 break
+            if resource_entry is None:
+                resource_entry = r
         if resource_entry is None:
             return refuse("FAIL_CLOSED", six_field(
                 "RESOURCE_NOT_REGISTERED",
@@ -1767,9 +1932,33 @@ def do_route(body):
             total, quote = fee_total_micro(tier)
         except SettlementQuoteUnavailable:
             return refuse("FAIL_CLOSED", _quote_fail_detail())
+        # The seller leg's exact amount: the probed fixed amount
+        # where registration probed one; where the terms are
+        # live-priced instead (a governance fee whose total is
+        # completed by the live settlement charge — 8374's own
+        # declared receptor form, amount_micro_usdc null in the
+        # registry), the amount is that fee plus THIS route's
+        # settlement-charge quote, the same total the seller's
+        # own 402 challenge states at route time.
+        if terms.get("amount_micro_usdc") is not None:
+            seller_amount = int(terms["amount_micro_usdc"])
+        elif terms.get("governance_fee_micro_usdc") is not None:
+            seller_amount = int(terms["governance_fee_micro_usdc"]) \
+                + int(quote["settlement_charge_micro_usdc"])
+        else:
+            return refuse("FAIL_CLOSED", six_field(
+                "SELLER_TERMS_UNPROBED",
+                "the resource's terms state an exact amount (a "
+                "probed amount, or a governance fee the live "
+                "settlement-charge quote completes)",
+                "re-register the origin (POST /router/register) "
+                "when the seller is reachable and issuing 402 "
+                "challenges",
+                "POST /router/register, then POST /router/route",
+                "seller reachable, then the caller retries"))
         # Verify the 8374 fee leg (to the router's payTo).
         fee_ev, fee_detail = _verify_presented(
-            body.get("fee_payment"), ROUTER_PAYTO, total, X402_ASSET,
+            fee_presented, ROUTER_PAYTO, total, X402_ASSET,
             "fee")
         if fee_detail is not None:
             return refuse("FAIL_CLOSED", fee_detail)
@@ -1788,11 +1977,21 @@ def do_route(body):
         # Verify the buyer→seller leg (to the seller's probed payTo,
         # for exactly the probed amount).
         seller_ev, seller_detail = _verify_presented(
-            body.get("payment"), terms["payTo"],
-            int(terms["amount_micro_usdc"]),
+            seller_presented, terms["payTo"], seller_amount,
             terms.get("asset") or X402_ASSET, "seller")
         if seller_detail is not None:
             return refuse("FAIL_CLOSED", seller_detail)
+        # The relay re-presents the seller leg to the seller in
+        # its canonical base64 spelling, under the header name
+        # its envelope version governs.
+        seller_payload = x402kit.coerce_payment_payload(
+            seller_presented)
+        seller_header_b64 = seller_presented \
+            if isinstance(seller_presented, str) \
+            else x402kit.encode_payment_payload(seller_payload)
+        seller_header_name = "PAYMENT-SIGNATURE" \
+            if (seller_payload or {}).get("x402Version") == 2 \
+            else "X-PAYMENT"
         seller_ev.update({
             "seller_origin": seller_origin,
             "resource": resource_entry.get("url"),
@@ -1828,7 +2027,8 @@ def do_route(body):
         try:
             status, _h, raw = _relay(seller_url,
                                      body.get("resource_body") or {},
-                                     body.get("payment"), timeout=30)
+                                     seller_header_b64, timeout=30,
+                                     header_name=seller_header_name)
             seller_response = _parse_json(raw)
             if seller_response is None:
                 seller_response = {
@@ -1903,13 +2103,449 @@ def do_route(body):
                                  quote["settlement_charge_micro_usdc"],
                              "total_authorized_micro_usdc": total,
                              "seller_amount_micro_usdc":
-                                 int(terms["amount_micro_usdc"]),
+                                 seller_amount,
                              "seller_payTo": terms["payTo"]},
                 "route": route_rec, "settlement": settlement_out}
         if ambiguous_note:
             resp["outcome"] = "AMBIGUOUS"
             resp["ambiguous_outcome"] = ambiguous_note
         return 200, resp
+
+
+# ---------------- published contract ----------------
+def _example_payloads():
+    """The two payment payload shapes, decoded, with example
+    values (addresses are the live public constants where they
+    are constant; amounts are illustrative — read the live
+    quote and catalog terms)."""
+    auth = {"from": "0x<buyer address>", "to": "0x<payee address>",
+            "value": "<exact amount, micro-USDC, as a string>",
+            "validAfter": "<unix seconds>",
+            "validBefore": "<unix seconds>",
+            "nonce": "0x<32-byte hex, fresh per authorization>"}
+    v1 = {"x402Version": 1, "scheme": "exact",
+          "network": "eip155:8453",
+          "payload": {"signature": "0x<65-byte EIP-3009 signature>",
+                      "authorization": auth}}
+    v2 = {"x402Version": 2,
+          "accepted": {"scheme": "exact", "network": "eip155:8453",
+                       "amount": "<exact amount, micro-USDC>",
+                       "asset": X402_ASSET, "payTo": "0x<payee>",
+                       "maxTimeoutSeconds": 300,
+                       "extra": {"name": "USD Coin", "version": "2"}},
+          "payload": {"signature": "0x<65-byte EIP-3009 signature>",
+                      "authorization": auth}}
+    return v1, v2
+
+
+def service_document():
+    """ROUTER__SERVICE__01 — the router's published contract:
+    routes, pricing, and the complete route contract with a
+    worked example. Served at the router service root and at
+    GET /router (the public path)."""
+    v1, v2 = _example_payloads()
+    return {
+        "service": "8374-router", "router": ROUTING_NAME,
+        "identity": IDENTITY,
+        "document": "ROUTER__SERVICE__01",
+        "openapi": "GET /router/openapi.json",
+        "provenance": live_provenance_block(),
+        "routes": {
+            "GET /router":
+                "this service document (the published route "
+                "contract, with a worked example)",
+            "GET /router/openapi.json":
+                "OpenAPI 3 description of every /router/* path, "
+                "including the route contract",
+            "POST /router/register":
+                "free self-serve seller registration {origin} — "
+                "crawls /.well-known/x402 + /openapi.json, probes "
+                "live 402 terms; re-registering refreshes terms",
+            "GET /router/catalog":
+                "machine-readable catalog of registered "
+                "sellers/resources with probed terms and "
+                "provenance",
+            "GET /router/discovery/resources":
+                "Bazaar-format discovery feed (the CDP discovery "
+                "schema): every registered seller's resources "
+                "with their probed terms, generated live from "
+                "the registry — the feed aggregators ingest; "
+                "accepts ?limit= and ?offset=",
+            "GET /router/provenance?origin=":
+                "provenance for one origin (8374: replayable "
+                "chain facts, recomputed read-only)",
+            "GET /router/quote?tier=":
+                "the posted crossing price for a tier: governance "
+                "fee + live settlement charge = total_micro_usdc, "
+                "and the payTo the fee leg authorizes",
+            "POST /router/route":
+                "route one governed crossing — see route_contract",
+            "POST /router/settle-pair":
+                "operator-only (not exposed at the public "
+                "surface): force one settlement attempt per "
+                "pending leg of {pair_id}, or {sweep: true}"},
+        "pricing": {
+            "middleman": "none — no percentage skim, no listing "
+                         "fee, no proven-seller gate",
+            "tiers_micro_usdc": TIERS_MICRO,
+            "settlement_charge": "live-quoted gas (BUILD-Q-43 "
+                                 "formula), charged, never absorbed",
+            "total": "governance fee + settlement charge"},
+        "route_contract": {
+            "summary":
+                "A routed crossing carries TWO EIP-3009 "
+                "authorizations, each signed by the buyer: the "
+                "fee leg pays 8374 for the routed crossing "
+                "itself, and the seller leg pays the seller for "
+                "its resource. The disposition resolves first, "
+                "from locally-decidable predicates only; on "
+                "ALLOW the pair is issued, the seller leg is "
+                "relayed to the seller exactly once, and in "
+                "settle mode the router's relayer also submits "
+                "both authorizations on-chain. On any non-ALLOW "
+                "disposition nothing is relayed and nothing is "
+                "settled.",
+            "steps": [
+                "1. (seller, once) POST /router/register "
+                "{origin} — free; re-register any time to "
+                "refresh the probed terms.",
+                "2. Read the resource's terms in GET "
+                "/router/catalog: terms.payTo and the amount "
+                "(below).",
+                "3. GET /router/quote?tier=receipt-only (or "
+                "full-evaluation): total_micro_usdc and payTo "
+                "price the fee leg.",
+                "4. Sign both authorizations (EIP-3009 "
+                "transferWithAuthorization under the USDC domain "
+                "on Base: name 'USD Coin', version '2', chainId "
+                "8453, verifyingContract the asset), each with a "
+                "fresh single-use nonce.",
+                "5. POST /router/route with the body below."],
+            "request_fields": {
+                "counterparty": "string, required — the buyer's "
+                                "name for the crossing record",
+                "seller_origin": "string, required — the "
+                                 "registered seller origin",
+                "resource": "string, required — the resource "
+                            "path or URL from the seller's "
+                            "catalog entry",
+                "scope": "receipt-only (default) | ME-EVAL-01 "
+                         "(the full-evaluation tier; requires "
+                         "the commit-time evidence object)",
+                "settlement": "relay (default) | settle",
+                "fee_payment": "the fee leg payment payload "
+                               "(presentations below)",
+                "payment": "the seller leg payment payload "
+                           "(presentations below)",
+                "resource_body": "optional object, forwarded "
+                                 "verbatim to the seller as the "
+                                 "relayed request body (for "
+                                 "8374's /crossing it is the "
+                                 "endpoint's crossing request — "
+                                 "see its /openapi.json)",
+                "evidence": "required for scope ME-EVAL-01: the "
+                            "commit-time evidence object "
+                            "{authority, delegation, "
+                            "evidence_refs, exclusions, policy: "
+                            "ME-POLICY-01, validity_at_commit: "
+                            "true}"},
+            "quote_note":
+                "Amounts are live-quoted (45-second cache). If "
+                "a leg fails PAYMENT_VALUE_MISMATCH, the refusal "
+                "detail names the exact expected total for that "
+                "leg — re-sign that leg at the named amount and "
+                "retry promptly; the fresh quote is cached, so "
+                "the retry prices identically.",
+            "legs": {
+                "fee_leg": {
+                    "body_field": "fee_payment",
+                    "payTo": ROUTER_PAYTO,
+                    "amount": "total_micro_usdc from GET "
+                              "/router/quote for the tier "
+                              "(governance fee + live settlement "
+                              "charge)"},
+                "seller_leg": {
+                    "body_field": "payment",
+                    "payTo": "the resource's terms.payTo in GET "
+                             "/router/catalog",
+                    "amount": "the resource's "
+                              "terms.amount_micro_usdc; where "
+                              "that is null the terms are "
+                              "live-priced (8374's own /crossing): "
+                              "terms.governance_fee_micro_usdc + "
+                              "the settlement charge from the "
+                              "same GET /router/quote"}},
+            "presentations":
+                "Each leg's payload may be presented as "
+                "(a) a base64 string in its body field, "
+                "(b) the decoded JSON object in its body field, "
+                "or (c) in the X-PAYMENT (v1) or "
+                "PAYMENT-SIGNATURE (v2) HTTP header. A header "
+                "fills the seller leg first — the standard x402 "
+                "presentation pays the resource; when the seller "
+                "leg already rides in the body, a header fills "
+                "the fee leg. Both envelopes are accepted for "
+                "either leg: v1 {x402Version: 1, scheme, "
+                "network, payload:{signature, authorization}} "
+                "and v2 {x402Version: 2, accepted:{...}, "
+                "payload:{signature, authorization}}.",
+            "payload_shapes": {"v1": v1, "v2": v2},
+            "worked_example": {
+                "note": "Request amounts illustrative: read the "
+                        "live quote (fee leg total) and catalog "
+                        "terms (seller leg) at route time. The "
+                        "OUTPUT below is not illustrative — it is "
+                        "a real settled receipt pair from the "
+                        "production chain, read live at request "
+                        "time: the proof is the content.",
+                "output": latest_settled_allow_pair(),
+                "request": {
+                    "counterparty": "example-buyer",
+                    "seller_origin": "https://8374.stegverse.org",
+                    "resource": "/crossing",
+                    "scope": "receipt-only",
+                    "settlement": "settle",
+                    "fee_payment": "<base64 of the fee-leg "
+                                   "payload: to " + ROUTER_PAYTO
+                                   + ", value = quote "
+                                   "total_micro_usdc>",
+                    "payment": "<base64 of the seller-leg "
+                               "payload: to the resource's "
+                               "terms.payTo, value = the "
+                               "resource's amount>",
+                    "resource_body": {"counterparty":
+                                      "example-buyer",
+                                      "action": "evaluate",
+                                      "scope_ref": "ME-EVAL-01"}},
+                "fee_leg_payload_decoded": v1,
+                "seller_leg_payload_decoded": v1},
+            "responses": {
+                "ALLOW": "200 {disposition: ALLOW, pair_id, "
+                         "crossing:{...amounts}, route:{mode, "
+                         "delivery, seller_status, "
+                         "seller_response}, settlement:{...}}",
+                "refusal": "403 (DENY) or 422 (FAIL_CLOSED) "
+                           "{disposition, pair_id, detail: "
+                           "{failure_code, failed_predicate, "
+                           "required_evidence_or_repair, "
+                           "retry_entrypoint, next_attempt}, "
+                           "route:{delivered: false}, "
+                           "settlement:{state: NOT_SUBMITTED}} — "
+                           "a refusal is itself receipted as a "
+                           "pair on the router's chain"}},
+        "patent_pending": "U.S. Provisional Patent Application "
+                          "No. 64/198,910, filed November 14, "
+                          "2026"}
+
+
+def openapi_document():
+    """OpenAPI 3 description of the router's public surface,
+    including the route contract (the governed endpoint's
+    /openapi.json documents /crossing; this document covers
+    every /router/* path)."""
+    v1, v2 = _example_payloads()
+    auth_schema = {
+        "type": "object",
+        "required": ["from", "to", "value", "validAfter",
+                     "validBefore", "nonce"],
+        "properties": {
+            "from": {"type": "string", "description": "buyer "
+                     "address (0x, 20 bytes)"},
+            "to": {"type": "string", "description": "payee "
+                   "address — the leg's payTo"},
+            "value": {"type": "string", "description": "exact "
+                      "amount in micro-USDC"},
+            "validAfter": {"type": "string"},
+            "validBefore": {"type": "string"},
+            "nonce": {"type": "string", "description": "0x + 32 "
+                      "bytes hex; single-use"}}}
+    payload_schema = {
+        "type": "object",
+        "description": "x402 payment payload, v1 or v2 "
+                       "envelope",
+        "properties": {
+            "x402Version": {"type": "integer", "enum": [1, 2]},
+            "scheme": {"type": "string", "example": "exact"},
+            "network": {"type": "string",
+                        "example": "eip155:8453"},
+            "accepted": {"type": "object",
+                         "description": "v2 only: the accepted "
+                                        "requirements echoed "
+                                        "from the 402 challenge"},
+            "payload": {"type": "object",
+                        "properties": {
+                            "signature": {"type": "string"},
+                            "authorization": auth_schema}}}}
+    presented = {
+        "description": "the payment payload as a base64 string "
+                       "or as the decoded JSON object",
+        "anyOf": [{"type": "string"}, payload_schema]}
+    return {
+        "openapi": "3.0.3",
+        "info": {"title": "8374 Router (8374.@router)",
+                 "version": "ROUTER-V1",
+                 "description": "Relay + settle for third-party "
+                                "x402 crossings. Every routed "
+                                "call is a governed crossing: "
+                                "disposition first, dual receipt "
+                                "pairs, the posted crossing fee "
+                                "is the only take. The complete "
+                                "contract is in GET /router."},
+        "servers": [{"url": "https://8374.stegverse.org"}],
+        "paths": {
+            "/router": {"get": {"summary": "the router service "
+                                "document: routes, pricing, and "
+                                "the complete route contract "
+                                "with a worked example",
+                                "responses": {"200": {
+                                    "description": "service "
+                                                   "document"}}}},
+            "/router/openapi.json": {"get": {
+                "summary": "this OpenAPI document",
+                "responses": {"200": {"description": "OpenAPI "
+                                                     "3 JSON"}}}},
+            "/router/register": {"post": {
+                "summary": "free self-serve seller registration",
+                "requestBody": {"required": True, "content": {
+                    "application/json": {"schema": {
+                        "type": "object", "required": ["origin"],
+                        "properties": {"origin": {
+                            "type": "string",
+                            "description": "the seller's "
+                                           "http(s) origin"}}}}}},
+                "responses": {"200": {"description": "the "
+                                      "registered registry entry "
+                                      "with probed terms"}}}},
+            "/router/catalog": {"get": {
+                "summary": "registered sellers/resources with "
+                           "probed terms and provenance",
+                "responses": {"200": {"description": "catalog "
+                                                     "document"}}}},
+            "/router/discovery/resources": {"get": {
+                "summary": "Bazaar-format discovery feed (CDP "
+                           "discovery schema), generated live "
+                           "from the registry",
+                "parameters": [
+                    {"name": "limit", "in": "query",
+                     "schema": {"type": "integer", "default": 20}},
+                    {"name": "offset", "in": "query",
+                     "schema": {"type": "integer", "default": 0}}],
+                "responses": {"200": {"description": "discovery "
+                                                     "feed"}}}},
+            "/router/provenance": {"get": {
+                "summary": "provenance for one origin",
+                "parameters": [{"name": "origin", "in": "query",
+                                "required": True,
+                                "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "provenance "
+                                                     "document"}}}},
+            "/router/quote": {"get": {
+                "summary": "the posted crossing price for a "
+                           "tier: governance fee + live "
+                           "settlement charge",
+                "parameters": [{"name": "tier", "in": "query",
+                                "schema": {"type": "string",
+                                           "enum": sorted(
+                                               TIERS_MICRO),
+                                           "default":
+                                               "receipt-only"}}],
+                "responses": {"200": {"description": "quote: "
+                                      "{tier, governance_fee_"
+                                      "micro_usdc, settlement_"
+                                      "charge_micro_usdc, total_"
+                                      "micro_usdc, payTo, "
+                                      "network, asset, scheme}"}}}},
+            "/router/route": {"post": {
+                "summary": "route one governed crossing (two "
+                           "EIP-3009 legs: fee leg + seller leg)",
+                "parameters": [
+                    {"name": "X-PAYMENT", "in": "header",
+                     "required": False,
+                     "description": "a payment payload (v1 "
+                                    "envelope, base64) presented "
+                                    "by header; fills the seller "
+                                    "leg first, else the fee leg",
+                     "schema": {"type": "string"}},
+                    {"name": "PAYMENT-SIGNATURE", "in": "header",
+                     "required": False,
+                     "description": "a payment payload (v2 "
+                                    "envelope, base64) presented "
+                                    "by header; governs when "
+                                    "both headers are presented",
+                     "schema": {"type": "string"}}],
+                "requestBody": {"required": True, "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "required": ["counterparty",
+                                         "seller_origin",
+                                         "resource"],
+                            "properties": {
+                                "counterparty": {"type":
+                                                 "string"},
+                                "seller_origin": {"type":
+                                                  "string"},
+                                "resource": {"type": "string"},
+                                "scope": {"type": "string",
+                                          "enum": [
+                                              "receipt-only",
+                                              "ME-EVAL-01"],
+                                          "default":
+                                              "receipt-only"},
+                                "settlement": {"type": "string",
+                                               "enum": ["relay",
+                                                        "settle"],
+                                               "default":
+                                                   "relay"},
+                                "fee_payment": presented,
+                                "payment": presented,
+                                "resource_body": {"type":
+                                                  "object"},
+                                "evidence": {"type": "object"}}},
+                        "example": {
+                            "counterparty": "example-buyer",
+                            "seller_origin":
+                                "https://8374.stegverse.org",
+                            "resource": "/crossing",
+                            "scope": "receipt-only",
+                            "settlement": "settle",
+                            "fee_payment": "<base64 fee-leg "
+                                           "payload>",
+                            "payment": "<base64 seller-leg "
+                                       "payload>",
+                            "resource_body": {
+                                "counterparty": "example-buyer",
+                                "action": "evaluate",
+                                "scope_ref": "ME-EVAL-01"}}}}},
+                "responses": {
+                    "200": {"description": "ALLOW: {disposition, "
+                            "pair_id, crossing, route, "
+                            "settlement}"},
+                    "403": {"description": "DENY (receipted "
+                            "refusal pair)"},
+                    "422": {"description": "FAIL_CLOSED "
+                            "(receipted refusal pair with a "
+                            "six-field detail)"}}}},
+            "/router/settle-pair": {"post": {
+                "summary": "operator-only: NOT exposed at the "
+                           "public surface (the proxy refuses "
+                           "it); force settlement attempts for a "
+                           "pair's pending legs, or sweep",
+                "responses": {"200": {"description": "settlement "
+                                                     "attempt "
+                                                     "results"}}}},
+            "/health": {"get": {
+                "summary": "router health, chain totals, "
+                           "registry size (on the router service; "
+                           "the public /health is the endpoint's)",
+                "responses": {"200": {"description": "health "
+                                                     "document"}}}}},
+        "components": {"schemas": {
+            "PaymentPayloadV1": {"example": v1,
+                                 **payload_schema},
+            "PaymentPayloadV2": {"example": v2,
+                                 **payload_schema},
+            "Authorization": auth_schema}}}
 
 
 # ---------------- HTTP surface ----------------
@@ -1950,52 +2586,11 @@ class Handler(BaseHTTPRequestHandler):
                 "payTo": ROUTER_PAYTO, "network": X402_NETWORK,
                 "asset": X402_ASSET})
         elif p.path == "/":
-            self._send(200, {
-                "service": "8374-router", "router": ROUTING_NAME,
-                "identity": IDENTITY,
-                "document": "ROUTER__SERVICE__01",
-                "routes": {
-                    "POST /router/register":
-                        "free self-serve seller registration "
-                        "{origin} — crawls /.well-known/x402 + "
-                        "/openapi.json, probes live 402 terms",
-                    "GET /router/catalog":
-                        "machine-readable catalog of registered "
-                        "sellers/resources with probed terms and "
-                        "provenance",
-                    "GET /router/discovery/resources":
-                        "Bazaar-format discovery feed (the CDP "
-                        "discovery schema): every registered "
-                        "seller's resources with their probed "
-                        "terms, generated live from the registry "
-                        "— the feed aggregators ingest; accepts "
-                        "?limit= and ?offset=",
-                    "GET /router/provenance?origin=":
-                        "provenance for one origin (8374: replayable "
-                        "chain facts, recomputed read-only)",
-                    "GET /router/quote?tier=":
-                        "the posted crossing price for a tier: "
-                        "governance fee + live settlement charge",
-                    "POST /router/route":
-                        "route one governed crossing {seller_origin, "
-                        "resource, scope: receipt-only|ME-EVAL-01, "
-                        "settlement: relay|settle, payment, "
-                        "fee_payment, evidence?}",
-                    "POST /router/settle-pair":
-                        "force one settlement attempt per pending "
-                        "leg of {pair_id}, or {sweep: true} for all "
-                        "pending legs (pair-first eventual leg)"},
-                "pricing": {
-                    "middleman": "none — no percentage skim, no "
-                                 "listing fee, no proven-seller gate",
-                    "tiers_micro_usdc": TIERS_MICRO,
-                    "settlement_charge": "live-quoted gas "
-                                         "(BUILD-Q-43 formula), "
-                                         "charged, never absorbed",
-                    "total": "governance fee + settlement charge"},
-                "patent_pending": "U.S. Provisional Patent "
-                                  "Application No. 64/198,910, "
-                                  "filed November 14, 2026"})
+            self._send(200, service_document())
+        elif p.path in ("/router", "/router/"):
+            self._send(200, service_document())
+        elif p.path == "/router/openapi.json":
+            self._send(200, openapi_document())
         elif p.path == "/router/catalog":
             self._send(200, catalog_document())
         elif p.path == "/router/discovery/resources":
@@ -2064,7 +2659,10 @@ class Handler(BaseHTTPRequestHandler):
                                           "resource are required to "
                                           "form a crossing record"})
                 return
-            code, resp = do_route(body)
+            code, resp = do_route(body, {
+                "x-payment": self.headers.get("X-PAYMENT"),
+                "payment-signature":
+                    self.headers.get("PAYMENT-SIGNATURE")})
             self._send(code, resp)
         elif p.path == "/router/settle-pair":
             # The production POST /settle-pair pattern: force one

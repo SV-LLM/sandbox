@@ -169,17 +169,71 @@ def make_payment_header(priv, payer, to, value, valid_after, valid_before,
         "0x" + digest.hex()
 
 
+def make_payment_header_v2(priv, payer, to, value, valid_after,
+                           valid_before, nonce_bytes=None,
+                           network=NETWORK, asset=USDC_BASE,
+                           max_timeout_seconds=300):
+    """Buyer side, x402 v2 envelope (the endpoint's
+    verify_x402_payment_v2 shape, BUILD-Q-48): the client echoes
+    the challenge's accepted requirements and carries the same
+    EIP-3009 authorization core. Returns (header_b64,
+    authorization_dict, digest_hex)."""
+    nonce = (nonce_bytes or secrets.token_bytes(32)).hex()
+    auth = {"from": payer, "to": to, "value": str(value),
+            "validAfter": str(valid_after), "validBefore": str(valid_before),
+            "nonce": "0x" + nonce}
+    digest = authorization_digest(auth, asset)
+    sig = sign_digest(priv, digest)
+    payload = {"x402Version": 2,
+               "accepted": {"scheme": SCHEME, "network": network,
+                            "amount": str(value), "asset": asset,
+                            "payTo": to,
+                            "maxTimeoutSeconds": int(max_timeout_seconds),
+                            "extra": {"name": ASSET_NAME,
+                                      "version": ASSET_VERSION}},
+               "payload": {"signature": "0x" + sig.hex(),
+                           "authorization": auth}}
+    return base64.b64encode(json.dumps(payload).encode()).decode(), auth, \
+        "0x" + digest.hex()
+
+
 def decode_payment_header(header_b64):
     """Returns the decoded payload dict, or None when the presented
-    header is not a base64 JSON object at all (garbled)."""
+    header is not a base64 JSON object at all (garbled). The base64
+    envelope is decoded tolerantly — surrounding whitespace,
+    stripped padding, and the URL-safe alphabet are repaired
+    before validation — because those are transport spellings of
+    the same payload, not different payloads; the decoded content
+    is then held to the full strict verification below."""
     if not isinstance(header_b64, str) or not header_b64:
         return None
     try:
-        raw = base64.b64decode(header_b64, validate=True)
+        s = header_b64.strip().translate(
+            str.maketrans("-_", "+/"))
+        s += "=" * (-len(s) % 4)
+        raw = base64.b64decode(s, validate=True)
         obj = json.loads(raw)
     except Exception:
         return None
     return obj if isinstance(obj, dict) else None
+
+
+def coerce_payment_payload(value):
+    """A presented payment, in any accepted spelling: a base64
+    string (header or body) or the decoded JSON object itself
+    (body). Returns the payload dict, or None when the value is
+    neither (garbled)."""
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        return decode_payment_header(value)
+    return None
+
+
+def encode_payment_payload(payload):
+    """The canonical base64 spelling of a payload dict (the form
+    a seller expects in its payment header on relay)."""
+    return base64.b64encode(json.dumps(payload).encode()).decode()
 
 
 class VerifyFail(Exception):
@@ -188,6 +242,71 @@ class VerifyFail(Exception):
         self.code = code
         self.predicate = predicate
         self.repair = repair
+
+
+def normalize_payment_payload(payload, expected_payto,
+                              expected_value, asset=USDC_BASE):
+    """Envelope normalization (the endpoint's BUILD-Q-48 v2
+    handling, verify_x402_payment_v2): a v1 payload already
+    carries scheme/network at top level and passes through; a
+    v2 payload nests them in the `accepted` requirements object
+    the client echoes from the 402 challenge — that object is
+    checked against the declared requirements and the expected
+    payee/value for THIS leg, then the envelope is normalized to
+    the v1 shape so the strict core below verifies both dialects
+    identically. Raises VerifyFail with the production codes."""
+    def fail(code, predicate, repair):
+        raise VerifyFail(code, predicate, repair)
+    version = payload.get("x402Version", 1)
+    if version == 1:
+        return payload
+    if version != 2:
+        fail("PAYMENT_VERSION_UNSUPPORTED",
+             "the payment payload declares x402Version 1 or 2",
+             "present the payment in the x402 v1 envelope "
+             "(x402Version 1, X-PAYMENT) or the v2 envelope "
+             "(x402Version 2, PAYMENT-SIGNATURE)")
+    acc = payload.get("accepted")
+    if not isinstance(acc, dict):
+        fail("PAYMENT_PAYLOAD_MALFORMED",
+             "the payment payload carries the accepted payment "
+             "requirements object",
+             "echo the accepted entry from the 402 challenge's "
+             "accepts[] as `accepted`")
+    try:
+        accepted_amount = int(acc.get("amount"))
+    except (TypeError, ValueError):
+        accepted_amount = None
+    if acc.get("scheme") != SCHEME \
+            or acc.get("network") != NETWORK \
+            or (acc.get("asset") is not None
+                and str(acc["asset"]).lower() != asset.lower()) \
+            or (expected_payto is not None
+                and str(acc.get("payTo", "")).lower()
+                != expected_payto.lower()) \
+            or (expected_value is not None
+                and accepted_amount != expected_value):
+        fail("PAYMENT_REQUIREMENTS_MISMATCH",
+             "the accepted requirements are the declared "
+             "requirements for this leg (scheme exact, network "
+             "eip155:8453, asset USDC on Base, payTo the leg's "
+             "payee, amount the leg's exact amount)",
+             "accept the requirements stated in the 402 "
+             "challenge: scheme 'exact', network 'eip155:8453', "
+             f"asset {asset}, payTo {expected_payto}, amount "
+             f"{expected_value}")
+    pl = payload.get("payload")
+    if not isinstance(pl, dict):
+        fail("PAYMENT_PAYLOAD_MALFORMED",
+             "the payment payload carries payload.signature and "
+             "payload.authorization",
+             "present payload:{signature, authorization:{from,to,"
+             "value,validAfter,validBefore,nonce}}")
+    normalized = {"scheme": SCHEME, "network": NETWORK,
+                  "payload": pl}
+    if acc.get("asset") is not None:
+        normalized["asset"] = acc["asset"]
+    return normalized
 
 
 def verify_authorization(payload, expected_payto, expected_value,
@@ -210,6 +329,9 @@ def verify_authorization(payload, expected_payto, expected_value,
         fail("PAYMENT_PAYLOAD_MALFORMED",
              "the payment payload is a JSON object",
              "present the base64-encoded x402 payment payload object")
+    presented_version = payload.get("x402Version", 1)
+    payload = normalize_payment_payload(payload, expected_payto,
+                                        expected_value, asset)
     if payload.get("scheme") != SCHEME or payload.get("network") != NETWORK:
         fail("PAYMENT_REQUIREMENTS_MISMATCH",
              "the payment payload matches the declared requirements (scheme exact, network eip155:8453)",
@@ -291,6 +413,10 @@ def verify_authorization(payload, expected_payto, expected_value,
              "the EIP-3009 signature recovers to authorization.from over the authorization digest",
              "sign the EIP-712 transferWithAuthorization digest under the USDC domain (name 'USD Coin', version '2', chainId 8453, verifyingContract the asset) with the payer key")
     return {"scheme": SCHEME, "network": NETWORK, "asset": asset,
+            "x402_version": presented_version,
+            "payment_header": "PAYMENT-SIGNATURE"
+                              if presented_version == 2
+                              else "X-PAYMENT",
             "payTo": expected_payto,
             "from": auth["from"], "to": auth["to"],
             "value": str(value), "value_micro_usdc": value,

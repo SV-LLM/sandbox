@@ -104,7 +104,11 @@ class Handler(BaseHTTPRequestHandler):
         raw = self.rfile.read(n) if n else b""
         with LOCK:
             STATS["requests"] += 1
-        hdr = self.headers.get("X-PAYMENT")
+        # PAYMENT-SIGNATURE (v2) governs when both are presented
+        # — the governed endpoint's rule; x402kit verifies both
+        # envelopes.
+        hdr = self.headers.get("PAYMENT-SIGNATURE") \
+            or self.headers.get("X-PAYMENT")
         if not hdr:
             with LOCK:
                 STATS["challenges"] += 1

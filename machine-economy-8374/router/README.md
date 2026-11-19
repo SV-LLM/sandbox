@@ -87,6 +87,51 @@ pricing**:
   router's only key is a gas-only relayer key (dust ETH, no
   USDC), the production Gate 2 pattern.
 
+## Route contract (published; cured 2026-11-19)
+
+A clean-room sufficiency test found the original route path
+accepted payments **only** as two base64 payloads in JSON body
+fields — a contract published nowhere — and rejected every
+standard header-presented x402 payload as
+`PAYMENT_PAYLOAD_MALFORMED`. The cured contract, published at
+`GET /router` (service document, with a worked example) and
+`GET /router/openapi.json`:
+
+- A routed crossing carries **two** buyer-signed EIP-3009
+  authorizations: the **fee leg** (`fee_payment`: to the
+  router's payTo, exactly the `GET /router/quote` total =
+  governance fee + live settlement charge) and the **seller
+  leg** (`payment`: to the resource's catalog `terms.payTo`,
+  exactly its amount — a probed fixed amount, or, for
+  live-priced terms such as 8374's own `/crossing`, the tier
+  governance fee + the same quote's settlement charge).
+- Each leg accepts the dialects the governed endpoint
+  accepts: **x402 v1** (`{x402Version: 1, scheme, network,
+  payload:{signature, authorization}}`) and **v2**
+  (`{x402Version: 2, accepted:{...}, payload:{...}}`, with the
+  `accepted` object checked against the leg's declared
+  requirements), presented as a base64 string or the decoded
+  JSON object in its body field, **or** in the `X-PAYMENT` /
+  `PAYMENT-SIGNATURE` HTTP header. A header fills the seller
+  leg first (the standard presentation pays the resource);
+  when the seller leg already rides in the body, a header
+  fills the fee leg. Verification strictness is unchanged —
+  garbage still fails closed.
+- **The proof is the content of 8374's published row.** The
+  service document carries a live `provenance` block (pair
+  count, terminal anchor, replay verdict — recomputed from
+  the production chain at request time) and its worked
+  example's **output is a real settled receipt pair** (the
+  production chain's latest settled ALLOW pair, fields read
+  live). The discovery feed's 8374 items carry the same live
+  fields as `metadata.provenance`; other sellers' items are
+  unchanged.
+- Resource selection prefers the registry entry whose terms
+  carry the requested tier (8374 lists `/crossing` per tier),
+  and live-priced terms (`amount_micro_usdc: null`) are priced
+  from the route's own quote — previously that path evaluated
+  `int(None)` after the fee leg verified.
+
 ## Files
 
 | file | role |
@@ -102,6 +147,7 @@ pricing**:
 | `battery3_settle.py` | settle-mode route, on-chain, exact balance movement — 10 checks |
 | `battery4_failclosed.py` | garbled payment / missing evidence / replayed nonce / mid-route drop — 5 checks |
 | `battery5_discovery.py` | Bazaar discovery feed: registry→feed schema fidelity, self-entry real accepts + harvested bazaar block, freshness — 12 checks |
+| `battery6_dialects.py` | payment dialects (v1/v2 × header/body/object), v2 settle on-chain, garbage fail-closed, published contract + live provenance assertions — 12 checks |
 | `replay_router.py` | chain replay CLI (production replay.py pattern) |
 | `setup_dev.py` | generates the dev instance's throwaway relayer key + config |
 | `router_config.json` | dev config (throwaway payTo — see carry checklist) |
@@ -112,6 +158,8 @@ Battery result at build time (2026-11-19, final code):
 **28/28 checks passed** (B1 8/8, B2 5/5, B3 10/10, B4 5/5),
 including on-chain settlement of both legs with exact balance
 movement and chain replay MATCH on every battery chain.
+Route-contract cure re-run (2026-11-19): **B1–B4 28/28,
+B5 12/12, B6 12/12** on the cured code.
 
 ## Run the dev instance
 
