@@ -2398,7 +2398,11 @@ def landing_html():
         "document</li></ul>"
         "<p>Standing, per the /inspect determination: supported — "
         "functional, settled on-chain, chain integrity. Not "
-        "claimed — external demand, profitability.</p>")
+        "claimed — external demand, profitability.</p>"
+        "<p>Contact: <a href='https://www.linkedin.com/company/"
+        "stegverse/'>StegVerse on LinkedIn</a> · "
+        "<!--email_off--><a href='mailto:stegverse@stegverse.org'>"
+        "stegverse@stegverse.org</a><!--/email_off--></p>")
     return _page_shell("0R10N15-8374 — governed crossings", body)
 
 
@@ -2592,7 +2596,19 @@ def compare_html():
         "<p>External framework results on record: <strong>none "
         f"yet</strong> (as of {PAGES_RECORD_DATE}). The table is "
         "open for theirs. A result reported without the Step 4 "
-        "evidence is a claim, not a run.</p>")
+        "evidence is a claim, not a run.</p>"
+        "<h2>Submit your result</h2>"
+        "<p>If you run it: link the test page — "
+        "<a href='/frozen-test'>https://8374.stegverse.org/"
+        "frozen-test</a> — in your published results. Posting on "
+        "LinkedIn? Link StegVerse — "
+        "<a href='https://www.linkedin.com/company/stegverse/'>"
+        "https://www.linkedin.com/company/stegverse/</a>. And "
+        "send a link to your published work to "
+        "<!--email_off--><a href='mailto:stegverse@stegverse.org'>"
+        "stegverse@stegverse.org</a><!--/email_off--> — results "
+        "sent in get "
+        "added to this comparison table.</p>")
     return _page_shell("0R10N15-8374 — test comparisons", body)
 
 
