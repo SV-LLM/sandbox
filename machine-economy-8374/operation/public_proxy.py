@@ -2,11 +2,16 @@
 """Public exposure proxy for the machine-economy endpoint (BUILD-Q-19;
 hardened 2026-11-17 for public exposure ahead of public advertisement).
 
-The public surface is exactly three operations:
+The public surface is exactly these operations:
     GET  /health    -> minimal body {"status": "ok", "service": ...}
     GET  /offer     -> public-terms projection of the offer, carrying
                        the patent_pending declaration
     POST /crossing  -> forwarded; the caller receives its own pair data
+    GET  /inspect   -> the one-link inspection surface (2026-11-18):
+                       live service + chain state, on-chain
+                       settlement evidence, resolving pointers, and
+                       the compact determination block; HTML by
+                       default, JSON at /inspect?format=json
 
 Everything else -- every other path, every other method -- is refused
 here with a static 404 and never reaches the endpoint. In particular
@@ -46,7 +51,9 @@ UPSTREAM_PORT = int(os.environ.get("ME_UPSTREAM_PORT", "8794"))
 PORT = int(os.environ.get("ME_PROXY_PORT", "8796"))
 ALLOWED = {("GET", "/health"), ("GET", "/offer"), ("POST", "/crossing"),
            ("GET", "/crossing"), ("HEAD", "/crossing"),
-           ("GET", "/openapi.json"), ("GET", "/.well-known/x402")}
+           ("GET", "/openapi.json"), ("GET", "/.well-known/x402"),
+           ("GET", "/.well-known/402index-verify.txt"),
+           ("GET", "/inspect")}
 MAX_BODY = 64 * 1024
 RATE_PER_MIN = 30
 RATE_BURST = 10
@@ -211,7 +218,13 @@ class H(BaseHTTPRequestHandler):
                 return None
 
     def _handle(self):
-        if (self.command, self.path) not in ALLOWED:
+        path_only = self.path.split("?", 1)[0]
+        # /inspect is the one route whose query string is part of
+        # its form (the JSON twin at /inspect?format=json); every
+        # other route keeps the exact-match rule, query included.
+        if (self.command, self.path) not in ALLOWED \
+                and not (self.command == "GET"
+                         and path_only == "/inspect"):
             self._refuse()
             return
         body = None
@@ -270,6 +283,7 @@ class H(BaseHTTPRequestHandler):
             data = resp.read()
             status = resp.status
             resp_cl = resp.getheader("Content-Length")
+            resp_ct = resp.getheader("Content-Type")
             resp_x402 = {h: resp.getheader(h) for h in
                          ("PAYMENT-REQUIRED", "PAYMENT-RESPONSE")}
         except Exception:
@@ -303,7 +317,12 @@ class H(BaseHTTPRequestHandler):
         # PAYMENT-RESPONSE on settled crossings.
         try:
             self.send_response(status)
-            self.send_header("Content-Type", "application/json")
+            # /inspect negotiates its own type (HTML page or JSON
+            # twin); every other verbatim response is JSON.
+            if path_only == "/inspect" and resp_ct:
+                self.send_header("Content-Type", resp_ct)
+            else:
+                self.send_header("Content-Type", "application/json")
             if self.command == "HEAD" and resp_cl:
                 self.send_header("Content-Length", resp_cl)
             else:

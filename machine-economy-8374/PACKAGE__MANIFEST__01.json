@@ -11,6 +11,10 @@
   "sha256": "4fa76ee43c7351bf39c5afe677fdf32e52e198e1ad43eba314d5da1bf46766a8",
   "size": 2929
  },
+ "PAIR__FIRST__BUILD__RECORD__01.md": {
+  "sha256": "d68b22fb9d8f476fab94d7429d086a0aced2301a15911ac6b64b46e68e459f6f",
+  "size": 10352
+ },
  "README.md": {
   "sha256": "c67b3e1b0935ed6a3a54b1201a1087e753e63bcb0c0cb45435df47f3328ed8dd",
   "size": 7238
@@ -23,9 +27,13 @@
   "sha256": "5ae6dceaf89a0447065bfd7f28d5b442956317e6e79b021e74eb42c87e53fd92",
   "size": 6982
  },
+ "batteries/outage_battery.py": {
+  "sha256": "d55e208d50d3c9d65cb012f70a8144da86a4722462225e5123dee59293da5396",
+  "size": 13559
+ },
  "batteries/settlement_battery.py": {
-  "sha256": "d69cb4a128b0b04fde86ca384d4427add6ce84607c48eb404c8af86df28fb87f",
-  "size": 7088
+  "sha256": "544537212e9eea83a84b87d37a4d3d0ba940d1d29b6a3571fdec2675fc848bc1",
+  "size": 7426
  },
  "batteries/x402_battery.py": {
   "sha256": "e813ed6fb43dcd3620e012824367daffd13d14a4670a6a1aa1d2721892abfb19",
@@ -132,16 +140,16 @@
   "size": 18378
  },
  "operation/config.template.json": {
-  "sha256": "59bd26f3c928df918d7d6a7c1ccd8e09be7ae0e656c46296cacc15a02a4393d0",
-  "size": 6141
+  "sha256": "4ac19f8b023a9b298fbcf46e84cedfe86060654941df4801cd15e9a4efcb88f2",
+  "size": 6098
  },
  "operation/connect_shim.py": {
   "sha256": "d2cafed1ff3f7073735f0d71af998fd5622534e9cbe058d4da18e7900fb65aeb",
   "size": 2072
  },
  "operation/endpoint.py": {
-  "sha256": "395969e8e6936fbd70e0f6bc8fb47103aa250ca6e3e854cab51c564e0b4a0030",
-  "size": 123721
+  "sha256": "25694f55a603db23e7faf13a3ce401b465225bc08dee2450848fc0e3207a5561",
+  "size": 153968
  },
  "operation/funds.py": {
   "sha256": "274ec65f04669aeec7a67fdf7a87fef6a23e59bb3ebee6ba26a0378dd64f7a51",
@@ -156,8 +164,8 @@
   "size": 20107
  },
  "operation/public_proxy.py": {
-  "sha256": "9707caea1012dd8a03c35b51b9f4535eb1ba022f5026d9019529d698eb0407ee",
-  "size": 14144
+  "sha256": "018a844f162fa08181ad5a7f75b1dd0e89303fadae34a963ec7ea0faa9124c1c",
+  "size": 15213
  },
  "operation/relayer_setup.py": {
   "sha256": "c7cbf9076bd9d8d1c551dc92d210bcc5817f03d0eb47faf742ff1285cfe21ee9",

@@ -6,9 +6,12 @@ its own unfunded relayer) -- never the live chain. Usage:
     python3 settlement_battery.py [base_url] [instance_dir] [relayer]
 
 Cases:
- 1. verified authorization + unfunded relayer -> crossing ALLOW,
-    pair carries settlement FAIL_CLOSED / SETTLEMENT_RELAYER_UNFUNDED,
-    relayer named in the record.
+ 1. verified authorization + unfunded relayer -> crossing ALLOW;
+    pair-first (BUILD-Q-45 migration): the pair itself is born
+    with settlement_state PENDING (written before any RPC), the
+    response carries the settlement attempt record FAIL_CLOSED /
+    SETTLEMENT_RELAYER_UNFUNDED with the relayer named, and the
+    pair's state stays PENDING for the sweep.
  2. garbage signature -> PAYMENT_SIGNATURE_INVALID refusal pair with
     NO settlement record (settlement is never attempted when
     verification fails -- BUILD-Q-18 behavior unchanged).
@@ -20,8 +23,8 @@ Cases:
     payer is unfunded) proves the calldata decodes and executes.
  4. throwaway chain replays MATCH with the settlement records in it.
 """
-import json, os, sys, time, urllib.request, urllib.error
-sys.path.insert(0, sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "operation"))
+import json, sys, time, urllib.request, urllib.error
+sys.path.insert(0, sys.argv[2] if len(sys.argv) > 2 else "/tmp/me-settle")
 from x402_specimen import new_keypair, make_payment_header, USDC_BASE
 import settlement as settle_mod
 
@@ -79,14 +82,18 @@ def main():
           and srec.get("status") == "FAIL_CLOSED"
           and srec.get("failure_code") == "SETTLEMENT_RELAYER_UNFUNDED"
           and srec.get("relayer") == RELAYER
-          and pair_srec.get("failure_code")
-              == "SETTLEMENT_RELAYER_UNFUNDED"
+          and pair_srec.get("status") == "PENDING"
+          and pair_srec.get("settlement_state") == "PENDING"
+          and body.get("settlement_state") == "PENDING"
+          and body.get("settlement_pair_id") is None
           and (body.get("payment") or {}).get(
               "governance_fee_micro_usdc") == 500
           and (body.get("payment") or {}).get(
               "total_authorized_micro_usdc") == total,
           f"HTTP {code}, pair={body.get('pair_id')}, "
-          f"settlement={srec.get('failure_code')}, total={total}")
+          f"attempt={srec.get('failure_code')}, "
+          f"pair_state={pair_srec.get('settlement_state')}, "
+          f"total={total}")
 
     # 2. garbage signature -> verification failure, no settlement
     import base64 as _b64

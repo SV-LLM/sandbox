@@ -34,7 +34,21 @@ from live Base gas conditions and the live ETH/USD rate, and the
 total a payer authorizes is governance fee + settlement charge.
 If no live quote can be produced, no paid challenge is issued
 (SETTLEMENT_CHARGE_QUOTE_UNAVAILABLE) -- gas is never silently
-absorbed. Stdlib only. Binds localhost.
+absorbed. Pair-first migration (BUILD-Q-45, 2026-11-18): the
+receipt pair is written FIRST, from locally-decidable predicates
+only (signature recovery, receptor match, value, validity window,
+evidence rules, and the nonce checked against the registry the
+receipt chain itself is), with settlement_state PENDING -- before
+any settlement RPC -- so a total egress outage at crossing time no
+longer defers the crossing. Settlement is an eventual leg:
+attempted immediately when the RPC answers, swept while PENDING
+(background sweep + POST /settle-pair), and its outcome receipted
+as an appended record bound to the pair (SETTLEMENT pair on
+success, SETTLEMENT-FAILURE pair on terminal on-chain failure);
+the pair's disposition never changes. Under an outage the
+settlement charge serves its last successful quote with
+quote_stale: true; the charge leg fails closed only when no quote
+has ever been obtained. Stdlib only. Binds localhost.
 """
 import base64, hashlib, json, os, threading, time
 import urllib.error, urllib.request
@@ -320,6 +334,36 @@ class ReceiptChain:
                               "index_in_pair": 0, "side": "endpoint",
                               "recorded_by": "machine-economy-endpoint (StegVerse LLC)"})
             b = self._append({**base, "kind": "SETTLEMENT_PARENT_ANCHOR",
+                              "index_in_pair": 1, "side": "parent_anchor",
+                              "recorded_by": "machine-economy-endpoint (StegVerse LLC)",
+                              "pair_anchor": a["hash"]})
+            self.pairs += 1
+            return pair_id, [a, b]
+
+    def issue_settlement_failure_pair(self, settlement_record,
+                                      settles_pair_id):
+        """Append a SETTLEMENT-FAILURE pair (BUILD-Q-45 pair-first
+        migration): the terminal on-chain failure of an earlier
+        EVALUATION pair's settlement leg (the authorization's nonce
+        consumed elsewhere, or the payer's balance insufficient --
+        the settlement can never land). Appended, never a rewrite:
+        the settled pair's own record keeps settlement_state PENDING
+        and its disposition never changes; this pair is the terminal
+        settlement state bound to it. Structural like a SETTLEMENT
+        pair: counts as a pair, NOT as a new unit of compute, and
+        carries no 'payment' block (the nonce stands under the
+        original pair only)."""
+        with self.lock:
+            self.pair_seq += 1
+            pair_id = f"PAIR-{self.pair_seq:06d}"
+            base = {"pair_id": pair_id, "pair_class": "SETTLEMENT",
+                    "disposition": "SETTLEMENT_FAILED",
+                    "ts": now(), "settles_pair_id": settles_pair_id,
+                    "settlement": settlement_record}
+            a = self._append({**base, "kind": "SETTLEMENT_FAILURE_ENDPOINT_SIDE",
+                              "index_in_pair": 0, "side": "endpoint",
+                              "recorded_by": "machine-economy-endpoint (StegVerse LLC)"})
+            b = self._append({**base, "kind": "SETTLEMENT_FAILURE_PARENT_ANCHOR",
                               "index_in_pair": 1, "side": "parent_anchor",
                               "recorded_by": "machine-economy-endpoint (StegVerse LLC)",
                               "pair_anchor": a["hash"]})
@@ -824,10 +868,51 @@ def _eth_usd_spot():
         "ETH/USD spot read failed on every egress route: "
         + " | ".join(errors))
 
+_QUOTE_CACHE_FILE = os.path.join(BASE, "quote-cache.json")
+
+def _persist_quote(quote):
+    """Persist the last successful quote (fsync) so a restart during
+    an egress outage can still serve it as a stale quote (BUILD-Q-45
+    pair-first migration): the charge leg fails closed only when no
+    quote has EVER been obtained."""
+    try:
+        with open(_QUOTE_CACHE_FILE, "w") as f:
+            json.dump(quote, f, sort_keys=True)
+            f.flush()
+            os.fsync(f.fileno())
+    except Exception:
+        pass
+
+def _serve_stale_quote(reason):
+    """The last successful quote (memory cache first, then the
+    persisted cache), marked stale; None when no quote has ever
+    been obtained."""
+    q = None
+    with _quote_lock:
+        if _quote_cache["quote"] is not None:
+            q = dict(_quote_cache["quote"])
+    if q is None:
+        try:
+            with open(_QUOTE_CACHE_FILE) as f:
+                q = json.load(f)
+        except Exception:
+            q = None
+    if not isinstance(q, dict) \
+            or "settlement_charge_micro_usdc" not in q:
+        return None
+    q["quote_stale"] = True
+    q["stale_reason"] = str(reason)[:200]
+    q["served_stale_at_unix"] = int(time.time())
+    return q
+
 def settlement_charge_quote():
     """The current settlement-charge quote, or raise
     SettlementQuoteUnavailable. Cached for the TTL so one crossing
-    (challenge -> payment) is priced on a single quote."""
+    (challenge -> payment) is priced on a single quote. Pair-first
+    (BUILD-Q-45): when the live read fails, the LAST SUCCESSFUL
+    quote is served with quote_stale: true (and persisted across
+    restarts); the charge leg fails closed only when no quote has
+    ever been obtained."""
     now = time.time()
     with _quote_lock:
         q = _quote_cache["quote"]
@@ -846,9 +931,13 @@ def settlement_charge_quote():
         except settle_mod.RpcError:
             priority = 100000
         eth_usd = _eth_usd_spot()
-    except SettlementQuoteUnavailable:
-        raise
     except Exception as e:
+        stale = _serve_stale_quote(
+            f"live quote read failed: {type(e).__name__}: {e}")
+        if stale is not None:
+            return stale
+        if isinstance(e, SettlementQuoteUnavailable):
+            raise
         raise SettlementQuoteUnavailable(
             f"Base fee read failed: {type(e).__name__}: {e}"[:200])
     max_fee = 2 * base_fee + priority
@@ -862,6 +951,7 @@ def settlement_charge_quote():
              "max_fee_per_gas_wei": max_fee,
              "eth_usd": eth_usd,
              "quoted_at_unix": int(now),
+             "quote_stale": False,
              "quote_ttl_seconds": SETTLEMENT_QUOTE_TTL_SECONDS,
              "formula": "ceil(gas_units_basis * (2*base_fee_per_gas + "
                         "priority_fee_per_gas) * eth_usd / 1e18, "
@@ -869,6 +959,7 @@ def settlement_charge_quote():
     with _quote_lock:
         _quote_cache["at"] = now
         _quote_cache["quote"] = quote
+    _persist_quote(quote)
     return quote
 
 def crossing_total_micro(tier):
@@ -1664,6 +1755,410 @@ def journal_settlement(crossing, disposition, payment, settle_rec,
         return False
 
 
+# ---------------- pair-first settlement state (BUILD-Q-45 migration) ----
+# The pair is written FIRST, from locally-decidable predicates only,
+# with settlement_state PENDING; settlement is an eventual leg. Its
+# outcome is receipted as an APPENDED record bound to the pair (a
+# SETTLEMENT pair on success, a SETTLEMENT-FAILURE pair on terminal
+# on-chain failure) -- never a rewrite of the pair, never a silent
+# drop, and never a change to the pair's disposition. Retryable
+# failures leave the pair PENDING for the sweep. The pending set is
+# derived from the receipt chain itself (every PENDING pair stands
+# on the chain), so no second store can diverge from the record.
+SETTLEMENT_TERMINAL_CODES = {"SETTLEMENT_SIMULATION_REVERTED",
+                             "SETTLEMENT_REVERTED_ONCHAIN"}
+SWEEP_INTERVAL_SECONDS = int(SETTLE_CFG.get("sweep_interval_seconds", 60))
+_PENDING_CLAIMS = set()
+_PENDING_CLAIMS_LOCK = threading.Lock()
+
+def _claim_pending(pair_id):
+    with _PENDING_CLAIMS_LOCK:
+        if pair_id in _PENDING_CLAIMS:
+            return False
+        _PENDING_CLAIMS.add(pair_id)
+        return True
+
+def _release_pending(pair_id):
+    with _PENDING_CLAIMS_LOCK:
+        _PENDING_CLAIMS.discard(pair_id)
+
+def pending_settlement_record(payment):
+    """The settlement record a pair is born with under pair-first:
+    PENDING, not yet attempted, written before any RPC call."""
+    return {"build": "GATE-2", "mode": "self-relayer",
+            "attempted": False, "status": "PENDING",
+            "settlement_state": "PENDING",
+            "asset": payment.get("asset"), "payTo": payment.get("payTo"),
+            "value_micro_usdc": payment.get("value_micro_usdc"),
+            "nonce": payment.get("nonce"),
+            "note": "pair-first (BUILD-Q-45): this pair was written "
+                    "before any settlement submission; settlement is "
+                    "an eventual leg -- attempted immediately when "
+                    "the RPC answers, swept while PENDING, and its "
+                    "outcome is receipted as an appended settlement "
+                    "record bound to this pair"}
+
+def _confirm_terminal_onchain(payment):
+    """On-chain confirmation for a simulation revert: the revert is
+    terminal only when chain state itself says the authorization
+    can never settle -- its nonce already consumed by another
+    settlement, or the payer's balance below the authorized value.
+    An RPC's revert response alone is not chain state (a degraded
+    route can report a revert the chain does not sustain -- the
+    PAIR-000049/50 lesson, 2026-11-18: the failure pair stood while
+    the nonce was unconsumed and the simulation succeeded on a
+    direct read), so an unconfirmed revert leaves the pair
+    PENDING. Returns an evidence dict when terminal, else None --
+    including when the read itself fails: unprovable is not
+    terminal."""
+    try:
+        rpc = settle_mod.Rpc([SETTLE_CFG.get("rpc_primary"),
+                              SETTLE_CFG.get("rpc_fallback")])
+        asset = payment.get("asset")
+        payer = payment.get("from")
+        nonce = payment.get("nonce") or ""
+        nonce_hex = nonce[2:] if nonce.startswith("0x") else nonce
+        sel = settle_mod.keccak256(
+            b"authorizationState(address,bytes32)")[:4].hex()
+        data = "0x" + sel + "0" * 24 + payer[2:].lower() + nonce_hex
+        consumed = int(rpc.call("eth_call",
+                                [{"to": asset, "data": data},
+                                 "latest"]), 16)
+        bal_data = "0x70a08231" + "0" * 24 + payer[2:].lower()
+        balance = int(rpc.call("eth_call",
+                               [{"to": asset, "data": bal_data},
+                                "latest"]), 16)
+        value = int(payment.get("value_micro_usdc") or 0)
+        if consumed:
+            return {"authorization_state": "consumed",
+                    "payer_balance_micro_usdc": balance}
+        if balance < value:
+            return {"authorization_state": "unconsumed",
+                    "payer_balance_micro_usdc": balance,
+                    "authorized_value_micro_usdc": value}
+    except Exception:
+        return None
+    return None
+
+
+def _chain_settlement_index(seg_dir):
+    """(settled, failed, pending) for one chain, read from its own
+    records: settled/failed map settles_pair_id -> the settlement
+    record of the appended outcome pair; pending lists
+    (pair_id, payment) for EVALUATION pairs born PENDING with no
+    outcome pair yet. A SETTLEMENT-FAILURE pair marks its target
+    failed only when its record carries terminal_confirmed -- an
+    unconfirmed failure record does not bar a later settlement;
+    when the settlement pair lands, it is the pair's outcome."""
+    settled, failed, pending = {}, {}, []
+    for r in read_entries(seg_dir):
+        c = r["content"]
+        if c.get("index_in_pair") != 0:
+            continue
+        if c.get("pair_class") == "SETTLEMENT":
+            rec = c.get("settlement") or {}
+            target = c.get("settles_pair_id")
+            if c.get("disposition") == "SETTLEMENT_FAILED" \
+                    and rec.get("terminal_confirmed") is True:
+                failed[target] = rec
+            elif rec.get("status") in ("SETTLED", "SUBMITTED"):
+                settled[target] = rec
+        elif c.get("pair_class") == "EVALUATION":
+            s = c.get("settlement") or {}
+            if s.get("status") == "PENDING" and c.get("payment"):
+                pending.append((c["pair_id"], c["payment"]))
+    pending = [(pid, pay) for pid, pay in pending
+               if pid not in settled and pid not in failed]
+    return settled, failed, pending
+
+def attempt_and_receipt(chain, pair_id, payment):
+    """One settlement attempt for a PENDING pair, with its outcome
+    receipted on the pair's own chain. Returns
+    {settlement_state, settlement, settlement_pair_id} -- the state
+    is PENDING (retryable failure; no outcome pair appended),
+    SETTLED/SUBMITTED (SETTLEMENT pair appended), or FAILED_TERMINAL
+    (SETTLEMENT-FAILURE pair appended). Returns None when another
+    attempt for this pair is already in flight."""
+    if not _claim_pending(pair_id):
+        return None
+    try:
+        rec = settle_mod.attempt_settlement(payment, SETTLE_CFG, BASE)
+        status = rec.get("status")
+        if status in ("SETTLED", "SUBMITTED"):
+            rec = {**rec, "settlement_state": status}
+            spid, _r = chain.issue_settlement_pair(rec, pair_id)
+            return {"settlement_state": status, "settlement": rec,
+                    "settlement_pair_id": spid}
+        code = rec.get("failure_code")
+        if code == "SETTLEMENT_REVERTED_ONCHAIN":
+            # A mined status-0 receipt is chain state itself:
+            # terminal as it stands.
+            rec = {**rec, "settlement_state": "FAILED_TERMINAL",
+                   "terminal_confirmed": True,
+                   "terminal_evidence": {
+                       "basis": "mined receipt status 0x0",
+                       "tx_hash": rec.get("tx_hash")}}
+            spid, _r = chain.issue_settlement_failure_pair(rec, pair_id)
+            return {"settlement_state": "FAILED_TERMINAL",
+                    "settlement": rec, "settlement_pair_id": spid}
+        if code == "SETTLEMENT_SIMULATION_REVERTED":
+            evidence = _confirm_terminal_onchain(payment)
+            if evidence is not None:
+                rec = {**rec, "settlement_state": "FAILED_TERMINAL",
+                       "terminal_confirmed": True,
+                       "terminal_evidence": evidence}
+                spid, _r = chain.issue_settlement_failure_pair(
+                    rec, pair_id)
+                return {"settlement_state": "FAILED_TERMINAL",
+                        "settlement": rec, "settlement_pair_id": spid}
+            rec = {**rec, "terminal_check":
+                   "simulation revert NOT confirmed against on-chain "
+                   "state (nonce unconsumed and payer funded, or the "
+                   "confirmation read failed); the pair remains "
+                   "PENDING -- an RPC response is not chain state"}
+            return {"settlement_state": "PENDING", "settlement": rec,
+                    "settlement_pair_id": None}
+        return {"settlement_state": "PENDING", "settlement": rec,
+                "settlement_pair_id": None}
+    finally:
+        _release_pending(pair_id)
+
+def _all_chains():
+    out = [(CHAIN, SEG_DIR, "parent")]
+    if os.path.isdir(SUBLANE_ROOT):
+        for n in sorted(os.listdir(SUBLANE_ROOT)):
+            d = os.path.join(SUBLANE_ROOT, n)
+            if os.path.isdir(d) and sublane_valid(n):
+                lane = get_lane(n)
+                out.append((lane.chain, lane.dir, n))
+    return out
+
+def sweep_pending_settlements():
+    """The eventual leg's sweep: attempt every PENDING pair on
+    every chain (parent + sub-lanes) and receipt the outcomes.
+    Returns a per-pair summary list."""
+    results = []
+    for chain, seg_dir, name in _all_chains():
+        _s, _f, pending = _chain_settlement_index(seg_dir)
+        for pair_id, payment in pending:
+            out = attempt_and_receipt(chain, pair_id, payment)
+            if out is None:
+                results.append({"pair_id": pair_id, "chain": name,
+                                "settlement_state": "IN_FLIGHT"})
+                continue
+            results.append({"pair_id": pair_id, "chain": name,
+                            "settlement_state": out["settlement_state"],
+                            "settlement_pair_id":
+                                out["settlement_pair_id"],
+                            "failure_code":
+                                out["settlement"].get("failure_code"),
+                            "tx_hash":
+                                out["settlement"].get("tx_hash")})
+    return results
+
+def _settlement_sweeper():
+    while True:
+        time.sleep(SWEEP_INTERVAL_SECONDS)
+        try:
+            sweep_pending_settlements()
+        except Exception:
+            pass
+
+def find_pair_location(pair_id):
+    """(chain, seg_dir, members) for a pair on the parent chain or
+    any sub-lane chain; (None, None, []) when absent."""
+    members = pair_members(pair_id)
+    if members:
+        return CHAIN, SEG_DIR, members
+    if os.path.isdir(SUBLANE_ROOT):
+        for n in sorted(os.listdir(SUBLANE_ROOT)):
+            d = os.path.join(SUBLANE_ROOT, n)
+            if not (os.path.isdir(d) and sublane_valid(n)):
+                continue
+            ms = [r["content"] for r in read_entries(d)
+                  if r["content"].get("pair_id") == pair_id]
+            if ms:
+                return get_lane(n).chain, d, ms
+    return None, None, []
+
+# ---------------- /inspect: the one-link inspection surface ----------------
+# GET /inspect serves, in ONE response, everything an arbitrary
+# inspector (human or LLM) needs to determine functionality cold:
+# live service state, receipt-chain state with a live replay, the
+# on-chain settlement evidence with the payTo balance read live,
+# pointers that resolve (suite conformance proof, retention
+# verifier, lane home), and a compact determination block tying
+# each claim to the check that decides it. Pointers live in
+# inspect_pointers.json beside the endpoint (updated at carriage
+# time); the state sections are computed at request time.
+INSPECT_POINTERS_FILE = os.path.join(BASE, "inspect_pointers.json")
+_INSPECT_POINTER_DEFAULTS = {
+    "lane_home": {"repo": "SV-LLM/sandbox",
+                  "branch": "machine-economy-8374",
+                  "folder": "machine-economy-8374/"},
+    "retention_verifier": {
+        "form": "RETENTION_BUNDLE/1 verifier (verify_bundle.py), "
+                "rules receipt-chain-rules/1",
+        "kv_drive_id": "1C06p8DWlSL1DrUakGgw8tUv2qEv01Uyt"},
+    "suite": {"name": "MACHINE__ECONOMY__ENTRY__SUITE",
+              "generation": None, "manifest_sha256": None,
+              "kv_zip_drive_id": None,
+              "conformance_proof": "CONFORMANCE__PROOF__01.json "
+                                   "(in-suite member)"}}
+
+def _payto_balance_micro():
+    """8374's USDC balance at payTo, read live from Base; None when
+    no RPC answers (the inspect document then names the failure
+    rather than stating a stale balance)."""
+    data = "0x70a08231" + "0" * 24 + X402_PAYTO[2:].lower()
+    rpc = settle_mod.Rpc([SETTLE_CFG.get(
+        "rpc_primary", "https://mainnet.base.org"),
+        SETTLE_CFG.get("rpc_fallback",
+                       "https://base-rpc.publicnode.com")])
+    return int(rpc.call("eth_call",
+                        [{"to": X402_ASSET, "data": data}, "latest"]), 16)
+
+def inspect_document():
+    rep = replay()
+    settled = []
+    pending_count = 0
+    for r in read_entries(SEG_DIR):
+        c = r["content"]
+        s = c.get("settlement") or {}
+        if s.get("status") == "SETTLED" and s.get("tx_hash"):
+            settled.append({
+                "pair_id": c["pair_id"],
+                "settles_pair_id": c.get("settles_pair_id"),
+                "tx_hash": s["tx_hash"],
+                "block_number": s.get("block_number"),
+                "value_micro_usdc": s.get("value_micro_usdc")})
+        if c.get("index_in_pair") == 0 \
+                and c.get("pair_class") == "EVALUATION" \
+                and s.get("status") == "PENDING":
+            pending_count += 1
+    try:
+        balance = _payto_balance_micro()
+        balance_state = "read live from Base at inspection time"
+    except Exception as e:
+        balance = None
+        balance_state = f"unavailable: {type(e).__name__}: {e}"[:160]
+    try:
+        quote = settlement_charge_quote()
+    except SettlementQuoteUnavailable:
+        quote = {"status": SETTLEMENT_QUOTE_FAILURE}
+    pointers = dict(_INSPECT_POINTER_DEFAULTS)
+    try:
+        with open(INSPECT_POINTERS_FILE) as f:
+            stored = json.load(f)
+        for k, v in stored.items():
+            if isinstance(v, dict) and isinstance(pointers.get(k), dict):
+                pointers[k] = {**pointers[k], **v}
+            else:
+                pointers[k] = v
+    except Exception:
+        pass
+    return {
+        "document": "INSPECT__8374",
+        "service": "0R10N15-8374 — governed-crossing endpoint "
+                   "(StegVerse LLC, 8374@StegVerse.ai)",
+        "generated_at": now(),
+        "service_state": {
+            "status": "ok",
+            "offer_version": OFFER_BASE.get("version"),
+            "receptor": {"scheme": X402_SCHEME, "network": X402_NETWORK,
+                         "asset": X402_ASSET, "payTo": X402_PAYTO},
+            "tiers_micro_usdc": X402_TIERS_MICRO,
+            "settlement_charge": {
+                "basis": "governance fee + settlement charge; the "
+                         "charge is quoted live at challenge time "
+                         "from Base gas conditions (86,679 gas units "
+                         "basis) and the live ETH/USD rate; under an "
+                         "egress outage the last successful quote is "
+                         "served with quote_stale: true",
+                "live_quote": quote},
+            "settlement_grammar": "pair-first (BUILD-Q-45): the "
+                "receipt pair is written from locally-decidable "
+                "predicates before any RPC call, with "
+                "settlement_state PENDING; settlement is an eventual "
+                "leg whose outcome is receipted as an appended "
+                "record bound to the pair"},
+        "receipt_chain": {
+            "pairs": rep["pairs"], "entries": rep["entries"],
+            "replay_verdict": rep["verdict"],
+            "terminal_anchor": rep["terminal_anchor"],
+            "pairs_with_settlement_pending": pending_count},
+        "settlement_evidence": {
+            "payTo": X402_PAYTO,
+            "payTo_balance_micro_usdc": balance,
+            "payTo_balance_state": balance_state,
+            "settled_pairs": settled,
+            "spot_check": "verify any tx_hash on a public Base "
+                          "explorer or via eth_getTransactionReceipt "
+                          "on any public Base RPC"},
+        "pointers": pointers,
+        "determination": {
+            "supported": [
+                {"claim": "functional: governed crossings evaluate "
+                          "and receipt matched pairs",
+                 "check": "receipt_chain.pairs and replay_verdict "
+                          "above; POST /crossing"},
+                {"claim": "settled on-chain: crossing fees have "
+                          "moved on Base",
+                 "check": "settlement_evidence.settled_pairs "
+                          "tx_hash/block_number, spot-verifiable"},
+                {"claim": "chain integrity: the receipt chain "
+                          "recomputes end to end",
+                 "check": "replay_verdict MATCH at "
+                          "terminal_anchor above; retention bundles "
+                          "verify offline with the retention "
+                          "verifier"}],
+            "not_supported": [
+                {"claim": "external demand",
+                 "check": "every settled pair to date is an insider "
+                          "specimen; the first external crossing "
+                          "(P1) is still open"},
+                {"claim": "profitability",
+                 "check": "payTo_balance_micro_usdc above against "
+                          "operating cost; no profitability "
+                          "determination is made"}]}}
+
+def inspect_html(doc):
+    sc = doc["service_state"]
+    rc = doc["receipt_chain"]
+    se = doc["settlement_evidence"]
+    rows = "".join(
+        f"<tr><td>{s['pair_id']}</td><td>{s['tx_hash']}</td>"
+        f"<td>{s['block_number']}</td>"
+        f"<td>{s['value_micro_usdc']}</td></tr>"
+        for s in se["settled_pairs"])
+    det = "".join(
+        f"<li>SUPPORTED — {d['claim']} (check: {d['check']})</li>"
+        for d in doc["determination"]["supported"]) + "".join(
+        f"<li>NOT SUPPORTED — {d['claim']} (check: {d['check']})</li>"
+        for d in doc["determination"]["not_supported"])
+    return ("<!DOCTYPE html><html><head><meta charset='utf-8'>"
+            "<title>0R10N15-8374 — inspect</title></head><body>"
+            "<h1>0R10N15-8374 — inspection</h1>"
+            f"<p>{doc['service']} · generated {doc['generated_at']} · "
+            "<a href='/inspect?format=json'>JSON</a></p>"
+            f"<h2>Service</h2><p>status {sc['status']} · offer "
+            f"v{sc['offer_version']} · tiers "
+            f"{json.dumps(sc['tiers_micro_usdc'])} micro-USDC · "
+            f"payTo {sc['receptor']['payTo']}</p>"
+            f"<h2>Receipt chain</h2><p>{rc['pairs']} pairs · replay "
+            f"{rc['replay_verdict']} · terminal anchor "
+            f"{rc['terminal_anchor']} · settlement pending on "
+            f"{rc['pairs_with_settlement_pending']} pairs</p>"
+            f"<h2>Settlement evidence</h2><p>payTo balance: "
+            f"{se['payTo_balance_micro_usdc']} micro-USDC "
+            f"({se['payTo_balance_state']})</p>"
+            "<table border='1'><tr><th>pair</th><th>tx</th>"
+            f"<th>block</th><th>micro-USDC</th></tr>{rows}</table>"
+            f"<h2>Determination</h2><ul>{det}</ul>"
+            f"<h2>Pointers</h2><pre>"
+            f"{json.dumps(doc['pointers'], indent=1)}</pre>"
+            "</body></html>")
+
 # ---------------- HTTP surface ----------------
 class H(BaseHTTPRequestHandler):
     def log_message(self, *a):
@@ -1672,6 +2167,13 @@ class H(BaseHTTPRequestHandler):
         b = json.dumps(obj, indent=1).encode()
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(b)))
+        self.end_headers()
+        self.wfile.write(b)
+    def _text(self, code, text):
+        b = text.encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "text/plain")
         self.send_header("Content-Length", str(len(b)))
         self.end_headers()
         self.wfile.write(b)
@@ -1741,6 +2243,36 @@ class H(BaseHTTPRequestHandler):
             else:
                 self._json(200, doc)
             return
+        if _split.path == "/inspect":
+            # The one-link public inspection surface: one response
+            # carrying live service state, chain state with a live
+            # replay, on-chain settlement evidence, resolving
+            # pointers, and the compact determination block. JSON
+            # via ?format=json or an application/json Accept;
+            # otherwise the compact HTML page (whose JSON twin is
+            # the same document).
+            try:
+                doc = inspect_document()
+            except Exception as e:
+                self._json(503, {"error": "inspect unavailable",
+                                 "failure_code": "INSPECT_UNAVAILABLE",
+                                 "detail": str(e)[:200]})
+                return
+            want_json = urllib.parse.parse_qs(
+                _split.query).get("format") == ["json"] \
+                or "application/json" in (
+                    self.headers.get("Accept") or "")
+            if want_json:
+                self._json(200, doc)
+            else:
+                body = inspect_html(doc).encode()
+                self.send_response(200)
+                self.send_header("Content-Type",
+                                 "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            return
         if self.path == "/health":
             self._json(200, {"status": "ok", "service": CONFIG["service"],
                              "port": PORT, "project_id": CONFIG["project_id"],
@@ -1799,6 +2331,16 @@ class H(BaseHTTPRequestHandler):
             self._json(200, openapi_document())
         elif self.path == "/.well-known/x402":
             self._json(200, wellknown_x402())
+        elif self.path == "/.well-known/402index-verify.txt":
+            # 402 Index domain-verification file (BUILD-Q-50 entry
+            # push, 2026-11-18): serves the claim hash issued for
+            # 8374.stegverse.org; content lives in the file beside
+            # this module so the claim can rotate without a code edit.
+            try:
+                with open(os.path.join(BASE, "402index-verify.txt")) as f:
+                    self._text(200, f.read().strip())
+            except OSError:
+                self._json(404, {"error": "not found"})
         elif self.path == "/replay":
             self._json(200, manifold_replay())
         elif self.path == "/crossing":
@@ -1861,10 +2403,25 @@ class H(BaseHTTPRequestHandler):
         The authorization is read from the pair itself -- its payment
         evidence is self-contained -- and is never re-receipted as a
         payment: its nonce stands under the original pair only, and
-        the settlement consumes it on-chain."""
+        the settlement consumes it on-chain.
+
+        Pair-first (BUILD-Q-45 migration): the route is also the
+        sweep. POST {"sweep": true} attempts every PENDING pair on
+        every chain and receipts the outcomes. For a single pair,
+        the outcome is receipted only when it is terminal for now
+        (SETTLED/SUBMITTED -> SETTLEMENT pair; terminal on-chain
+        failure -> SETTLEMENT-FAILURE pair); a retryable failure
+        leaves the pair PENDING and appends nothing."""
         req = self._body()
+        if req.get("sweep") is True:
+            results = sweep_pending_settlements()
+            return self._json(200, {"sweep": True,
+                                    "attempted": len(results),
+                                    "results": results,
+                                    "totals": CHAIN.totals()})
         pair_id = req.get("pair_id")
-        members = pair_members(pair_id) if pair_id else []
+        chain, seg_dir, members = (find_pair_location(pair_id)
+                                   if pair_id else (None, None, []))
         if not members:
             return self._json(404, {"error": f"pair not found: {pair_id}"})
         first = sorted(members, key=lambda c: c.get("index_in_pair", 0))[0]
@@ -1875,20 +2432,29 @@ class H(BaseHTTPRequestHandler):
         if (first.get("settlement") or {}).get("status") == "SETTLED":
             return self._json(409, {
                 "error": f"pair {pair_id} already settled at its crossing"})
-        for r in read_entries(SEG_DIR):
-            c = r["content"]
-            if c.get("pair_class") == "SETTLEMENT" \
-                    and c.get("settles_pair_id") == pair_id \
-                    and (c.get("settlement") or {}).get("status") == "SETTLED":
-                return self._json(409, {
-                    "error": f"pair {pair_id} already settled by {c.get('pair_id')}"})
-        settle_rec = settle_mod.attempt_settlement(payment, SETTLE_CFG, BASE)
-        new_pair_id, _recs = CHAIN.issue_settlement_pair(settle_rec, pair_id)
-        self._json(200, {"pair_id": new_pair_id,
+        settled, failed, _p = _chain_settlement_index(seg_dir)
+        if pair_id in settled:
+            return self._json(409, {
+                "error": f"pair {pair_id} already settled by an appended settlement pair"})
+        if pair_id in failed:
+            return self._json(409, {
+                "error": f"pair {pair_id} settlement failed terminally "
+                         f"({failed[pair_id].get('failure_code')}); "
+                         "the failure stands receipted on the chain"})
+        out = attempt_and_receipt(chain, pair_id, payment)
+        if out is None:
+            return self._json(409, {
+                "error": f"pair {pair_id} settlement attempt already in flight"})
+        chain_name = "parent" if seg_dir == SEG_DIR else \
+            os.path.basename(seg_dir)
+        bundle = retention_bundle(out["settlement_pair_id"], seg_dir,
+                                  chain_name) \
+            if out["settlement_pair_id"] else None
+        self._json(200, {"pair_id": out["settlement_pair_id"],
                          "settles_pair_id": pair_id,
-                         "settlement": settle_rec,
-                         "retention_bundle": retention_bundle(
-                             new_pair_id, SEG_DIR, "parent")})
+                         "settlement": out["settlement"],
+                         "settlement_state": out["settlement_state"],
+                         "retention_bundle": bundle})
 
     def _issue_parent(self, kind, crossing, disp, detail, payment,
                       settle_rec):
@@ -1921,6 +2487,45 @@ class H(BaseHTTPRequestHandler):
             "required_evidence_or_repair": "endpoint chain-write repair; a settlement that reached the chain is journaled beside the segments for operator reconciliation",
             "settlement": settle_rec,
             "settlement_journaled": journaled})
+
+    def _finish_settlement(self, chain, pair_id, payment,
+                           provider_side, settle_rec):
+        """Pair-first eventual leg for a just-issued pair: attempt
+        settlement now (the RPC may or may not answer) and receipt
+        the outcome as an appended record bound to the pair.
+        Returns (response_settlement, settlement_state,
+        settlement_pair_id). Provider-side pairs are never
+        submitted: their state is NOT_SUBMITTED and the pair's
+        withheld record is the response record."""
+        if provider_side:
+            return settle_rec, "NOT_SUBMITTED", None
+        out = attempt_and_receipt(chain, pair_id, payment)
+        if out is None:
+            return settle_rec, "PENDING", None
+        return (out["settlement"], out["settlement_state"],
+                out["settlement_pair_id"])
+
+    def _v2_response(self, payment, resp_settlement, settlement_state):
+        """BUILD-Q-48: the v2 SettlementResponse for this crossing,
+        carried in the PAYMENT-RESPONSE header of whichever response
+        the crossing produces. Under pair-first, success is stated
+        only when the settlement leg has actually SETTLED by
+        response time; a PENDING leg is named, never implied."""
+        if payment.get("x402_version") != 2:
+            return
+        _ok = settlement_state == "SETTLED"
+        _sr = {"success": _ok,
+               "transaction": (resp_settlement.get("tx_hash") or "")
+               if _ok else "",
+               "network": X402_NETWORK,
+               "payer": payment.get("from"),
+               "amount": str(payment.get("value_micro_usdc"))}
+        if not _ok:
+            _sr["errorReason"] = resp_settlement.get("failure_code") \
+                or ("SETTLEMENT_PENDING"
+                    if settlement_state == "PENDING"
+                    else settlement_state)
+        self._payment_response = _b64_json(_sr)
 
     def _crossing(self):
         # BUILD-Q-45 repair: the verify -> resolve -> settle -> issue
@@ -1999,51 +2604,27 @@ class H(BaseHTTPRequestHandler):
                                           "totals": CHAIN.totals(),
                                           "identity_totals": identity_totals()}})
             return
-        # Settlement leg (Gate 2): the verified authorization is
-        # submitted for on-chain settlement exactly once, here, for a
-        # fee-bearing disposition -- so every pair that carries a
-        # verified payment also carries its settlement record. The
-        # outcome never alters the disposition resolved above.
+        # Pair-first (BUILD-Q-45 migration): the pair is written
+        # FIRST -- from the locally-decidable predicates alone
+        # (signature recovery, receptor match, value, window,
+        # evidence rules, and the nonce checked against the local
+        # registry the receipt chain itself is) -- with
+        # settlement_state PENDING, before any settlement RPC. A
+        # crossing during a total egress outage therefore returns
+        # its disposition and pair exactly as in normal operation.
+        # Settlement is attempted afterwards as an eventual leg and
+        # its outcome is receipted as an appended record bound to
+        # the pair; it never alters the disposition resolved above.
         # Provider-caused FAIL_CLOSED dispositions
-        # (PROVIDER_SIDE_FAIL_CODES) never submit settlement: the fee
-        # is not collected for the provider's own failure, and the
-        # authorization stands under the refusal pair only.
-        if disp == "FAIL_CLOSED" and \
-                detail.get("failure_code") in PROVIDER_SIDE_FAIL_CODES:
+        # (PROVIDER_SIDE_FAIL_CODES) never submit settlement: the
+        # fee is not collected for the provider's own failure, and
+        # the pair carries the withheld record instead of PENDING.
+        provider_side = disp == "FAIL_CLOSED" and \
+            detail.get("failure_code") in PROVIDER_SIDE_FAIL_CODES
+        if provider_side:
             settle_rec = settlement_withheld(payment, detail)
         else:
-            try:
-                settle_rec = settle_mod.attempt_settlement(
-                    payment, SETTLE_CFG, BASE)
-            except Exception as e:
-                settle_rec = {
-                    "build": "GATE-2", "mode": "self-relayer",
-                    "attempted": False, "status": "FAIL_CLOSED",
-                    "failure_code": "SETTLEMENT_INTERNAL",
-                    "failed_predicate": "the settlement leg returns a settlement record for every verified authorization",
-                    "required_evidence_or_repair": "endpoint repair of the settlement leg",
-                    "owning_goal": OWNING_GOAL,
-                    "error": f"{type(e).__name__}: {e}"[:200],
-                    "asset": payment.get("asset"),
-                    "payTo": payment.get("payTo"),
-                    "value_micro_usdc": payment.get("value_micro_usdc"),
-                    "nonce": payment.get("nonce")}
-        if payment.get("x402_version") == 2:
-            # BUILD-Q-48: the v2 SettlementResponse for this
-            # crossing, carried in the PAYMENT-RESPONSE header of
-            # whichever response the crossing now produces.
-            _ok = settle_rec.get("status") == "SETTLED"
-            _sr = {"success": _ok,
-                   "transaction": (settle_rec.get("tx_hash") or "")
-                   if _ok else "",
-                   "network": X402_NETWORK,
-                   "payer": payment.get("from"),
-                   "amount": str(payment.get("value_micro_usdc"))}
-            if not _ok:
-                _sr["errorReason"] = settle_rec.get("failure_code") \
-                    or settle_rec.get("status") \
-                    or "SETTLEMENT_NOT_SETTLED"
-            self._payment_response = _b64_json(_sr)
+            settle_rec = pending_settlement_record(payment)
         if sublane is not None and not sublane_valid(sublane):
             # Manifold grammar failure: FAIL_CLOSED, refusal pair on the
             # PARENT chain, nothing created for the invalid name. The
@@ -2055,9 +2636,16 @@ class H(BaseHTTPRequestHandler):
             if issued is None:
                 return
             pair_id, recs = issued
+            resp_settlement, settlement_state, settlement_pair_id = \
+                self._finish_settlement(CHAIN, pair_id, payment,
+                                        provider_side, settle_rec)
+            self._v2_response(payment, resp_settlement, settlement_state)
             self._json_crossing(422, {"disposition": "FAIL_CLOSED", "executed": False,
                              **detail,
-                             "payment": payment, "settlement": settle_rec,
+                             "payment": payment,
+                             "settlement": resp_settlement,
+                             "settlement_state": settlement_state,
+                             "settlement_pair_id": settlement_pair_id,
                              "refusal_pair_id": pair_id,
                              "refusal_record_pair": recs,
                              "retention_bundle": retention_bundle(
@@ -2073,12 +2661,20 @@ class H(BaseHTTPRequestHandler):
                 if issued is None:
                     return
                 pair_id, recs = issued
+                resp_settlement, settlement_state, settlement_pair_id = \
+                    self._finish_settlement(CHAIN, pair_id, payment,
+                                            provider_side, settle_rec)
+                self._v2_response(payment, resp_settlement,
+                                  settlement_state)
                 self._json_crossing(200, {"disposition": "ALLOW", "executed": True,
                                  "pair_id": pair_id,
                                  "receipt_pair": recs,
                                  "retention_bundle": retention_bundle(
                                      pair_id, SEG_DIR, "parent"),
-                                 "payment": payment, "settlement": settle_rec,
+                                 "payment": payment,
+                                 "settlement": resp_settlement,
+                                 "settlement_state": settlement_state,
+                                 "settlement_pair_id": settlement_pair_id,
                                  "pair_anchor_terminal": recs[1]["hash"],
                                  "metering": {"unit": "1 receipt pair = 1 unit of compute",
                                               "totals": CHAIN.totals()},
@@ -2089,9 +2685,17 @@ class H(BaseHTTPRequestHandler):
                 if issued is None:
                     return
                 pair_id, recs = issued
+                resp_settlement, settlement_state, settlement_pair_id = \
+                    self._finish_settlement(CHAIN, pair_id, payment,
+                                            provider_side, settle_rec)
+                self._v2_response(payment, resp_settlement,
+                                  settlement_state)
                 self._json_crossing(422, {"disposition": disp, "executed": False,
                                  **detail,
-                                 "payment": payment, "settlement": settle_rec,
+                                 "payment": payment,
+                                 "settlement": resp_settlement,
+                                 "settlement_state": settlement_state,
+                                 "settlement_pair_id": settlement_pair_id,
                                  "refusal_pair_id": pair_id,
                                  "refusal_record_pair": recs,
                                  "retention_bundle": retention_bundle(
@@ -2100,9 +2704,11 @@ class H(BaseHTTPRequestHandler):
                                               "totals": CHAIN.totals()}})
             return
         # Sub-lane crossing: receipts land on the sub-lane's own chain.
-        # The disposition was resolved above (BUILD-Q-45); a chain
-        # write failure here is guarded like the parent path: a
-        # SETTLED/SUBMITTED settlement is journaled, never lost.
+        # Pair-first (BUILD-Q-45 migration): the pair issues under
+        # MANIFOLD_LOCK with settlement_state PENDING; the eventual
+        # settlement leg runs after issuance, outside the lock, and
+        # receipts its outcome on the same sub-lane chain. A chain
+        # write failure at issuance is guarded like the parent path.
         crossing["sublane"] = sublane
         pair_id = None
         try:
@@ -2120,32 +2726,42 @@ class H(BaseHTTPRequestHandler):
                 sealed = None
                 if lane.open_pairs >= SEGMENT_SIZE:
                     sealed = lane.seal_open_segment()
-                body = {"disposition": disp, "executed": disp == "ALLOW",
-                        "sublane": sublane, "payment": payment, "settlement": settle_rec,
-                        "metering": {"unit": "1 receipt pair = 1 unit of compute",
-                                     "totals": lane.chain.totals(),
-                                     "identity_totals": identity_totals()},
-                        "detail": detail}
-                if kind == "RECEIPT":
-                    body.update({"pair_id": pair_id, "receipt_pair": recs,
-                                 "pair_anchor_terminal": recs[1]["hash"]})
-                else:
-                    body.update({**detail, "refusal_pair_id": pair_id,
-                                 "refusal_record_pair": recs})
-                if sealed is not None:
-                    body["segment_sealed"] = sealed
                 _seal = None
                 if sealed is not None:
                     _seal = {k: sealed[k] for k in (
                         "sublane", "segment_index", "terminal_anchor",
                         "entry_count", "pair_count", "prev_seal_digest",
                         "seal_digest")}
-                body["retention_bundle"] = retention_bundle(
+                bundle = retention_bundle(
                     pair_id, lane.dir, sublane, segment_seal=_seal)
-                self._json_crossing(200 if disp == "ALLOW" else 422, body)
+                lane_totals = lane.chain.totals()
         except Exception as e:
             self._chain_write_failure(crossing, disp, payment,
                                       settle_rec, e, pair_id=pair_id)
+            return
+        resp_settlement, settlement_state, settlement_pair_id = \
+            self._finish_settlement(lane.chain, pair_id, payment,
+                                    provider_side, settle_rec)
+        self._v2_response(payment, resp_settlement, settlement_state)
+        body = {"disposition": disp, "executed": disp == "ALLOW",
+                "sublane": sublane, "payment": payment,
+                "settlement": resp_settlement,
+                "settlement_state": settlement_state,
+                "settlement_pair_id": settlement_pair_id,
+                "metering": {"unit": "1 receipt pair = 1 unit of compute",
+                             "totals": lane_totals,
+                             "identity_totals": identity_totals()},
+                "detail": detail}
+        if kind == "RECEIPT":
+            body.update({"pair_id": pair_id, "receipt_pair": recs,
+                         "pair_anchor_terminal": recs[1]["hash"]})
+        else:
+            body.update({**detail, "refusal_pair_id": pair_id,
+                         "refusal_record_pair": recs})
+        if sealed is not None:
+            body["segment_sealed"] = sealed
+        body["retention_bundle"] = bundle
+        self._json_crossing(200 if disp == "ALLOW" else 422, body)
     def _sign(self):
         """Custody signing route (BUILD-Q-14 wiring): forwards the signing
         request to the SKAP sign-under-seal operation and returns its
@@ -2368,4 +2984,9 @@ if __name__ == "__main__":
     print(f"machine-economy-endpoint on 127.0.0.1:{PORT}, identity "
           f"{CONFIG['identity']['form']}, signing: {signing_state()}, "
           f"chain: {CHAIN.totals()}")
+    # Pair-first eventual leg (BUILD-Q-45): the background sweep
+    # retries PENDING settlements; the operator route POST
+    # /settle-pair {"sweep": true} runs the same sweep on demand.
+    threading.Thread(target=_settlement_sweeper, daemon=True,
+                     name="settlement-sweeper").start()
     ThreadingHTTPServer(("127.0.0.1", PORT), H).serve_forever()
