@@ -2021,21 +2021,26 @@ def _payto_balance_micro():
 def inspect_document():
     rep = replay()
     settled = []
-    pending_count = 0
+    seen_settled = set()
     for r in read_entries(SEG_DIR):
         c = r["content"]
         s = c.get("settlement") or {}
         if s.get("status") == "SETTLED" and s.get("tx_hash"):
+            key = (c["pair_id"], s["tx_hash"])
+            if key in seen_settled:
+                continue  # both pair members carry the record
+            seen_settled.add(key)
             settled.append({
                 "pair_id": c["pair_id"],
                 "settles_pair_id": c.get("settles_pair_id"),
                 "tx_hash": s["tx_hash"],
                 "block_number": s.get("block_number"),
                 "value_micro_usdc": s.get("value_micro_usdc")})
-        if c.get("index_in_pair") == 0 \
-                and c.get("pair_class") == "EVALUATION" \
-                and s.get("status") == "PENDING":
-            pending_count += 1
+    # Pending = born PENDING with no outcome pair yet, by the same
+    # chain index the sweep works from (a pair settled through its
+    # appended settlement pair is not pending).
+    _s, _f, _pending = _chain_settlement_index(SEG_DIR)
+    pending_count = len(_pending)
     try:
         balance = _payto_balance_micro()
         balance_state = "read live from Base at inspection time"

@@ -148,8 +148,8 @@
   "size": 2072
  },
  "operation/endpoint.py": {
-  "sha256": "25694f55a603db23e7faf13a3ce401b465225bc08dee2450848fc0e3207a5561",
-  "size": 153968
+  "sha256": "24c4db734259d4c1f5d77d37ad8480f21a2ffec618280cb9a8e85d46b6cc46ea",
+  "size": 154243
  },
  "operation/funds.py": {
   "sha256": "274ec65f04669aeec7a67fdf7a87fef6a23e59bb3ebee6ba26a0378dd64f7a51",
