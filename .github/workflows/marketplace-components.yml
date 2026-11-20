@@ -1,0 +1,19 @@
+name: Validate Marketplace source components
+on:
+  pull_request:
+    paths:
+      - 'machine-economy-8374/github-marketplace/**'
+      - '.github/workflows/marketplace-components.yml'
+  push:
+    branches: ['codex/q56-marketplace-components-20261119']
+permissions:
+  contents: read
+jobs:
+  source-components:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Offline component regressions
+        run: |
+          python3 -I -B machine-economy-8374/github-marketplace/tests/test_components.py -v
+          python3 -I -B -O machine-economy-8374/github-marketplace/tests/test_components.py -v
