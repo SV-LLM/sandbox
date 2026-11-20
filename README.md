@@ -83,3 +83,12 @@ The existing W07 continuation is `validating`, COSV `30000000021222` in the Org
 Registry; PR #47 task scope/assignment and authentic WorkerCoordinator claim/fence
 remain unresolved. This candidate does not activate Sandbox, publish the SDK
 route, modify Registry state, or authorize a merge.
+
+
+## Q58 bounded Replayability Index
+
+`machine-economy-8374/replayability-index/` (repository-root-relative) contains
+the stdlib public discovery/checker batch runner and first-edition JSON/HTML.
+Coverage and source failures are explicit; catalog claims stay distinct from
+checker observations. No payments, origin deployment or resident task is added.
+Continuation: `docs/MACHINE_ECONOMY_REPLAYABILITY_INDEX_MIRROR_HANDOFF.md`.

@@ -1,0 +1,110 @@
+[
+  {
+    "resource": "https://verdict.scriptmasterlabs.com/seal",
+    "original_verdict": "ABSENT_IN_CHECKED_LOCATIONS",
+    "spot_verdict": "ABSENT_IN_CHECKED_LOCATIONS",
+    "observation": {
+      "http_status": 200,
+      "received_at": "2026-11-20T03:23:49.221568+00:00",
+      "url": "https://8374.stegverse.org/verify/check?url=https%3A%2F%2Fverdict.scriptmasterlabs.com%2Fseal",
+      "body_sha256": "370bf9dfbf73d86793ddbdd9251b64650c7cb32b3c697b1ed38f7e0abc3e5d6b",
+      "body_bytes": 1686,
+      "retry_after": null,
+      "document": {
+        "resource": "https://verdict.scriptmasterlabs.com/seal",
+        "origin": "https://verdict.scriptmasterlabs.com",
+        "terms": {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          "payTo": "0x5BBd32e0478e49A7540EF2D760E0B0F9AA6328b2",
+          "amount": "5000",
+          "mimeType": null
+        },
+        "proof": {
+          "publishes_replayable_record": false,
+          "record_state": "none",
+          "method": "no record presented in the checked locations; nothing to recompute",
+          "evidence": [
+            "the 402 challenge carries extensions.bazaar (discovery metadata; not a transaction record)"
+          ],
+          "checked": [
+            {
+              "location": "https://verdict.scriptmasterlabs.com/seal",
+              "result": "GET answered HTTP 402"
+            },
+            {
+              "location": "https://verdict.scriptmasterlabs.com/seal",
+              "result": "402 challenge received via GET; terms recorded"
+            },
+            {
+              "location": "https://verdict.scriptmasterlabs.com/.well-known/x402",
+              "result": "HTTP 404"
+            },
+            {
+              "location": "https://verdict.scriptmasterlabs.com/openapi.json",
+              "result": "HTTP 200"
+            }
+          ],
+          "negative_result": "NOT_FOUND_IN_CHECKED_LOCATIONS",
+          "bounds": "bounds: unpaid GET and POST probes of the resource itself; the origin's /.well-known/x402 and /openapi.json; up to 3 named proof locations and up to 2 payment-manifest links followed one level; an MCP tools/list probe for MCP-shaped resources; 10 s timeouts, 512 KB response caps, at most 3 re-validated redirects per fetch. Locations outside this set were not checked."
+        },
+        "verdict": "x402 resource; no replayable transaction record found in the checked locations (NOT_FOUND_IN_CHECKED_LOCATIONS) -- the locations under 'checked' were probed within the stated bounds and none presented one; locations outside the checked set were not examined"
+      }
+    },
+    "same_verdict": true
+  },
+  {
+    "resource": "https://agora402.io/api/pay/1b52035f-4137-44c9-a1bf-eef24719e6eb",
+    "original_verdict": "ABSENT_IN_CHECKED_LOCATIONS",
+    "spot_verdict": "ABSENT_IN_CHECKED_LOCATIONS",
+    "observation": {
+      "http_status": 200,
+      "received_at": "2026-11-20T03:23:54.640524+00:00",
+      "url": "https://8374.stegverse.org/verify/check?url=https%3A%2F%2Fagora402.io%2Fapi%2Fpay%2F1b52035f-4137-44c9-a1bf-eef24719e6eb",
+      "body_sha256": "38153c0fa4030bf06261b26136a566ec15ee62b73d08a0b581b9dd39bd1c5f08",
+      "body_bytes": 1620,
+      "retry_after": null,
+      "document": {
+        "resource": "https://agora402.io/api/pay/1b52035f-4137-44c9-a1bf-eef24719e6eb",
+        "origin": "https://agora402.io",
+        "terms": {
+          "scheme": "exact",
+          "network": "base",
+          "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          "payTo": "0x3197aCdAd9575ECFD94Ab8E9b8398f329c78B2aF",
+          "amount": "20000",
+          "mimeType": "application/json"
+        },
+        "proof": {
+          "publishes_replayable_record": false,
+          "record_state": "none",
+          "method": "no record presented in the checked locations; nothing to recompute",
+          "evidence": [],
+          "checked": [
+            {
+              "location": "https://agora402.io/api/pay/1b52035f-4137-44c9-a1bf-eef24719e6eb",
+              "result": "GET answered HTTP 402"
+            },
+            {
+              "location": "https://agora402.io/api/pay/1b52035f-4137-44c9-a1bf-eef24719e6eb",
+              "result": "402 challenge received via GET; terms recorded"
+            },
+            {
+              "location": "https://agora402.io/.well-known/x402",
+              "result": "HTTP 404"
+            },
+            {
+              "location": "https://agora402.io/openapi.json",
+              "result": "HTTP 200"
+            }
+          ],
+          "negative_result": "NOT_FOUND_IN_CHECKED_LOCATIONS",
+          "bounds": "bounds: unpaid GET and POST probes of the resource itself; the origin's /.well-known/x402 and /openapi.json; up to 3 named proof locations and up to 2 payment-manifest links followed one level; an MCP tools/list probe for MCP-shaped resources; 10 s timeouts, 512 KB response caps, at most 3 re-validated redirects per fetch. Locations outside this set were not checked."
+        },
+        "verdict": "x402 resource; no replayable transaction record found in the checked locations (NOT_FOUND_IN_CHECKED_LOCATIONS) -- the locations under 'checked' were probed within the stated bounds and none presented one; locations outside the checked set were not examined"
+      }
+    },
+    "same_verdict": true
+  }
+]
