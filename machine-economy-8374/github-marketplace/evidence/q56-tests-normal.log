@@ -19,6 +19,6 @@ test_transfer_encoding_refused (__main__.ReceiverTests.test_transfer_encoding_re
 test_truncated_body_refused (__main__.ReceiverTests.test_truncated_body_refused) ... ok
 
 ----------------------------------------------------------------------
-Ran 19 tests in 0.002s
+Ran 19 tests in 0.001s
 
 OK

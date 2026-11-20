@@ -15,13 +15,14 @@ ROOT = Path(__file__).resolve().parents[1]
 def module(name, path):
     spec = importlib.util.spec_from_file_location(name, path)
     m = importlib.util.module_from_spec(spec)
+    sys.modules[name] = m
     spec.loader.exec_module(m)
     return m
 
 
-app = module('app', ROOT / 'app/webhook_core.py')
-sys.modules['webhook_core'] = app
-receiver = module('receiver', ROOT / 'app/receiver.py')
+module('q56_app', ROOT / 'app/__init__.py')
+app = module('q56_app.webhook_core', ROOT / 'app/webhook_core.py')
+receiver = module('q56_app.receiver', ROOT / 'app/receiver.py')
 adapters = module('adapters', ROOT / 'app/public_adapters.py')
 
 

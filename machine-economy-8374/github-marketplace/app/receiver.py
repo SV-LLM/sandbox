@@ -5,7 +5,7 @@ receive(handler, context) ONLY at its explicitly admitted GitHub webhook route.
 context provides the existing TVC secret resolver and durable/authorized adapters.
 """
 import json
-import webhook_core
+from . import webhook_core
 
 
 def reply(handler, status, code):
