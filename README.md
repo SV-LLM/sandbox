@@ -83,3 +83,8 @@ The existing W07 continuation is `validating`, COSV `30000000021222` in the Org
 Registry; PR #47 task scope/assignment and authentic WorkerCoordinator claim/fence
 remain unresolved. This candidate does not activate Sandbox, publish the SDK
 route, modify Registry state, or authorize a merge.
+
+
+## GitHub Marketplace source candidate (Q56)
+
+[Marketplace component handoff](docs/MACHINE_ECONOMY_GITHUB_MARKETPLACE_MIRROR_HANDOFF.md) describes the pinned-suite composite Action, authenticated webhook source core, neutral receipt check-run adapter, fixture tests and draft listing assets. Existing host/TVC/durable-delivery and owner publication bindings remain unestablished. This candidate adds no resident service or runtime authority.

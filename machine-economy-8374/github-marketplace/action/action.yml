@@ -1,0 +1,36 @@
+name: StegVerse pinned suite check
+description: Verify exact suite bytes and conformance records; optionally run a separately pinned reviewed checker.
+branding:
+  icon: check-circle
+  color: blue
+inputs:
+  suite-directory:
+    description: Existing trusted checkout or unpacked suite directory
+    required: true
+  manifest-sha256:
+    description: Exact lowercase SHA256 of the trusted package manifest
+    required: true
+  run-checker:
+    description: Explicit opt-in to execute reviewed suite code on this runner
+    default: 'false'
+  trusted-checker-sha256:
+    description: Independently approved checker SHA256; required when run-checker is true
+    default: ''
+outputs:
+  verdict:
+    description: PASS or NON_ALLOW for the stated source checks
+    value: ${{ steps.verify.outputs.verdict }}
+  result-path:
+    description: Runner-local JSON evidence path
+    value: ${{ steps.verify.outputs.result-path }}
+runs:
+  using: composite
+  steps:
+    - id: verify
+      shell: bash
+      env:
+        SUITE_DIRECTORY: ${{ inputs.suite-directory }}
+        SUITE_MANIFEST_SHA256: ${{ inputs.manifest-sha256 }}
+        SUITE_RUN_CHECKER: ${{ inputs.run-checker }}
+        SUITE_CHECKER_SHA256: ${{ inputs.trusted-checker-sha256 }}
+      run: python3 -I -B "$GITHUB_ACTION_PATH/verify_suite.py"

@@ -138,3 +138,8 @@ Coordination/build record only — distinct from authenticated admission,
 runtime execution, sovereign KV writes, and independently verified
 completion. Queue anchors: BUILD-Q-24…Q-27, Q-32/Q-35, Q-49, Q-50
 (StegVerse-Labs/.github #3443; pairing #3472).
+
+
+## Q56 Marketplace components — source candidate
+
+`github-marketplace/` contains the reviewed-source Action wrapper, App webhook integration core, public adapters, fixture regressions and draft listing/price mapping. Read its README and [canonical Marketplace handoff](../docs/MACHINE_ECONOMY_GITHUB_MARKETPLACE_MIRROR_HANDOFF.md). No App/listing exists from this source; existing host/custody bindings, native identity, separate public Action repository root and owner pricing/support/publisher acts remain required. No runtime deployment, purchase, public registration or check-run publication was exercised.

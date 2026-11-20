@@ -1,0 +1,9 @@
+{
+  "name": "StegVerse 8374 source candidate",
+  "url": "https://8374.stegverse.org",
+  "public": true,
+  "hook_attributes": {"url": "__EXISTING_ADMITTED_HOST_WEBHOOK_URL_REQUIRED__", "active": true},
+  "default_permissions": {"checks": "write", "metadata": "read"},
+  "default_events": ["installation", "installation_repositories"],
+  "description": "Receipt publication and public router registration. Template only; not registered or deployed."
+}
