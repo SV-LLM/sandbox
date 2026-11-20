@@ -1,0 +1,7 @@
+# Replayability Index Mirror Handoff
+Coordination task Q-58-REPLAYABILITY-INDEX-01, original StegVerse-Labs/.github#3443/7028977288; claim3472/7029231469. Date2026-11-19America/Chicago.
+NativeGoal/COSV UNBOUND; generic registeredparentSTEGVERSE-CANONICAL-WORK-COORDINATION-001 PROPOSED/contextonly/nullclaimfence/projectiononly/authorityNONE.
+Source-only candidate on isolated codex/q58-replayability-index-20261119 off machine-economy-8374@f99d69e21937cb5db20bc1ba31f07985c7c6f089.
+Build stdlib rerunnable public discovery reader, bounded checker batch and firsteditionJSON/HTML. Retain advertised terms/source references separately from live checker observations, every row permalinked to existing /verify, unknown/errors/refusals explicit. Enumerate all six named discovery doors; inaccessible/auth-required doors are not empty. Firstedition selection/coverage bounds explicit, no whole-market census inference. No payments, production writes, new service/host/framework/dependency/schedule/custody.
+Fixed productionchecker handles SSRF; localwrapper neverfetchestarget. Max20calls per60second batch, checkpoint and next-entry time rather than sleeper. Newinvocations respect existing globalchecker429 and stop; no bypass/automaticretry. Portable report filedEcosystemKV, originpublication separate originalcoordinatoract.
+Acceptance source+meaningful controls+firsteditiondataset/renderedindex/count/distribution/spotchecks. Production source state not nativeadmission or sellertruth/revenue. First$1externalpaiduse unproven.
