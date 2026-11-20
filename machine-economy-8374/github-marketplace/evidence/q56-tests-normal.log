@@ -11,8 +11,14 @@ test_missing_signature_refused (__main__.AppTests.test_missing_signature_refused
 test_no_owner_origin_refused (__main__.AppTests.test_no_owner_origin_refused) ... ok
 test_receipt_surface_is_neutral_and_commit_bound (__main__.AppTests.test_receipt_surface_is_neutral_and_commit_bound) ... ok
 test_tampered_body_has_no_effect (__main__.AppTests.test_tampered_body_has_no_effect) ... ok
+test_no_bindings_fail_closed (__main__.ReceiverTests.test_no_bindings_fail_closed) ... ok
+test_non_post_refused (__main__.ReceiverTests.test_non_post_refused) ... ok
+test_oversized_body_refused_before_read (__main__.ReceiverTests.test_oversized_body_refused_before_read) ... ok
+test_signed_delivery_replay_boundary (__main__.ReceiverTests.test_signed_delivery_replay_boundary) ... ok
+test_transfer_encoding_refused (__main__.ReceiverTests.test_transfer_encoding_refused) ... ok
+test_truncated_body_refused (__main__.ReceiverTests.test_truncated_body_refused) ... ok
 
 ----------------------------------------------------------------------
-Ran 13 tests in 0.001s
+Ran 19 tests in 0.002s
 
 OK

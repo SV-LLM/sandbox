@@ -2,6 +2,8 @@ import hashlib
 import hmac
 import importlib.util
 import json
+import io
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -18,6 +20,8 @@ def module(name, path):
 
 
 app = module('app', ROOT / 'app/webhook_core.py')
+sys.modules['webhook_core'] = app
+receiver = module('receiver', ROOT / 'app/receiver.py')
 adapters = module('adapters', ROOT / 'app/public_adapters.py')
 
 
@@ -132,6 +136,44 @@ class AdapterTests(unittest.TestCase):
         self.assertEqual(len(seen), 2)
         self.assertEqual(seen[1][0], 'https://api.github.com/repos/owner/repo/check-runs')
         self.assertEqual(seen[1][1]['payload']['conclusion'], 'neutral')
+
+
+class ReceiverTests(unittest.TestCase):
+    def handler(self, body=b'{}', method='POST'):
+        class Handler:
+            def send_response(self, status): self.status = status
+            def send_header(self, *args): pass
+            def end_headers(self): pass
+        h = Handler(); h.command = method
+        h.headers = {'Content-Type': 'application/json', 'Content-Length': str(len(body))}
+        h.rfile = io.BytesIO(body); h.wfile = io.BytesIO()
+        return h
+
+    def test_no_bindings_fail_closed(self):
+        self.assertEqual(receiver.receive(self.handler(), None), 503)
+    def test_non_post_refused(self):
+        self.assertEqual(receiver.receive(self.handler(method='GET'), None), 405)
+    def test_oversized_body_refused_before_read(self):
+        h = self.handler(); h.headers['Content-Length'] = '2000001'
+        self.assertEqual(receiver.receive(h, None), 413)
+        self.assertEqual(h.rfile.tell(), 0)
+    def test_transfer_encoding_refused(self):
+        h = self.handler(); h.headers['Transfer-Encoding'] = 'chunked'
+        self.assertEqual(receiver.receive(h, None), 400)
+    def test_truncated_body_refused(self):
+        h = self.handler(); h.headers['Content-Length'] = '3'
+        self.assertEqual(receiver.receive(h, object()), 400)
+    def test_signed_delivery_replay_boundary(self):
+        body = json.dumps({'zen': 'fixture', 'hook': {}}).encode()
+        h = self.handler(body); f = Fixtures()
+        class Context:
+            deliveries = f; bindings = f; router = f; github = f
+            def webhook_secret(self): return b'fixture-secret'
+        h.headers.update({'X-GitHub-Event': 'ping', 'X-GitHub-Delivery': 'fixture-http',
+            'X-Hub-Signature-256': 'sha256=' + hmac.new(b'fixture-secret', body, hashlib.sha256).hexdigest()})
+        self.assertEqual(receiver.receive(h, Context()), 200)
+        h.rfile = io.BytesIO(body); h.wfile = io.BytesIO()
+        self.assertEqual(receiver.receive(h, Context()), 409)
 
 
 if __name__ == '__main__': unittest.main()

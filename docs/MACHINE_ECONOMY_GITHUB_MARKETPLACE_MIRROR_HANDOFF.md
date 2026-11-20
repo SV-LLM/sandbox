@@ -16,7 +16,7 @@ machine-economy-8374/github-marketplace/ contains:
 - draft App manifest and listing/privacy/support/price mapping from actual PRICE SCHEDULE01 Drive1j0uBVIDs6cUCBvkpgh5CvPisCLiijJKU. Existingprices carried, no new annual pricing/planactivation invented.
 - fixture tests and officialGitHub documentation references.
 
-Source local App/adapter tests13/13 pass normal and -O. Earlier withdrawn Action20/23test history and GEN14 wrapper execution are historical duplicate work only, not a separate production discharge or PR52 verification. All remaining results author-grade. Independentreview required; no live webhook, installation, purchase, check-run creation or router registration was performed.
+Source local App/adapter/receiver tests19/19 pass normal and -O. Earlier withdrawn Action20/23test history and GEN14 wrapper execution are historical duplicate work only, not a separate production discharge or PR52 verification. All remaining results author-grade. Independentreview required; no live webhook, installation, purchase, check-run creation or router registration was performed.
 
 ## Current factual corrections to originalQ56
 Marketplace Action must live in a publicrepository with the actionmetadata at itsROOT. Current sandboxsubdirectory is a development/sourcecandidate, not an automatic Marketplace listing. Publicationowner choosesdedicated repository/export.
@@ -33,3 +33,8 @@ next_attempt: non-CODEX review of exactcandidate; StegVerse-org existinghost own
 ## Release boundary
 README and this canonicalhandoff accompanysource. This is preparation/sourcecandidate only. No publiclisting, release/tag, deployment, custodytransfer, payment, nativeclaim/admission/ownerbinding/completion is asserted. Existingproduction untouched. No useraction needed for review; originalowners retain reserved integration/submission. Sourceclaim releases when candidateFILED; originaltask remainder staysopen. No automatic propagationtask until release-ready evidence exists.
 
+
+## Late owner registration and receiver source — 2026-11-19
+Originalprincipalregistration3443/7027574188/pair3472/7027619181:8374 Governed Crossing,StegVerse-org,AppID5841786,publichttps://github.com/apps/8374-governed-crossing. Webhookinactive/privatekeyNOTgeneratedbydesignuntilreceiverexists. Supersedes any earlier unregistered wording; no Appregistration by this source lane.
+Scopedfollowupclaim3472/7027665715 adds app/receiver.py for an existing BaseHTTPRequestHandler-compatible host: bounded2MBPOST/JSON, framing/type/truncation refusals, originalTVCsecretresolver, durable core, genericfailureJSON, no listener ornewruntime. Sixreceiverfixtures include successfulsigneddeliveryandduplicate409. Total19tests normal/-O pass; actualhostroute/deadline/custody/authenticationremainunbound. Privatekeymustnotbecreatedorcarriedhere.
+Original19-testfinalreceiptandexactheadCIwillbefiledonPR53/currentreview3450/7027596099. Originalreviewsourcearchive18292B predatesreceiver, remainshistorical; use latecurrentarchive forcompletefinalsource. No Actionresurrection orsecondreviewidentity. Ownfourreleased7027649770; lateaddendumseparateandcarriedtoexistingCycle14writerfornextprefix-safeprojection.

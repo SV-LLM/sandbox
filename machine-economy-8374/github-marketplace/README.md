@@ -7,7 +7,7 @@ Funding: internal source preparation; no customer engagement or Marketplace purc
 
 ## Built and tested
 
-`app/` supplies an authenticated webhook core and public network adapters for
+`app/receiver.py` supplies a bounded POST/JSON receiver adapter for the existing host, with no socket/process/listener. `app/` also supplies an authenticated webhook core and public network adapters for
 integration into an EXISTING admitted host. It creates no listener or resident
 service. HMAC is checked before effects. Durable delivery reservation is a
 required host adapter, and uncertain outcomes stay reserved for reconciliation.
@@ -47,7 +47,7 @@ Marketplace purchase events are configured on the listing webhook separately.
 
 The registration owner uses StegVerse-org's organization settings, not SV-LLM
 or an individual account. Publisher verification/domain verification/listing
-submission remain that org owner's acts. No App registration has occurred.
+submission remain that org owner's acts. Original principal registration is filed at3443/7027574188: AppID5841786, publicpage https://github.com/apps/8374-governed-crossing. Webhook inactive; privatekey deliberately not generated until receiver binding. This is original-owner reported/screenshot-verified evidence, not registration performed by this code.
 
 There is no plan activation, paid call, operator-route call, secret custody,
 hosted framework, external resident machine, listing or deployment. Support,
