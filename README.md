@@ -106,3 +106,8 @@ public-source inputs. `scripts/q55_source_census.py` reproduces this readback
 without importing or executing product files. Existing byte equality does not
 choose a destination path or prove complete migration. Continue through the
 [canonical migration handoff](docs/MACHINE_ECONOMY_WORKSPACE_MIGRATION_MIRROR_HANDOFF.md).
+
+
+## Q55 returned-payload target contract — 2026-11-19
+
+The pinned source return verifies 263 payloads (2,084,953 bytes), with all 497 source paths dispositioned and two live-state exclusions. Its 30 target rows name 19 destinations: five have conflicting payload versions, and two ADD destinations already exist (six distinct affected files). No source payload is imported. See `machine-economy-8374/source-provenance/Q55_RETURN_CONTRACT_RESULT_01.json`, the offline `scripts/q55_return_contract.py` validator and the current workspace migration mirror handoff for exact owner repairs. Payload custody stays in the existing Ecosystem KV. This source-only contract check neither admits a native Goal nor verifies full migration.
