@@ -154,3 +154,70 @@ Thirty target rows map to nineteen unique targets. Five targets have different c
 Native readback is the complete 310-node Git tree observed at immutable PR54 head `ad97ee94bada03365579fc1170a45d5ccbc73030`, whose commit tree is `8cf1f5ce3a772ad05a9fe9f29a8490071d311eaa`. The standalone validator consumes already-authenticated input; it does not authenticate a supplied Git tree or confer authority. Six offline controls pass both ordinary and optimized Python. The actual return check exits 2 with target_contract_consistent=false. Exit 2 is an actionable mapping disposition, not input corruption. No product, archival, private or live-state payload was imported, and source_target_mapping_verified/full_migration_verified remain false.
 
 Original owner (Muse, #3443) must choose exactly one payload hash for each active target or explicitly archive/reassign every superseded version, correct existing-path ADD actions, and return a versioned manifest linked to the same source hashes and a fresh native head. Keep coherent endpoint/proxy/package choices atomic. Then rerun the offline validator, independent non-CODEX review, source integration under expected-head protection, and new full readback. Do not select a version merely by timestamp, size or directory name. The fourteen currently unambiguous destinations do not establish coherent package migration independently of these six repairs. Native task admission, runtime/custody and original source PR51/54 reviews remain separate. No native claim/fence, merge, release, runtime or propagation is asserted.
+
+## Q55 owner amendment consumed — 2026-11-19
+
+The original owner's `Q55_TARGET_CONTRACT_AMENDMENT_01.json` (8,234 bytes,
+SHA256 `f799cd9702f6be93f00b62728cce352137ac4098d9e5d8d1c45280b96ea69c41`,
+Ecosystem KV `1PomsV3ZXPlSb0NEbqZvL5S42UXkykAbd`, original #3443/7030821442)
+supersedes exactly fourteen path dispositions. Its lineage rule chooses one
+active payload per conflicting target or keeps native source unchanged. It does
+not change the return ZIP or historical manifest. Claim #3472/7031408870 consumes
+that new owner input on existing PR59; it grants no native execution authority.
+
+The checker now accepts an optional pinned amendment plus the pinned historical
+contract result. It verifies unchanged request/census/archive/manifest lineage,
+each original path/hash/disposition/target, original target blob references,
+unique chosen payloads or explicit native-stands decisions, and recomputed
+disposition totals. Active chosen targets must retain their recorded native
+predecessor. No amendment is inferred from a generation label or timestamp.
+The current root README may evolve because the owner explicitly chose NOT-APPLIED;
+the returned cloned README never replaces it. The GEN14 package manifest also
+stays native; integrating changed product files later requires a deliberate
+manifest refresh rather than substituting another package state's manifest.
+
+Actual byte check at immutable PR59 predecessor
+`bc3d372f604627d53d87676abd1c011703893052` (Git tree
+`5ab888fead0e36cb99c40960ace7060205867cfc`, 313 complete recursive entries):
+263 returned payloads / 2,084,953 bytes verified; all 497 source paths covered;
+20 TARGET-REPLACEMENT, 0 TARGET-ADD, 475 ARCHIVAL, 2 NOT-REQUIRED; twenty active
+rows resolve to seventeen destinations; no target-contract findings. The two
+live-state exclusions remain exclusions. The prior inconsistent result is
+preserved under its original filename. The new
+`machine-economy-8374/source-provenance/Q55_AMENDED_RETURN_CONTRACT_RESULT_01.json`
+records the amended computation; the amendment is preserved alongside it.
+
+Reproduce with the original ZIP from its existing custody location and a complete
+GitHub tree authenticated at the immutable revision below (the checker does not
+authenticate an arbitrary caller-supplied tree):
+
+```bash
+python3 -I -B scripts/q55_return_contract.py \
+  --request machine-economy-8374/source-provenance/Q55_MISSING_SOURCE_PAYLOAD_REQUEST_01.json \
+  --request-sha256 f1de0a03439f37f043aa69e86c0bf87590a16aef66372cc995f280dc31e1c770 \
+  --return-zip /path/to/Q55_PAYLOAD_RETURN_01.zip \
+  --return-sha256 6037247a83741f615e1dfb71faaea748c9d4612431911824afe95cf6bb2d62b7 \
+  --native-tree /path/to/authenticated-bc3d372f-tree.json \
+  --revision bc3d372f604627d53d87676abd1c011703893052 \
+  --amendment machine-economy-8374/source-provenance/Q55_TARGET_CONTRACT_AMENDMENT_01.json \
+  --amendment-sha256 f799cd9702f6be93f00b62728cce352137ac4098d9e5d8d1c45280b96ea69c41 \
+  --prior-result machine-economy-8374/source-provenance/Q55_RETURN_CONTRACT_RESULT_01.json \
+  --output /tmp/q55-amended-contract.json
+```
+
+Thirteen offline tests pass ordinary and optimized Python, including refusal of
+tampered lineage, incomplete/ambiguous choices, count corruption, unsafe/duplicate
+paths and changed active-target predecessors. These are author checks of this
+source change, not independent review. A consistent target contract does not
+establish product semantics, complete workspace parity, native admission,
+protected integration, package conformance or runtime execution. All payloads
+remain unimported/unexecuted. `source_target_mapping_verified` and
+`full_migration_verified` remain false.
+
+Next: non-CODEX exact-head review; existing source owner integrates the coherent
+source delta on a fresh protected head, deliberately refreshes the package
+manifest, tests the actual integrated source and reads it back. Runtime/custody,
+Registry admission and Organization-ledger transitions retain their own owners.
+Q55 native Goal/COSV remain UNBOUND; context parent G326 PROPOSED/null claim/fence
+and its historical 20/20 decomposition are not borrowed as execution authority.
+No merge, release, deployment, payment, provider operation or user action occurred.

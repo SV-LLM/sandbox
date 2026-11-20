@@ -2,6 +2,7 @@
 """Validate Q55 return bytes and target consistency without importing payloads."""
 import argparse
 import collections
+import copy
 import hashlib
 import io
 import json
@@ -22,7 +23,90 @@ def safe(path):
     return path
 
 
-def evaluate(request_bytes, archive_bytes, native_tree, request_sha, archive_sha, revision):
+def amend_manifest(manifest, amendment_bytes, amendment_sha, prior_result_bytes,
+                   request_sha, archive_sha, manifest_sha, census_sha):
+    """Apply a pinned owner disposition overlay, preserving the returned bytes."""
+    if not amendment_sha or sha(amendment_bytes) != amendment_sha:
+        raise ValueError('amendment digest mismatch')
+    a = json.loads(amendment_bytes)
+    if a.get('schema') != 'stegverse.q55-target-contract-amendment/v1':
+        raise ValueError('unknown amendment schema')
+    pins = a['source_pins_unchanged']
+    if (pins['payload_request_sha256'] != request_sha or
+            pins['workspace_census_sha256'] != census_sha or
+            pins['original_return_manifest_sha256'] != manifest_sha or
+            not pins['return_archive'].endswith('SHA-256 ' + archive_sha)):
+        raise ValueError('amendment source lineage differs')
+    bound = re.search(r'SHA-256 ([0-9a-f]{64}), native_revision_observed '
+                      r'([0-9a-f]{40}), PR59 head ([0-9a-f]{40})$', pins['consume_result'])
+    if not bound or prior_result_bytes is None or sha(prior_result_bytes) != bound[1]:
+        raise ValueError('pinned prior contract result required')
+    prior = json.loads(prior_result_bytes)
+    if (prior['native_revision_observed'] != bound[2] or
+            prior['request_sha256'] != request_sha or
+            prior['return_archive_sha256'] != archive_sha or
+            prior['return_manifest_sha256'] != manifest_sha):
+        raise ValueError('prior result lineage differs')
+    old_targets = {x['target']: x for x in prior['targets']}
+    amended = copy.deepcopy(manifest)
+    by_path = {}
+    for payload in amended['payloads']:
+        for row in payload['workspace_paths']:
+            if row['path'] in by_path:
+                raise ValueError('duplicate original disposition path')
+            by_path[row['path']] = (payload['sha256'], row)
+    seen_paths = set()
+    seen_targets = set()
+    decisions = []
+    for decision in a['decisions']:
+        target = safe(decision['target'])
+        if target in seen_targets or target not in old_targets:
+            raise ValueError('duplicate or unknown amended target')
+        seen_targets.add(target)
+        if decision['native_blob'] != old_targets[target]['native_blob']:
+            raise ValueError('amendment prior native blob differs')
+        chosen = []
+        for change in decision['amended']:
+            path = safe(change['workspace_path'])
+            if path in seen_paths or path not in by_path:
+                raise ValueError('duplicate or unknown amendment path')
+            seen_paths.add(path)
+            digest, row = by_path[path]
+            if (digest != change['sha256'] or row.get('target') != target or
+                    row['disposition'] != change['was']):
+                raise ValueError('amendment does not match original row')
+            if change['now'] not in ('ARCHIVAL', 'TARGET-REPLACEMENT', 'TARGET-ADD'):
+                raise ValueError('unknown amended disposition')
+            row['disposition'] = change['now']
+            if change.get('role') == 'CHOSEN':
+                if change['now'] not in ('TARGET-REPLACEMENT', 'TARGET-ADD'):
+                    raise ValueError('chosen payload must remain active')
+                chosen.append(digest)
+        active = [digest for digest, row in by_path.values()
+                  if row.get('target') == target and row['disposition'].startswith('TARGET-')]
+        native_stands = decision['decision'].startswith('NOT-APPLIED')
+        if native_stands:
+            if active or chosen:
+                raise ValueError('native-stands decision retains active payload')
+        elif (not decision['decision'].startswith('CHOSEN:') or len(chosen) != 1 or
+              not active or set(active) != set(chosen)):
+            raise ValueError('chosen decision lacks exactly one active hash')
+        decisions.append({'target': target, 'native_stands': native_stands,
+                          'chosen_sha256': chosen[0] if chosen else None,
+                          'prior_native_blob': decision['native_blob']})
+    counts = collections.Counter(row['disposition'] for _, row in by_path.values())
+    expected = a['amended_disposition_counts']
+    if expected.get('total_paths') != len(by_path) or any(
+            counts.get(k, 0) != expected.get(k, 0)
+            for k in set(counts) | (set(expected) - {'total_paths'})):
+        raise ValueError('amended disposition counts differ')
+    return amended, {'sha256': amendment_sha, 'prior_result_sha256': bound[1],
+                     'prior_native_revision': bound[2], 'prior_source_head': bound[3],
+                     'amended_paths': len(seen_paths), 'decisions': decisions}
+
+
+def evaluate(request_bytes, archive_bytes, native_tree, request_sha, archive_sha, revision,
+             amendment_bytes=None, amendment_sha=None, prior_result_bytes=None):
     if sha(request_bytes)!=request_sha or sha(archive_bytes)!=archive_sha:
         raise ValueError('input digest mismatch')
     if not re.fullmatch('[0-9a-f]{40}',revision) or native_tree.get('truncated') is not False:
@@ -49,6 +133,12 @@ def evaluate(request_bytes, archive_bytes, native_tree, request_sha, archive_sha
             raise ValueError('return not bound to requested census')
         if m['native_revision']!=request['native_revision']:
             raise ValueError('return native base differs from request')
+        amendment = None
+        if amendment_bytes is not None:
+            m, amendment = amend_manifest(m, amendment_bytes, amendment_sha, prior_result_bytes,
+                                         request_sha, archive_sha, sha(manifest_bytes), request['census_sha256'])
+        elif amendment_sha is not None or prior_result_bytes is not None:
+            raise ValueError('amendment bytes required for overlay inputs')
         seen=set();paths=set();targets=collections.defaultdict(list)
         returned=held=payload_bytes=0;dispositions=collections.Counter()
         for p in m['payloads']:
@@ -96,6 +186,13 @@ def evaluate(request_bytes, archive_bytes, native_tree, request_sha, archive_sha
              'distinct_payloads':len(hashes),'conditions':reasons}
         target_rows.append(row)
         if reasons:findings.append({'target':target,'conditions':reasons,'candidate_hashes':hashes})
+    if amendment:
+        for decision in amendment['decisions']:
+            target = decision['target']; node = nodes.get(target)
+            decision['current_native_blob'] = node.get('sha') if node else None
+            if not decision['native_stands'] and decision['current_native_blob'] != decision['prior_native_blob']:
+                findings.append({'target': target, 'conditions': ['CHOSEN_TARGET_NATIVE_PREDECESSOR_CHANGED'],
+                                 'candidate_hashes': [decision['chosen_sha256']]})
     return {'schema':'stegverse.q55-return-contract-check/v1','authority':'NONE',
         'request_sha256':request_sha,'return_archive_sha256':archive_sha,
         'return_manifest_sha256':sha(manifest_bytes),'native_revision_observed':revision,
@@ -104,9 +201,11 @@ def evaluate(request_bytes, archive_bytes, native_tree, request_sha, archive_sha
         'workspace_paths_dispositioned':len(paths),'disposition_counts':dict(dispositions),
         'target_rows':sum(len(v) for v in targets.values()),'distinct_targets':len(targets),
         'targets':target_rows,'findings':findings,'target_contract_consistent':not findings,
+        'amendment':amendment,
         'source_import_performed':False,'source_target_mapping_verified':False,
         'full_migration_verified':False,
-        'next_action':'Original owner chooses one exact hash per conflicting target or archives/reassigns each older version; correct ADD to existing-path semantics; refresh native pin; independent review then explicit atomic source integration.'}
+        'next_action':('Non-author exact-head review, then existing owner explicitly integrates the coherent source delta under fresh expected-head protection and deliberately refreshes package manifest; no import/runtime follows from this contract check.' if amendment and not findings else
+                       'Original owner chooses one exact hash per conflicting target or archives/reassigns each older version; correct ADD to existing-path semantics; refresh native pin; independent review then explicit atomic source integration.')}
 
 
 def main():
@@ -114,8 +213,12 @@ def main():
     p.add_argument('--return-zip',required=True,type=pathlib.Path);p.add_argument('--native-tree',required=True,type=pathlib.Path)
     p.add_argument('--request-sha256',required=True);p.add_argument('--return-sha256',required=True)
     p.add_argument('--revision',required=True);p.add_argument('--output',required=True,type=pathlib.Path)
+    p.add_argument('--amendment',type=pathlib.Path);p.add_argument('--amendment-sha256')
+    p.add_argument('--prior-result',type=pathlib.Path)
     a=p.parse_args()
-    try:r=evaluate(a.request.read_bytes(),a.return_zip.read_bytes(),json.loads(a.native_tree.read_text()),a.request_sha256,a.return_sha256,a.revision)
+    try:r=evaluate(a.request.read_bytes(),a.return_zip.read_bytes(),json.loads(a.native_tree.read_text()),a.request_sha256,a.return_sha256,a.revision,
+                   a.amendment.read_bytes() if a.amendment else None, a.amendment_sha256,
+                   a.prior_result.read_bytes() if a.prior_result else None)
     except Exception as exc:
         print(json.dumps({'failure_code':'Q55_RETURN_INPUT_NON_ALLOW','failed_predicate':str(exc),'required_evidence_or_repair':'exact pinned complete input and regular native targets','retry_entrypoint':'original Q55 return/PR54','owning_existing_goal':'BUILD-Q-55 coordination; native UNBOUND','next_attempt':'repair named input; never import unverified bytes'}));return 1
     a.output.write_text(json.dumps(r,indent=2)+'\n');print(json.dumps({k:r[k] for k in ['returned_payloads_verified','workspace_paths_dispositioned','distinct_targets','target_contract_consistent']}))
