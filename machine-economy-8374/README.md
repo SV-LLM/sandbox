@@ -146,3 +146,14 @@ At GEN14 head f99d69e21937cb5db20bc1ba31f07985c7c6f089, router, verify-page, cha
 
 
 Q55 O-S444-1 clarification: Selection rule: only the six public host/source records (endpoint specification, router discovery and carry records, install script, service unit and configuration template) are copied here; the remaining 23 unmatched suite members stay in the original GEN14 suite under its manifest, because this bounded source carriage does not duplicate suite generation documents, offer/proof records or checker tooling. Full workspace parity remains unverified pending the original coordinator's exact source-only census; this note changes no code or census data.
+
+## New Q55 source census — exact remaining inputs
+
+Against the current parent candidate `005bd843121535f6c7263fe6e69f46978455653b`,
+872 of the coordinator's1369 source entries have exact bytes already in Git;
+497 entries need265 distinct missing payloads totaling2085363 bytes.
+The [complete crosswalk](source-provenance/Q55_WORKSPACE_NATIVE_DELTA_005bd843.json)
+and [deduplicated source request](source-provenance/Q55_MISSING_SOURCE_PAYLOAD_REQUEST_01.json)
+retain every source row. This is source-byte availability, not target-path,
+installation, production or complete-migration acceptance. Do not copy existing
+files again or infer deployment mappings from basenames/hash equality.

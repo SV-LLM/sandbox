@@ -91,3 +91,13 @@ route, modify Registry state, or authorize a merge.
 
 
 Q55 O-S444-1 clarification: Selection rule: only the six public host/source records (endpoint specification, router discovery and carry records, install script, service unit and configuration template) are copied here; the remaining 23 unmatched suite members stay in the original GEN14 suite under its manifest, because this bounded source carriage does not duplicate suite generation documents, offer/proof records or checker tooling. Full workspace parity remains unverified pending the original coordinator's exact source-only census; this note changes no code or census data.
+
+## Q55 source-census delta
+
+The original coordinator's exact five-tree source census is now filed. The
+[Q55 crosswalk and payload request](machine-economy-8374/source-provenance/Q55_MISSING_SOURCE_PAYLOAD_REQUEST_01.json)
+deduplicate source already in the pinned Git tree and name the remaining exact
+public-source inputs. `scripts/q55_source_census.py` reproduces this readback
+without importing or executing product files. Existing byte equality does not
+choose a destination path or prove complete migration. Continue through the
+[canonical migration handoff](docs/MACHINE_ECONOMY_WORKSPACE_MIGRATION_MIRROR_HANDOFF.md).
