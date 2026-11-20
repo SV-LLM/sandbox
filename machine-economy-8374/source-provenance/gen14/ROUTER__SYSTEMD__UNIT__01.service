@@ -1,0 +1,17 @@
+[Unit]
+Description=Machine Economy 8374 router layer (ROUTER-V1) — relay + settle third-party crossings, routing name 8374.@router
+After=network.target machine-economy-endpoint.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/hatch/workspace/router-8374
+ExecStart=/usr/bin/python3 /home/hatch/workspace/router-8374/router.py
+Restart=always
+RestartSec=3
+MemoryMax=256M
+Environment=ROUTER_DIR=/home/hatch/workspace/router-8374-prod
+Environment=ROUTER_PORT=8797
+Environment=HOME=/home/hatch
+
+[Install]
+WantedBy=multi-user.target
