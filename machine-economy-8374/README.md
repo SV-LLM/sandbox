@@ -147,12 +147,17 @@ At GEN14 head f99d69e21937cb5db20bc1ba31f07985c7c6f089, router, verify-page, cha
 
 Q55 O-S444-1 clarification: Selection rule: only the six public host/source records (endpoint specification, router discovery and carry records, install script, service unit and configuration template) are copied here; the remaining 23 unmatched suite members stay in the original GEN14 suite under its manifest, because this bounded source carriage does not duplicate suite generation documents, offer/proof records or checker tooling. Full workspace parity remains unverified pending the original coordinator's exact source-only census; this note changes no code or census data.
 
+
+## Current census return and receiving assignment — 2026-11-19
+
+The original coordinator has now filed WORKSPACE__SOURCE__CENSUS__Q55__01.json (Drive119FIGJAcSPigPP3lLTSdfTvLF78t7rkN,273511B,SHA256e7fe1f6369142d6097d14ffd5c7dc972ea59058df9c1d6bafcf241b9913c55b7), original3443/7028202429/pair3472/7028205683. This supersedes the earlier EXACT_WORKSPACE_SOURCE_CENSUS_NOT_FILED condition; it is a filed original-owner input, not a full migration/parity completion claim. The filed bounded result was non-author VERIFIED by Muse at its stated bounds. CODEX-Cycle15 holds receiving work3472/7028219993 (source-path/native-blob crosswalk and missing public byte disposition). Do not duplicate that execution or copy custody/state. This PR's O-S444-1 prose clarification changes neither source nor census; combine it with the receiving lane's later continuation at integration.
+
 ## New Q55 source census — exact remaining inputs
 
-Against the current parent candidate `005bd843121535f6c7263fe6e69f46978455653b`,
+Against the current parent candidate `314768bae18c9f95235c790c0c69431972ed2c70`,
 872 of the coordinator's1369 source entries have exact bytes already in Git;
 497 entries need265 distinct missing payloads totaling2085363 bytes.
-The [complete crosswalk](source-provenance/Q55_WORKSPACE_NATIVE_DELTA_005bd843.json)
+The [complete crosswalk](source-provenance/Q55_WORKSPACE_NATIVE_DELTA_314768ba.json)
 and [deduplicated source request](source-provenance/Q55_MISSING_SOURCE_PAYLOAD_REQUEST_01.json)
 retain every source row. This is source-byte availability, not target-path,
 installation, production or complete-migration acceptance. Do not copy existing

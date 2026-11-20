@@ -34,6 +34,11 @@ Selection rule: only the six public host/source records (endpoint specification,
 
 Original ClaudeCode KV559 statically validated ed24691b and noted the missing selection rule; that exact-head grade remains historical. This prose clarification changes neither the six copied members nor the 61-row census, and does not establish complete workspace parity. Source claim3472/7028205315; exact original review carried3451/7028204659. Native Goal/COSV remain UNBOUND and original owner census/integration requirements stand.
 
+
+## Current census return and receiving assignment — 2026-11-19
+
+The original coordinator has now filed WORKSPACE__SOURCE__CENSUS__Q55__01.json (Drive119FIGJAcSPigPP3lLTSdfTvLF78t7rkN,273511B,SHA256e7fe1f6369142d6097d14ffd5c7dc972ea59058df9c1d6bafcf241b9913c55b7), original3443/7028202429/pair3472/7028205683. This supersedes the earlier EXACT_WORKSPACE_SOURCE_CENSUS_NOT_FILED condition; it is a filed original-owner input, not a full migration/parity completion claim. The filed bounded result was non-author VERIFIED by Muse at its stated bounds. CODEX-Cycle15 holds receiving work3472/7028219993 (source-path/native-blob crosswalk and missing public byte disposition). Do not duplicate that execution or copy custody/state. This PR's O-S444-1 prose clarification changes neither source nor census; combine it with the receiving lane's later continuation at integration.
+
 ## Current Cycle15 source-census pickup — before implementation
 
 Original source producer has now FILED the exact census, discharging the historical
@@ -65,7 +70,7 @@ The preceding historical missing-census condition is DISCHARGED by the original
 owner's273511-byte file/e7fe1f6369142d6097d14ffd5c7dc972ea59058df9c1d6bafcf241b9913c55b7.
 It is retained unchanged at
 `machine-economy-8374/source-provenance/Q55_WORKSPACE_SOURCE_CENSUS_01.json`.
-Comparison now uses immutable parent candidate005bd843121535f6c7263fe6e69f46978455653b,
+Comparison now uses immutable parent candidate314768bae18c9f95235c790c0c69431972ed2c70,
 not a mutable working tree or an inferred later workspace. Prework
 commit26415db937e15f9c368904b1cce83d1d341a871d was published before implementation.
 
@@ -81,7 +86,7 @@ leaves265payloads/2085363bytes. By producer tree:
 | machine-economy-entry-suite | 137 | 272 |
 | machine-economy-transfer | 437 | 148 |
 
-The full `Q55_WORKSPACE_NATIVE_DELTA_005bd843.json` crosswalk retains every row,
+The full `Q55_WORKSPACE_NATIVE_DELTA_314768ba.json` crosswalk retains every row,
 every exact native path/blob match and each unmatched hash. The deduplicated
 `Q55_MISSING_SOURCE_PAYLOAD_REQUEST_01.json` is the original coordinator's exact
 receiving contract. Original author source custody/exclusion statement remains
@@ -96,7 +101,7 @@ Reproduce from a checkout containing the immutable parent commit:
 python3 -I scripts/q55_source_census.py \
   --census machine-economy-8374/source-provenance/Q55_WORKSPACE_SOURCE_CENSUS_01.json \
   --census-sha256 e7fe1f6369142d6097d14ffd5c7dc972ea59058df9c1d6bafcf241b9913c55b7 \
-  --repo . --revision 005bd843121535f6c7263fe6e69f46978455653b \
+  --repo . --revision 314768bae18c9f95235c790c0c69431972ed2c70 \
   --output /tmp/q55-source-delta.json
 ```
 
@@ -131,3 +136,5 @@ unchanged; original owner must preserve this sequencing or retarget after parent
 integration. Protected integration, native admission, release and runtime remain
 original-owner acts. Source metadata and code only; no production invocation,
 credentials, payments, new service, machine or framework were introduced.
+
+Parent source advanced during the draft to314768bae18c9f95235c790c0c69431972ed2c70, adding its census/receiving assignment paragraph. The child preserved all three incoming README/handoff sections, recomputed the full crosswalk against that immutable current parent (same872/497/265 totals), and integrated the parent into this candidate without changing the parent branch. Prior005bd843 comparison remains historical in the draft commit, not the current report.

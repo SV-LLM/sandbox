@@ -2,7 +2,7 @@
   "schema": "stegverse.q55-source-delta/v1",
   "authority_effect": "NONE_SOURCE_READBACK_ONLY",
   "census_sha256": "e7fe1f6369142d6097d14ffd5c7dc972ea59058df9c1d6bafcf241b9913c55b7",
-  "native_revision": "005bd843121535f6c7263fe6e69f46978455653b",
+  "native_revision": "314768bae18c9f95235c790c0c69431972ed2c70",
   "census_entries": 1369,
   "producer_reported_excluded_count": 70,
   "byte_coverage": {
