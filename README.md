@@ -96,3 +96,13 @@ Q55 O-S444-1 clarification: Selection rule: only the six public host/source reco
 ## Current census return and receiving assignment — 2026-11-19
 
 The original coordinator has now filed WORKSPACE__SOURCE__CENSUS__Q55__01.json (Drive119FIGJAcSPigPP3lLTSdfTvLF78t7rkN,273511B,SHA256e7fe1f6369142d6097d14ffd5c7dc972ea59058df9c1d6bafcf241b9913c55b7), original3443/7028202429/pair3472/7028205683. This supersedes the earlier EXACT_WORKSPACE_SOURCE_CENSUS_NOT_FILED condition; it is a filed original-owner input, not a full migration/parity completion claim. The filed bounded result was non-author VERIFIED by Muse at its stated bounds. CODEX-Cycle15 holds receiving work3472/7028219993 (source-path/native-blob crosswalk and missing public byte disposition). Do not duplicate that execution or copy custody/state. This PR's O-S444-1 prose clarification changes neither source nor census; combine it with the receiving lane's later continuation at integration.
+
+## Q55 source-census delta
+
+The original coordinator's exact five-tree source census is now filed. The
+[Q55 crosswalk and payload request](machine-economy-8374/source-provenance/Q55_MISSING_SOURCE_PAYLOAD_REQUEST_01.json)
+deduplicate source already in the pinned Git tree and name the remaining exact
+public-source inputs. `scripts/q55_source_census.py` reproduces this readback
+without importing or executing product files. Existing byte equality does not
+choose a destination path or prove complete migration. Continue through the
+[canonical migration handoff](docs/MACHINE_ECONOMY_WORKSPACE_MIGRATION_MIRROR_HANDOFF.md).

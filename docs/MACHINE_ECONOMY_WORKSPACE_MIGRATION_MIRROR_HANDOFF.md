@@ -38,3 +38,103 @@ Original ClaudeCode KV559 statically validated ed24691b and noted the missing se
 ## Current census return and receiving assignment — 2026-11-19
 
 The original coordinator has now filed WORKSPACE__SOURCE__CENSUS__Q55__01.json (Drive119FIGJAcSPigPP3lLTSdfTvLF78t7rkN,273511B,SHA256e7fe1f6369142d6097d14ffd5c7dc972ea59058df9c1d6bafcf241b9913c55b7), original3443/7028202429/pair3472/7028205683. This supersedes the earlier EXACT_WORKSPACE_SOURCE_CENSUS_NOT_FILED condition; it is a filed original-owner input, not a full migration/parity completion claim. The filed bounded result was non-author VERIFIED by Muse at its stated bounds. CODEX-Cycle15 holds receiving work3472/7028219993 (source-path/native-blob crosswalk and missing public byte disposition). Do not duplicate that execution or copy custody/state. This PR's O-S444-1 prose clarification changes neither source nor census; combine it with the receiving lane's later continuation at integration.
+
+## Current Cycle15 source-census pickup — before implementation
+
+Original source producer has now FILED the exact census, discharging the historical
+EXACT_WORKSPACE_SOURCE_CENSUS_NOT_FILED condition above: WORKSPACE__SOURCE__CENSUS__Q55__01.json,
+Drive119FIGJAcSPigPP3lLTSdfTvLF78t7rkN,273511B/SHA256
+e7fe1f6369142d6097d14ffd5c7dc972ea59058df9c1d6bafcf241b9913c55b7;
+original owner return .github3443/7028202429. It lists1369 source paths/size/hash
+across5trees and excludes70files; it contains no source payloads.
+
+CODEX-Cycle15 bounded source-consuming claim3472/7028219993 until22:30CST orFILED;
+parent source005bd843121535f6c7263fe6e69f46978455653b, isolated branch
+codex/q55-census-delta-20261119. This section is published BEFORE implementation.
+Do not modify the parent branch or relabel Muse's bounded verdict as a full
+byte-recomputed migration. CODEX authored the parent candidate and cannot perform
+its independent review. Native Q55 Goal/COSV remain UNBOUND; context parent
+PROPOSED/nullclaimfence/projection_only is not execution authority.
+
+Implement an offline deterministic census/native-blob crosswalk with rejection
+controls, distinguish existing exact bytes from changed/missing source and
+unassigned target paths, and request only exact necessary public payloads from
+the original producer. Copy only proven available nonsecret bytes under explicit
+native path binding; do not invent target layout, duplicate archives, import live
+state/keys or invoke production code. No new dependency, service or authority.
+README, exact evidence, qualified review and original owner integration follow.
+
+## Cycle15 result — new census compared, missing payloads made exact
+
+The preceding historical missing-census condition is DISCHARGED by the original
+owner's273511-byte file/e7fe1f6369142d6097d14ffd5c7dc972ea59058df9c1d6bafcf241b9913c55b7.
+It is retained unchanged at
+`machine-economy-8374/source-provenance/Q55_WORKSPACE_SOURCE_CENSUS_01.json`.
+Comparison now uses immutable parent candidate314768bae18c9f95235c790c0c69431972ed2c70,
+not a mutable working tree or an inferred later workspace. Prework
+commit26415db937e15f9c368904b1cce83d1d341a871d was published before implementation.
+
+Result:1369 source rows preserved;872 have exact size/SHA256 bytes already in
+regular-file Git blobs,497 need source bytes. Deduplicating missing byte identities
+leaves265payloads/2085363bytes. By producer tree:
+
+| Source tree | Exact bytes available | Source payload required |
+| --- | ---: | ---: |
+| chain-export | 6 | 0 |
+| lane-callsite-8374 | 273 | 36 |
+| machine-economy-endpoint | 19 | 41 |
+| machine-economy-entry-suite | 137 | 272 |
+| machine-economy-transfer | 437 | 148 |
+
+The full `Q55_WORKSPACE_NATIVE_DELTA_314768ba.json` crosswalk retains every row,
+every exact native path/blob match and each unmatched hash. The deduplicated
+`Q55_MISSING_SOURCE_PAYLOAD_REQUEST_01.json` is the original coordinator's exact
+receiving contract. Original author source custody/exclusion statement remains
+its own assertion; this tool does not reclassify private data as public.
+No source payload was fetched from the coordinator's private workspace. No new
+product module was imported or copied: already-present bytes need no duplicate
+carriage, missing bytes were not provided, and target layout is not authenticated.
+
+Reproduce from a checkout containing the immutable parent commit:
+
+```bash
+python3 -I scripts/q55_source_census.py \
+  --census machine-economy-8374/source-provenance/Q55_WORKSPACE_SOURCE_CENSUS_01.json \
+  --census-sha256 e7fe1f6369142d6097d14ffd5c7dc972ea59058df9c1d6bafcf241b9913c55b7 \
+  --repo . --revision 314768bae18c9f95235c790c0c69431972ed2c70 \
+  --output /tmp/q55-source-delta.json
+```
+
+Exit2 intentionally records missing source bytes. Exit1 is invalid input/native
+readback with six remediation fields. Exit0 means byte availability only; every
+report explicitly retains `source_target_mapping_verified=false` and
+`full_migration_verified=false`. A consumer must not equate Git bytes with a
+chosen installation path. The tool reads Git blobs through batch plumbing,
+independently recomputes SHA1 Git object identity and SHA256 body pins, never
+imports product code, ignores mutable worktree changes and excludes Git symlink/
+submodule modes. It rejects a wrong census pin, duplicate/malformed rows, paths
+outside the five trees, custody-shaped paths, extra row payload/authority fields,
+invalid sizes/hashes and moving Git references. No dependency or new runtime.
+
+Author validation:13meaningful unittest controls PASS normal and optimized;
+actual1369-row run exits2 with the exact counts above. Existing Sandbox event
+workflow runs the controls in both modes; it does not turn an expected partial
+migration into a permanently red CI leg. Old six-record/source-presence grades
+and Muse's bounded verdict remain historical at their exact subjects, not
+silently promoted to complete parity. This source-producing/diff leg is distinct
+from non-CODEX independent review of the CODEX-authored parentPR51.
+
+failure_code: Q55_EXACT_SOURCE_PAYLOADS_AND_TARGET_BINDINGS_REQUIRED
+failed_predicate: each census source identity has available exact public payload bytes and an authorized lane destination/disposition.
+required_evidence_or_repair: original coordinator returns only the265distinct nonsecret source payloads identified by the JSON request, plus an explicit destination or archival/not-required disposition for the workspace paths; preserve hashes, exclude all live state/SKAP/signing/wallet/tunnel custody, and supply no broad workspace archive. Existing872 byte identities should be reused from native paths rather than recopied.
+retry_entrypoint: originalQ55owner3443/7027241125 and followup7028202429; use Q55_MISSING_SOURCE_PAYLOAD_REQUEST_01.json, then run the same checker at the selected immutable candidate.
+owning_existing_goal: BUILD-Q-55 source migration; native Goal/COSVUNBOUND through existing Registry producer, no borrowed context authority.
+next_attempt: qualified source consumer checks returned payload pins and explicit path/disposition map, builds only proven deltas under expected-head protection, obtains non-author review and original owner integration/readback. Do not claim full migration from this report.
+
+Source PR is stacked on the existing Q55 source branch, leaving that branch
+unchanged; original owner must preserve this sequencing or retarget after parent
+integration. Protected integration, native admission, release and runtime remain
+original-owner acts. Source metadata and code only; no production invocation,
+credentials, payments, new service, machine or framework were introduced.
+
+Parent source advanced during the draft to314768bae18c9f95235c790c0c69431972ed2c70, adding its census/receiving assignment paragraph. The child preserved all three incoming README/handoff sections, recomputed the full crosswalk against that immutable current parent (same872/497/265 totals), and integrated the parent into this candidate without changing the parent branch. Prior005bd843 comparison remains historical in the draft commit, not the current report.

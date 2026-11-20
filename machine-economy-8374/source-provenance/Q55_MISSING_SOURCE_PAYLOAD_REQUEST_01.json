@@ -1,0 +1,2100 @@
+{
+  "schema": "stegverse.q55-source-payload-request/v1",
+  "authority_effect": "NONE_SOURCE_REQUEST_ONLY",
+  "original_task": "StegVerse-Labs/.github#3443/7027241125",
+  "original_followup": "StegVerse-Labs/.github#3443/7028202429",
+  "census_sha256": "e7fe1f6369142d6097d14ffd5c7dc972ea59058df9c1d6bafcf241b9913c55b7",
+  "native_revision": "314768bae18c9f95235c790c0c69431972ed2c70",
+  "request_count": 265,
+  "total_unique_bytes": 2085363,
+  "target_binding": "OWNER_TARGET_MAPPING_REQUIRED; exact byte reuse does not choose an installation path",
+  "payload_requests": [
+    {
+      "bytes": 17330,
+      "sha256": "2440f56dd4c27ed06ae2c109b3005b1ea1758e1f2e1a3a55e0717c0140cdbebb",
+      "workspace_paths": [
+        "lane-callsite-8374/README.md",
+        "machine-economy-transfer/proof-lane/clone/README.md"
+      ]
+    },
+    {
+      "bytes": 3177,
+      "sha256": "17daae701b3014faeed94e97e63b4b7968732d5bde9283dbc3fc26f8dd06de51",
+      "workspace_paths": [
+        "lane-callsite-8374/instance/HOST__RECORD__01.json"
+      ]
+    },
+    {
+      "bytes": 411,
+      "sha256": "580183d5ac4b5cfaf6fdff044ca3b9d19ac65d3fa4e499a55117839afc53081a",
+      "workspace_paths": [
+        "lane-callsite-8374/instance/continuity/funds_accounting.json"
+      ]
+    },
+    {
+      "bytes": 6073,
+      "sha256": "75a151961285e40602ef6047008c3e2418b4dd6e8fa91ab4c6a861624fbce8df",
+      "workspace_paths": [
+        "lane-callsite-8374/instance/operation/config.json"
+      ]
+    },
+    {
+      "bytes": 178966,
+      "sha256": "8fdb583225ff8ba9b58d2e9982acbcf745e5aa5f70a49987d4ae16a115ad2741",
+      "workspace_paths": [
+        "lane-callsite-8374/instance/operation/endpoint.py",
+        "lane-callsite-8374/machine-economy-8374/operation/endpoint.py",
+        "lane-callsite-8374/throwaway/operation/endpoint.py"
+      ]
+    },
+    {
+      "bytes": 10489,
+      "sha256": "274ec65f04669aeec7a67fdf7a87fef6a23e59bb3ebee6ba26a0378dd64f7a51",
+      "workspace_paths": [
+        "lane-callsite-8374/instance/operation/funds.py",
+        "lane-callsite-8374/machine-economy-8374/operation/funds.py",
+        "lane-callsite-8374/throwaway/operation/funds.py",
+        "machine-economy-transfer/package/operation/funds.py",
+        "machine-economy-transfer/proof-lane/clone/machine-economy-8374/operation/funds.py",
+        "machine-economy-transfer/proof-lane/instance-defect-run1/operation/funds.py",
+        "machine-economy-transfer/proof-lane/instance/operation/funds.py",
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/operation/funds.py",
+        "machine-economy-transfer/proof-lane/throwaway/operation/funds.py",
+        "machine-economy-transfer/pushroot/machine-economy-8374/operation/funds.py"
+      ]
+    },
+    {
+      "bytes": 20107,
+      "sha256": "2b18d98c8a3b8601c1703f1352a9a0e4646c79d5c85e37dc4e9989e49a7392b2",
+      "workspace_paths": [
+        "lane-callsite-8374/instance/operation/offer.base.json",
+        "lane-callsite-8374/machine-economy-8374/operation/offer.base.json",
+        "lane-callsite-8374/throwaway/operation/offer.base.json",
+        "machine-economy-transfer/lane-home/operation/offer.base.json",
+        "machine-economy-transfer/package/operation/offer.base.json",
+        "machine-economy-transfer/proof-instance/operation/offer.base.json",
+        "machine-economy-transfer/proof-lane/clone/machine-economy-8374/operation/offer.base.json",
+        "machine-economy-transfer/proof-lane/instance-defect-run1/operation/offer.base.json",
+        "machine-economy-transfer/proof-lane/instance/operation/offer.base.json",
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/operation/offer.base.json",
+        "machine-economy-transfer/proof-lane/throwaway/operation/offer.base.json"
+      ]
+    },
+    {
+      "bytes": 22,
+      "sha256": "32aa9072fd2eb8dc8a50249ab0455a049d47453a89ef373a75c2d37569620324",
+      "workspace_paths": [
+        "lane-callsite-8374/instance/operation/public-url.txt",
+        "machine-economy-transfer/proof-lane/instance-defect-run1/operation/public-url.txt",
+        "machine-economy-transfer/proof-lane/instance/operation/public-url.txt"
+      ]
+    },
+    {
+      "bytes": 16560,
+      "sha256": "a9150e0225b3781cf5e590f96d4d5fcc4e3db0aa4c0e1d95f26d57379710cb79",
+      "workspace_paths": [
+        "lane-callsite-8374/instance/operation/public_proxy.py",
+        "lane-callsite-8374/machine-economy-8374/operation/public_proxy.py",
+        "lane-callsite-8374/throwaway/operation/public_proxy.py"
+      ]
+    },
+    {
+      "bytes": 387,
+      "sha256": "cc81da350513aa49446ede0700f9d9dded9ef791704dd5e4971a863f94de1eba",
+      "workspace_paths": [
+        "lane-callsite-8374/instance/operation/quote-cache.json"
+      ]
+    },
+    {
+      "bytes": 391,
+      "sha256": "d984b659ef7c3d898e42da5ab12ef12ea8706066d52c18d30d1b45adf808882d",
+      "workspace_paths": [
+        "lane-callsite-8374/instance/operation/settlement_relayer.json"
+      ]
+    },
+    {
+      "bytes": 312,
+      "sha256": "f9930e59737436d4dbb6ea345532f88fe8c48500fd9c78b7d1611ea48f4afc4e",
+      "workspace_paths": [
+        "lane-callsite-8374/instance/operation/specimen_payer.json"
+      ]
+    },
+    {
+      "bytes": 2229,
+      "sha256": "21f1b2abd4b062afb2c62ff7f5c0d041bb075e11fca79c6054c081b8778ae1b4",
+      "workspace_paths": [
+        "lane-callsite-8374/instance/signing/config.json"
+      ]
+    },
+    {
+      "bytes": 425,
+      "sha256": "270c0584ff0efc27ea4c425d75c0374bb11dd66bfd3f72a363b4154ef7b9ed86",
+      "workspace_paths": [
+        "lane-callsite-8374/instance/systemd/claudecallsite-endpoint.service"
+      ]
+    },
+    {
+      "bytes": 496,
+      "sha256": "e6d44c38b632bb8d0270e28d5f7209bf0a42bbb60a672e85d53c608bb7664aa5",
+      "workspace_paths": [
+        "lane-callsite-8374/instance/systemd/claudecallsite-public-proxy.service"
+      ]
+    },
+    {
+      "bytes": 529,
+      "sha256": "c384b2ee306ff0a43dc0153bd7c9a015adb18a98a1dc989631504bfd037b4af8",
+      "workspace_paths": [
+        "lane-callsite-8374/instance/systemd/claudecallsite-signing.service"
+      ]
+    },
+    {
+      "bytes": 7992,
+      "sha256": "ae2494710e7c39244de32f7590018c363d5f838ce3530cb5270ef35602e32376",
+      "workspace_paths": [
+        "lane-callsite-8374/machine-economy-8374/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 7238,
+      "sha256": "c67b3e1b0935ed6a3a54b1201a1087e753e63bcb0c0cb45435df47f3328ed8dd",
+      "workspace_paths": [
+        "lane-callsite-8374/machine-economy-8374/README.md",
+        "machine-economy-transfer/proof-lane/clone/machine-economy-8374/README.md",
+        "machine-economy-transfer/pushroot/machine-economy-8374/README.md"
+      ]
+    },
+    {
+      "bytes": 3157,
+      "sha256": "dd5c08426bbe0eff4af077ebb0d54cc5829a1d9de8ab8a2274f8939a284ff02c",
+      "workspace_paths": [
+        "lane-callsite-8374/throwaway/HOST__RECORD__01.json"
+      ]
+    },
+    {
+      "bytes": 6073,
+      "sha256": "b867d763b25f8a45bcac19ff4c55f84859b56d63c384a27ffb8cc8a9b1ea5f64",
+      "workspace_paths": [
+        "lane-callsite-8374/throwaway/operation/config.json"
+      ]
+    },
+    {
+      "bytes": 22,
+      "sha256": "ae696549f3e0fc381f24e056d650624c964343a77ec031169ab8edcb7f1f35f4",
+      "workspace_paths": [
+        "lane-callsite-8374/throwaway/operation/public-url.txt"
+      ]
+    },
+    {
+      "bytes": 388,
+      "sha256": "e38edafcfefcd3d062d0c07e977aaae3aa3b7720e25ad26600ec7d0abd9d94c8",
+      "workspace_paths": [
+        "lane-callsite-8374/throwaway/operation/quote-cache.json"
+      ]
+    },
+    {
+      "bytes": 391,
+      "sha256": "8b8fa7794d8ab20f6e9ca2b819f5b3b32ad6fa1d75f112c99a7ef33952bb7a84",
+      "workspace_paths": [
+        "lane-callsite-8374/throwaway/operation/settlement_relayer.json"
+      ]
+    },
+    {
+      "bytes": 312,
+      "sha256": "dae20986f96249cad7ebb1639dd3774f2e0be5413ef6aa232b822eb8565afbf6",
+      "workspace_paths": [
+        "lane-callsite-8374/throwaway/operation/specimen_payer.json"
+      ]
+    },
+    {
+      "bytes": 2231,
+      "sha256": "11ac5d56b8bd8fa5d2d636b1d537fe4543078867367ff15ac7ee6d274bd128a9",
+      "workspace_paths": [
+        "lane-callsite-8374/throwaway/signing/config.json"
+      ]
+    },
+    {
+      "bytes": 427,
+      "sha256": "9610be3e47751484d78c43be3941362183fc43a22da25668c01834465a6f4cfb",
+      "workspace_paths": [
+        "lane-callsite-8374/throwaway/systemd/settlethrow-endpoint.service"
+      ]
+    },
+    {
+      "bytes": 495,
+      "sha256": "c26a9c0147fc65b4f21ff3f4c16ca09c8cdff24f7c184edf9856eaa24beb1d47",
+      "workspace_paths": [
+        "lane-callsite-8374/throwaway/systemd/settlethrow-public-proxy.service"
+      ]
+    },
+    {
+      "bytes": 531,
+      "sha256": "fcf83aa221b9df350102d9e2da140325fbd9aebd13a3d21ea7bec23cb8407072",
+      "workspace_paths": [
+        "lane-callsite-8374/throwaway/systemd/settlethrow-signing.service"
+      ]
+    },
+    {
+      "bytes": 65,
+      "sha256": "f99255e45d5d1a34780bab47421d4986350039326fd6e7c5c254eb9bf745487a",
+      "workspace_paths": [
+        "machine-economy-endpoint/402index-verify.txt"
+      ]
+    },
+    {
+      "bytes": 16633,
+      "sha256": "0a518874d9d53faa317ba44e6debb5c4b0a33c7232c4c9fbc21c595f26cace70",
+      "workspace_paths": [
+        "machine-economy-endpoint/AGENT__WORKFLOW__INTEGRATION__SPEC__01.md"
+      ]
+    },
+    {
+      "bytes": 9923,
+      "sha256": "e8937174b61ba2f64f64d0b2e816a912fb0e3ee47331078c56d1c8eaef038d7e",
+      "workspace_paths": [
+        "machine-economy-endpoint/BUILD__RECORD__Q43__OFFER__V07__01.md"
+      ]
+    },
+    {
+      "bytes": 3154,
+      "sha256": "ed0c5286f16c3f342819fc1c81be94cea1b44f3150ba06f1adf4b393070df2f1",
+      "workspace_paths": [
+        "machine-economy-endpoint/BUILD__RECORD__Q44__ISSUANCE__01.md"
+      ]
+    },
+    {
+      "bytes": 8030,
+      "sha256": "ea7c3b4590ff15f095a1378397d3964d9953d35eebf85d91a302f51cad268ea8",
+      "workspace_paths": [
+        "machine-economy-endpoint/BUILD__RECORD__Q48__X402__V2__01.md"
+      ]
+    },
+    {
+      "bytes": 8792,
+      "sha256": "92984973fc717fe13bcb00eb3c402c833e810199bf55161f7305dd4872c869f5",
+      "workspace_paths": [
+        "machine-economy-endpoint/BUILD__RECORD__Q49__AGREEMENT__SCOPE__01.md"
+      ]
+    },
+    {
+      "bytes": 9485,
+      "sha256": "5289249e28123ddc34ed23eb998f117c52eb22e4e9b8dca119b111c69b3c69bb",
+      "workspace_paths": [
+        "machine-economy-endpoint/DEFAULT__PROTOCOL__BUILD__SPEC__01.md"
+      ]
+    },
+    {
+      "bytes": 3258,
+      "sha256": "bac90c604af34326f97f9d412363ca6a221845fffc349b928ae727cf9341211a",
+      "workspace_paths": [
+        "machine-economy-endpoint/FUNDS__PROJECTION__BUILD__RECORD__01.md"
+      ]
+    },
+    {
+      "bytes": 10297,
+      "sha256": "bd5d2247e67f4fa909a8049ba5903a4576bad1526a0a04b432bc80e16a59943e",
+      "workspace_paths": [
+        "machine-economy-endpoint/README.md"
+      ]
+    },
+    {
+      "bytes": 5038,
+      "sha256": "5f1306f16d89d5ec3258cb726fa046d9184954f256c53858cba38ae6e1fac8bf",
+      "workspace_paths": [
+        "machine-economy-endpoint/REGISTRATION__RECORD__02.md"
+      ]
+    },
+    {
+      "bytes": 8834,
+      "sha256": "9a8ddc9f2e02bab0eb0d06f77b1ce6035a0940a2c6c85c5b43b2f6a293c9c258",
+      "workspace_paths": [
+        "machine-economy-endpoint/REGISTRATION__RECORD__03.md"
+      ]
+    },
+    {
+      "bytes": 2950,
+      "sha256": "93ab6f4ef635f2e14419a2dc3cebe451f211d073758375c9e9f13a7f5ecb3475",
+      "workspace_paths": [
+        "machine-economy-endpoint/REPAIR__RECORD__BAZAAR__01.md"
+      ]
+    },
+    {
+      "bytes": 19598,
+      "sha256": "27aa611fcad3d3fe596cc4e1d5fa4f810fab6df34eeecff1944867b1e10907d3",
+      "workspace_paths": [
+        "machine-economy-endpoint/REPAIR__RECORD__OFFER__AND__CHARGING__01.md"
+      ]
+    },
+    {
+      "bytes": 2759,
+      "sha256": "2d2750ec8f27f62c2d8d710e9a9038521ecc3ad5dc89ca4c80fc1723a57e1743",
+      "workspace_paths": [
+        "machine-economy-endpoint/SETTLEMENT__FACILITATOR__NOTE.md"
+      ]
+    },
+    {
+      "bytes": 4989,
+      "sha256": "01547ff2386e8f24d5dfd4fbebbb91cffc1ea20c9c8c8c9a83cc89c88fb6937e",
+      "workspace_paths": [
+        "machine-economy-endpoint/acceptance_battery.py"
+      ]
+    },
+    {
+      "bytes": 10743,
+      "sha256": "b0b797c2207e5f968d2d02fd875d4e9fa9db15ede56d7af06a008ea2494c6439",
+      "workspace_paths": [
+        "machine-economy-endpoint/agora_listing_retry.py"
+      ]
+    },
+    {
+      "bytes": 6935,
+      "sha256": "bc7c3601adbbb802db2dcd666c5efc132a89952a3b81540f7fae09df6302dac6",
+      "workspace_paths": [
+        "machine-economy-endpoint/agreement_battery.py"
+      ]
+    },
+    {
+      "bytes": 3561,
+      "sha256": "6797cc4e218e4107fb91ff987bbae71649d2d79dae768ce27e14a02fe2eedf68",
+      "workspace_paths": [
+        "machine-economy-endpoint/carriage/q55-q56-queue-filing.md"
+      ]
+    },
+    {
+      "bytes": 1064,
+      "sha256": "75b84282f2d1e36b7b89d1b789b2f0bff9e36a92b254dbc74ce42058586d6319",
+      "workspace_paths": [
+        "machine-economy-endpoint/cf-hosts.txt"
+      ]
+    },
+    {
+      "bytes": 27,
+      "sha256": "8ffc9439383aacaea9b5698663c032295c701defa182ee02c52d0dfd578a8b6b",
+      "workspace_paths": [
+        "machine-economy-endpoint/cf-origin.txt"
+      ]
+    },
+    {
+      "bytes": 18179,
+      "sha256": "90f0e82928afe5d38bf0546c47ca81bd9ed0995930ab8f837a4a629145b97c0e",
+      "workspace_paths": [
+        "machine-economy-endpoint/cf_tunnel_supervisor.py",
+        "machine-economy-transfer/lane-home/operation/cf_tunnel_supervisor.py",
+        "machine-economy-transfer/package/operation/cf_tunnel_supervisor.py",
+        "machine-economy-transfer/proof-instance/operation/cf_tunnel_supervisor.py"
+      ]
+    },
+    {
+      "bytes": 6300,
+      "sha256": "ce883dc385d2a57a542ca3fdccf92d27ca15fbf1cb60e2cf1a9bbc4ee35c3176",
+      "workspace_paths": [
+        "machine-economy-endpoint/config.json"
+      ]
+    },
+    {
+      "bytes": 5834,
+      "sha256": "f57e21bde4547817e952d0f11c99cddb87e7ad4d07e87ff1755a432c4095d8b7",
+      "workspace_paths": [
+        "machine-economy-endpoint/demo/DEMO__ACTIVATION__2026-11-17.json"
+      ]
+    },
+    {
+      "bytes": 10270,
+      "sha256": "54b9f6522ae5adaaadce3d5e266321c6c53ba8cd998e6beedc0fd14b25b7b95a",
+      "workspace_paths": [
+        "machine-economy-endpoint/demo_activation.py"
+      ]
+    },
+    {
+      "bytes": 623,
+      "sha256": "5890642d042b4626aba92c9e16179a2407b512ffebb71baa6c1df8be2a879ecf",
+      "workspace_paths": [
+        "machine-economy-endpoint/discord-channels.json"
+      ]
+    },
+    {
+      "bytes": 767,
+      "sha256": "cc21c38f9bf6080106f2706a0e971cd267dfba9291eac47ab131dd8f34949a09",
+      "workspace_paths": [
+        "machine-economy-endpoint/inspect_pointers.json"
+      ]
+    },
+    {
+      "bytes": 1034,
+      "sha256": "1bef1f1b5cf8a4457a5c49bf444df1c2ffd4ccba188b92d564193a779fa034f3",
+      "workspace_paths": [
+        "machine-economy-endpoint/install-tunnel.sh"
+      ]
+    },
+    {
+      "bytes": 397,
+      "sha256": "3e1c5baadde9b5df40fd4c8010d96a39211b17e68ae893f79208ea0a612f3014",
+      "workspace_paths": [
+        "machine-economy-endpoint/install.sh"
+      ]
+    },
+    {
+      "bytes": 12288,
+      "sha256": "7e9fe4f18d738a1ccc2836c142a22185bb2776198a4caf00495882e16cb13e01",
+      "workspace_paths": [
+        "machine-economy-endpoint/manifold_battery.py"
+      ]
+    },
+    {
+      "bytes": 22,
+      "sha256": "8fa6752f44b8a4276700b58e261136a4c108352e70251da0d76c6d22daf8e535",
+      "workspace_paths": [
+        "machine-economy-endpoint/public-url.txt"
+      ]
+    },
+    {
+      "bytes": 388,
+      "sha256": "6b490fb871e1a751c14d5bc70776eda85671f8a511a791913a09dae0671fe296",
+      "workspace_paths": [
+        "machine-economy-endpoint/quote-cache.json"
+      ]
+    },
+    {
+      "bytes": 391,
+      "sha256": "ede4d06acc1028a766f6ad5c96a586f3695f79720b6fa10a740a7b5e41609b97",
+      "workspace_paths": [
+        "machine-economy-endpoint/settlement_relayer.json"
+      ]
+    },
+    {
+      "bytes": 3884,
+      "sha256": "420ad7abfefece60e87ae5b57bbfa42c56a6a888b1aeeb728f51a370f8b0e83a",
+      "workspace_paths": [
+        "machine-economy-endpoint/site-page/index.html"
+      ]
+    },
+    {
+      "bytes": 250,
+      "sha256": "2fefe9786108631f2e45c500621c2967fac808253b84b4e6f449deab29479731",
+      "workspace_paths": [
+        "machine-economy-endpoint/specimen_payer.json"
+      ]
+    },
+    {
+      "bytes": 540,
+      "sha256": "74bb9d6b7468b5a43ad6614a2a17afe4d73fd90dcfd429f9aff137d9933239a7",
+      "workspace_paths": [
+        "machine-economy-endpoint/systemd/machine-economy-cf-tunnel.service"
+      ]
+    },
+    {
+      "bytes": 443,
+      "sha256": "757ed8db80577db9818f898ae9dedd912a46923038ca3edbeed1690e9583e6a4",
+      "workspace_paths": [
+        "machine-economy-endpoint/systemd/machine-economy-endpoint.service"
+      ]
+    },
+    {
+      "bytes": 526,
+      "sha256": "5dcd92f4af4570a0c9fed40506cec12d3213c32f84eed713c021dedd9eeae022",
+      "workspace_paths": [
+        "machine-economy-endpoint/systemd/machine-economy-public-proxy.service"
+      ]
+    },
+    {
+      "bytes": 463,
+      "sha256": "f6915dcf633ca59b0167d3f5c75397a97b9f6ce795cbfe906a7722a9b4dce7fd",
+      "workspace_paths": [
+        "machine-economy-endpoint/systemd/machine-economy-tunnel.service"
+      ]
+    },
+    {
+      "bytes": 6446,
+      "sha256": "11b62560e63a339d43a031869bd9d718a8fc10d8f8804ed744cdab757ed138b5",
+      "workspace_paths": [
+        "machine-economy-endpoint/tunnel_supervisor.py",
+        "machine-economy-transfer/lane-home/operation/tunnel_supervisor.py",
+        "machine-economy-transfer/package/operation/tunnel_supervisor.py",
+        "machine-economy-transfer/proof-instance/operation/tunnel_supervisor.py"
+      ]
+    },
+    {
+      "bytes": 9378,
+      "sha256": "40cb116263fe9596c44ac812dbb01de36012b03e729ced8764a0c210673d914b",
+      "workspace_paths": [
+        "machine-economy-endpoint/x402_battery.py"
+      ]
+    },
+    {
+      "bytes": 10153,
+      "sha256": "470aa065130ec5c5ba00b098b62a8becf81c8bff972c941a4309484628d923f6",
+      "workspace_paths": [
+        "machine-economy-endpoint/x402_v2_battery.py"
+      ]
+    },
+    {
+      "bytes": 6478,
+      "sha256": "150f9a386b0ac2cd2664cc6e0d11dd2b3a151bdaff741f76785b5745495cd43e",
+      "workspace_paths": [
+        "machine-economy-entry-suite/BUILD__RECORD__01.md"
+      ]
+    },
+    {
+      "bytes": 6582,
+      "sha256": "be679cb5d3bf4e07187e9a2ac0d5753d6d570b18e95949367db741ff29342e4a",
+      "workspace_paths": [
+        "machine-economy-entry-suite/BUILD__RECORD__02.md"
+      ]
+    },
+    {
+      "bytes": 7694,
+      "sha256": "9610ad960aed4a320235de788989a9ef0173cbee6f97545574e1708a61b0ee92",
+      "workspace_paths": [
+        "machine-economy-entry-suite/BUILD__RECORD__03.md"
+      ]
+    },
+    {
+      "bytes": 8078,
+      "sha256": "5a7047ae536d77daa793f6d7c38513671c5ab76c45bd30ea44a104ca4c65beff",
+      "workspace_paths": [
+        "machine-economy-entry-suite/BUILD__RECORD__04.md"
+      ]
+    },
+    {
+      "bytes": 7765,
+      "sha256": "f007afcc9960c6d1cd6b92d3b19dede5dc16ca4c65c8d98b5317b5e929267fbb",
+      "workspace_paths": [
+        "machine-economy-entry-suite/BUILD__RECORD__05.md"
+      ]
+    },
+    {
+      "bytes": 10560,
+      "sha256": "b0e2d33aab484f8f64f94372bce6892c83c6183243ddc67983325e00ca792747",
+      "workspace_paths": [
+        "machine-economy-entry-suite/BUILD__RECORD__06.md"
+      ]
+    },
+    {
+      "bytes": 1161,
+      "sha256": "b7046425cb96af0afc6e9c9581ac938e04ba391a65a21455307fc4580e4c6c78",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__01/CONFORMANCE__PROOF__01.json"
+      ]
+    },
+    {
+      "bytes": 5910,
+      "sha256": "8a8747a6dcd02454963e41818184c914d8b16a35faf80c6d07ffd46db72bc2fc",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__01/ENDPOINT__SPEC__01.md"
+      ]
+    },
+    {
+      "bytes": 6995,
+      "sha256": "1ad2e33beb5195acb005d2884f192eb65c06a6e78730cee851ee2715a3531e05",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__01/ENTRY__BASIS__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__02/ENTRY__BASIS__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__03/ENTRY__BASIS__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__04/ENTRY__BASIS__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__05/ENTRY__BASIS__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__06/ENTRY__BASIS__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__07/ENTRY__BASIS__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/ENTRY__BASIS__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/ENTRY__BASIS__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/ENTRY__BASIS__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/ENTRY__BASIS__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/ENTRY__BASIS__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/ENTRY__BASIS__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/ENTRY__BASIS__01.md"
+      ]
+    },
+    {
+      "bytes": 1333,
+      "sha256": "eb18ea2b83d285fdc928330b29d00b2d186ebd14ed048c05b1a317abd32e2e45",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__01/FUNDING__STATEMENT__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__02/FUNDING__STATEMENT__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__03/FUNDING__STATEMENT__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__04/FUNDING__STATEMENT__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__05/FUNDING__STATEMENT__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__06/FUNDING__STATEMENT__01.md"
+      ]
+    },
+    {
+      "bytes": 6530,
+      "sha256": "613b21bc489cfda95c6a9f06881e49df9e34aeb8ef6b2bd0d9bf3560b7af3c65",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__01/OFFER__MACHINE__READABLE__01.json"
+      ]
+    },
+    {
+      "bytes": 2444,
+      "sha256": "72fdd4e77dc384736762f164adbdec66433b9aa0c003352c6510d770b05e4607",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__01/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 2173,
+      "sha256": "429d861c95189768a4351f5ac2855956fa68356f2486c33f1c695cb3715cfa0b",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__01/README.md"
+      ]
+    },
+    {
+      "bytes": 1226,
+      "sha256": "65891e0616532aba9f583d4a6f28d41a0f90ea78c2ec1a710eac3de0e6e5865a",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__01/REFERENCES__01.md"
+      ]
+    },
+    {
+      "bytes": 1974,
+      "sha256": "657cb08ba1fa74f64bd741268321a7a841106dfc285c16dd81260e10f29729f9",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__01/SPEC__MEMBER__01.md"
+      ]
+    },
+    {
+      "bytes": 1596,
+      "sha256": "1cec47fc4f764065dbc9e67ae6d9ce022b52e6eec787691737a291cfed944c8e",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__01/SUITE__CHARTER__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__02/SUITE__CHARTER__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__03/SUITE__CHARTER__01.md"
+      ]
+    },
+    {
+      "bytes": 2913,
+      "sha256": "9f9207293b11f928fed46d5fe9a1a5ef41074825a90825588b97a1298bb32f7e",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__01/self_check.py",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__02/self_check.py",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__03/self_check.py",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__04/self_check.py",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__05/self_check.py",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__06/self_check.py",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__07/self_check.py",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/self_check.py",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/self_check.py",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/self_check.py",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/self_check.py",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/self_check.py",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/self_check.py",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/self_check.py"
+      ]
+    },
+    {
+      "bytes": 1161,
+      "sha256": "71b3a6d23726962723a5741c7639fdc8da50c0a47b82962fef3384f3a4dadcdb",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__02/CONFORMANCE__PROOF__01.json"
+      ]
+    },
+    {
+      "bytes": 6883,
+      "sha256": "72f9a6b675d9cb18b939ec6955c2123028045ff7188037caca1d16a7ae11daae",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__02/ENDPOINT__SPEC__01.md"
+      ]
+    },
+    {
+      "bytes": 4953,
+      "sha256": "01746819a05fce4d12913c0e2e2702cb124c2f850ca1ab9daaf82a0e1ab36745",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__02/GEN__02__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__03/GEN__02__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__04/GEN__02__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__05/GEN__02__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__06/GEN__02__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__07/GEN__02__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/GEN__02__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/GEN__02__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/GEN__02__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/GEN__02__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/GEN__02__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/GEN__02__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/GEN__02__CHANGES__01.md"
+      ]
+    },
+    {
+      "bytes": 7320,
+      "sha256": "3b3c836a14f34c9c33c43ed210d1bd791c3b70f972fbf662c28862ed03b41f07",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__02/OFFER__MACHINE__READABLE__01.json"
+      ]
+    },
+    {
+      "bytes": 3468,
+      "sha256": "74e31dd76fd42a68b421d1ec379306c69d664b8baa96cfb7def63d4f84c9b3e7",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__02/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 3407,
+      "sha256": "bf9c0912400fd6bdde563aeb4f8dc90fa693fc7564bdf0eec9f19dbaa211b295",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__02/README.md"
+      ]
+    },
+    {
+      "bytes": 2053,
+      "sha256": "34c49c1959b785a914fe5d40bc6dae832c123ff4eb0590bf17653351ed6ebe07",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__02/REFERENCES__01.md"
+      ]
+    },
+    {
+      "bytes": 2752,
+      "sha256": "efaaa98c945867cc9c3d7a45ab905a55aadf43e9e04f19979ef6e2e3060400ad",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__02/SPEC__MEMBER__01.md"
+      ]
+    },
+    {
+      "bytes": 1161,
+      "sha256": "3ea30a3ddf59cb7cce634203146b8b8c6e6f7293ee094462d0af1e545277a71e",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__03/CONFORMANCE__PROOF__01.json"
+      ]
+    },
+    {
+      "bytes": 9280,
+      "sha256": "e338b99dff67f11ef55419515319a6d9507f47a4ed45338c8ce95eba551ee0d4",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__03/ENDPOINT__SPEC__01.md"
+      ]
+    },
+    {
+      "bytes": 6968,
+      "sha256": "88fdaf418b408dece4cbc5fce3f7d38e44d180e49f3c34f19599bb1610bcd980",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__03/GEN__03__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__04/GEN__03__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__05/GEN__03__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__06/GEN__03__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__07/GEN__03__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/GEN__03__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/GEN__03__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/GEN__03__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/GEN__03__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/GEN__03__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/GEN__03__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/GEN__03__CHANGES__01.md"
+      ]
+    },
+    {
+      "bytes": 9693,
+      "sha256": "89d13b94bb3266909e72dbae926792de948135b43a016c763a3a803bccc2d815",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__03/OFFER__MACHINE__READABLE__01.json"
+      ]
+    },
+    {
+      "bytes": 4706,
+      "sha256": "f3c95374de63e71be3f998973af3f6080ca9082ad3e7b62f2c058fa3ba697f0b",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__03/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 4929,
+      "sha256": "428a3b9fa363ae69b0cb87511e42dc0a40174a5557f1142fffa366376d0e6706",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__03/README.md"
+      ]
+    },
+    {
+      "bytes": 3272,
+      "sha256": "f8e2c6b687ec0d5047c20d550d247fa913f29aa4fe70024ea54a8bd436bcd92e",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__03/REFERENCES__01.md"
+      ]
+    },
+    {
+      "bytes": 4533,
+      "sha256": "04c4d85062a8e0fc86132146d0dea03afcba6fcbf1394e21bd1cb098569e4bf4",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__03/SPEC__MEMBER__01.md"
+      ]
+    },
+    {
+      "bytes": 1161,
+      "sha256": "aa4af8862adb58ee62c8372a2da77a6194c3b61d91caab57f1210b1e0fc174b8",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__04/CONFORMANCE__PROOF__01.json"
+      ]
+    },
+    {
+      "bytes": 11515,
+      "sha256": "9eef8c121e683acb74f1ddf711e35927fc8bcccd7267dd5855e4e23a00f141ea",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__04/ENDPOINT__SPEC__01.md"
+      ]
+    },
+    {
+      "bytes": 8178,
+      "sha256": "21a398e9ec527fa898f7ba91730541736862ef1560e1c5f373e6792b82327094",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__04/GEN__04__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__05/GEN__04__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__06/GEN__04__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__07/GEN__04__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/GEN__04__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/GEN__04__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/GEN__04__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/GEN__04__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/GEN__04__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/GEN__04__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/GEN__04__CHANGES__01.md"
+      ]
+    },
+    {
+      "bytes": 12160,
+      "sha256": "60a25e84b7ae583ba1a8b550f485626d5320cc797ea6908927442cf08ca307b1",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__04/OFFER__MACHINE__READABLE__01.json"
+      ]
+    },
+    {
+      "bytes": 5570,
+      "sha256": "16a611534267df2214c0706e174569a7b05195b2c8e4da0fad7d8437b8133779",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__04/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 6311,
+      "sha256": "bf03c6e8a07e357e5693acee17f48ddae30a306ccbc6db1b1f34eb499291c289",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__04/README.md"
+      ]
+    },
+    {
+      "bytes": 4418,
+      "sha256": "46d5af485274197ae8ed9fe7f93ec75ccec37006008e07ce50159634fbdb483f",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__04/REFERENCES__01.md"
+      ]
+    },
+    {
+      "bytes": 5868,
+      "sha256": "4b7826961f6f6bb4d655262c5b218b538e88b8ac5f52cc2200aab1deea47d0e4",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__04/SPEC__MEMBER__01.md"
+      ]
+    },
+    {
+      "bytes": 1774,
+      "sha256": "1ff032a901527e9d84bddf9d78b07417c618b7cb44a5779af21ed79d4b6463e0",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__04/SUITE__CHARTER__01.md"
+      ]
+    },
+    {
+      "bytes": 1161,
+      "sha256": "ea7d6e984cae695d5bb8cbcaf87693e253d6524d151cb6ce7209a12f62c9d743",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__05/CONFORMANCE__PROOF__01.json"
+      ]
+    },
+    {
+      "bytes": 12315,
+      "sha256": "d0191e0412247ce2a18e596035d302cf28bcae61fa9417f1dc9ac227d157eb09",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__05/ENDPOINT__SPEC__01.md"
+      ]
+    },
+    {
+      "bytes": 6462,
+      "sha256": "36f499eb47f27da6d88c91a42a4d2b98c2b078db87b7a55244a7b9f75f45599a",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__05/GEN__05__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__06/GEN__05__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__07/GEN__05__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/GEN__05__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/GEN__05__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/GEN__05__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/GEN__05__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/GEN__05__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/GEN__05__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/GEN__05__CHANGES__01.md"
+      ]
+    },
+    {
+      "bytes": 12691,
+      "sha256": "045dc1ed13917ee3d14a3b46fa12e500b0560b56353705ca1ba2d46b3ef79756",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__05/OFFER__MACHINE__READABLE__01.json"
+      ]
+    },
+    {
+      "bytes": 5790,
+      "sha256": "c879d2ac2404e4e172bb379616699fbe13aa3a543d1e4c310879e915012084cf",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__05/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 6971,
+      "sha256": "9cd3230948941f7bfaf1af87a76dd8c953299aae31a2645e98bc06dced1d801a",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__05/README.md"
+      ]
+    },
+    {
+      "bytes": 5676,
+      "sha256": "96941f7ad914317c3f1836d473723c17bc570e3562f0221bbacf0f0334a7f805",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__05/REFERENCES__01.md"
+      ]
+    },
+    {
+      "bytes": 6612,
+      "sha256": "bb08a2f5a7a6fb0fbb4b6816834c634806e947fdd5d54d64ebe19bef780cc4c9",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__05/SPEC__MEMBER__01.md"
+      ]
+    },
+    {
+      "bytes": 2092,
+      "sha256": "64ff26e3f3f6e52db0446486f746650ff9aa0e189cb907ea4abd08a7f55a2a4d",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__05/SUITE__CHARTER__01.md"
+      ]
+    },
+    {
+      "bytes": 1161,
+      "sha256": "ef83546d7441a739163ebd879eb86a874eed5bc110bd02ea0d6b416d253c22f1",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__06/CONFORMANCE__PROOF__01.json"
+      ]
+    },
+    {
+      "bytes": 17816,
+      "sha256": "b556cb15d8822b86112636898d4f92ac1109093d7c820f0200efb3e0d4724f0d",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__06/GEN__06__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__07/GEN__06__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/GEN__06__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/GEN__06__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/GEN__06__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/GEN__06__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/GEN__06__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/GEN__06__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/GEN__06__CHANGES__01.md"
+      ]
+    },
+    {
+      "bytes": 17527,
+      "sha256": "5ee1996cd0be0bb0601e9d2e99bf3acd7f2ded35d1e560a25b4969ffd6d5be69",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__06/OFFER__MACHINE__READABLE__01.json",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__07/OFFER__MACHINE__READABLE__01.json",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/OFFER__MACHINE__READABLE__01.json",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/OFFER__MACHINE__READABLE__01.json",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/OFFER__MACHINE__READABLE__01.json",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/OFFER__MACHINE__READABLE__01.json",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/OFFER__MACHINE__READABLE__01.json",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/OFFER__MACHINE__READABLE__01.json",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/OFFER__MACHINE__READABLE__01.json"
+      ]
+    },
+    {
+      "bytes": 6129,
+      "sha256": "e684b1c3d2662a26b68627755b3acc2b1b3c903c4ad546d5bd3998ab69bad1bb",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__06/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 7447,
+      "sha256": "2e4d6abf53ab711c6756ea4277c2da8d3bf02be06cfe1de33a24c8def39ee3ca",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__06/README.md"
+      ]
+    },
+    {
+      "bytes": 7115,
+      "sha256": "335f88f5339262580ad3b1ebf6fdd2be435f452208a8cc6fc2bb974344a53a16",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__06/REFERENCES__01.md"
+      ]
+    },
+    {
+      "bytes": 7357,
+      "sha256": "95c6c9924b257725f081b9af17b78146bf06275c0f9a5756b5ebaa22a807b8ff",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__06/SPEC__MEMBER__01.md"
+      ]
+    },
+    {
+      "bytes": 2248,
+      "sha256": "e91d6c9ba7ac0da15002578537c2daa567e160f58b1ad74e7ddeb3bc3c77512a",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__06/SUITE__CHARTER__01.md"
+      ]
+    },
+    {
+      "bytes": 1161,
+      "sha256": "bc5914ca4a5e12a0337a68ffc353a1388cbe3ce94d019e8d26bfd5a08818388b",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__07/CONFORMANCE__PROOF__01.json"
+      ]
+    },
+    {
+      "bytes": 1341,
+      "sha256": "55a2555fb4a4721f03b91a7a266dfdc6601c9b93b82bcdc3996cf25f80ded6a4",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__07/FUNDING__STATEMENT__01.md"
+      ]
+    },
+    {
+      "bytes": 3249,
+      "sha256": "d00c4ef01c740e7d9daaf915cca6f730027ce23770ec36e728169512f2543d2e",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__07/GEN__07__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/GEN__07__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/GEN__07__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/GEN__07__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/GEN__07__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/GEN__07__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/GEN__07__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/GEN__07__CHANGES__01.md"
+      ]
+    },
+    {
+      "bytes": 4764,
+      "sha256": "c92b76d5a8c5b9d12c8436a19d4decac15212ce0f3827785439e22a39c7e458b",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__07/LANE__SUBSTANTIATION__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/LANE__SUBSTANTIATION__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/LANE__SUBSTANTIATION__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/LANE__SUBSTANTIATION__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/LANE__SUBSTANTIATION__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/LANE__SUBSTANTIATION__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/LANE__SUBSTANTIATION__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/LANE__SUBSTANTIATION__01.md"
+      ]
+    },
+    {
+      "bytes": 4609,
+      "sha256": "b860a9b178bdeb5a679579d29423e26935ee1af579e8de9f38ef7904e20cf4c9",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__07/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 1736,
+      "sha256": "cdf1a90d53dc9f7134efb6c6ba1bde079dbcc6c00cbc8a97d77beed3eb3d6e0b",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__07/README.md"
+      ]
+    },
+    {
+      "bytes": 209,
+      "sha256": "91831b57b0142dbc3c8c7a71fb3d62996495735b0aab5727bd2c9703f20fd588",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__07/REFERENCES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/REFERENCES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/REFERENCES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/REFERENCES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/REFERENCES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/REFERENCES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/REFERENCES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/REFERENCES__01.md"
+      ]
+    },
+    {
+      "bytes": 1312,
+      "sha256": "31e1d710e7f6c96a093aafe695a1b5649bad5b0d444724c08529038ed58eed39",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__07/SPEC__MEMBER__01.md"
+      ]
+    },
+    {
+      "bytes": 359,
+      "sha256": "2a54bb195c4c2ba84e1b4d656cbbb2d61913c6ebb4eea76f23cdb69036f8abb3",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__07/SUITE__CHARTER__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/SUITE__CHARTER__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/SUITE__CHARTER__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/SUITE__CHARTER__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/SUITE__CHARTER__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/SUITE__CHARTER__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/SUITE__CHARTER__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/SUITE__CHARTER__01.md"
+      ]
+    },
+    {
+      "bytes": 1161,
+      "sha256": "1deb6f394e13a2a83c4d0658d46658ca090442a42be34194cd4fd52b5f0b2d8b",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/CONFORMANCE__PROOF__01.json"
+      ]
+    },
+    {
+      "bytes": 1345,
+      "sha256": "4fc0bbebcc0e660d066b9d4028320007ad1e335cf4a4313336698cae863021aa",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/FUNDING__STATEMENT__01.md"
+      ]
+    },
+    {
+      "bytes": 3226,
+      "sha256": "4e326cbae0d157b8f1c9be244b10076086f86105002b25e1b76dc98792f52705",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/GEN__08__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/GEN__08__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/GEN__08__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/GEN__08__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/GEN__08__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/GEN__08__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/GEN__08__CHANGES__01.md"
+      ]
+    },
+    {
+      "bytes": 5144,
+      "sha256": "ef9bb8e08d1756a8c7a929890298abd7f783d87ddfd0170c026c70229f6e4637",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 7719,
+      "sha256": "1cecdd38c624651d88d4f164d9b9eb7499e6e04eb9bed84e5b65c16c014fec75",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/PACKAGE__MANIFEST__LANE__01.json"
+      ]
+    },
+    {
+      "bytes": 1774,
+      "sha256": "9294bd32c0d598a60eed8f32af1d11304e172cb3371a9b76546a296ddf496123",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/README.md"
+      ]
+    },
+    {
+      "bytes": 225,
+      "sha256": "42d6c9908246e36c7fd2e1eeeb6253fa7d2a0fbcb67beddadbc5517eb1a73bf3",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__08/SPEC__MEMBER__01.md"
+      ]
+    },
+    {
+      "bytes": 1161,
+      "sha256": "c35e800f552542baac1bb53f5c50e89ee0f91a80ec80af6d767b092affc4304e",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/CONFORMANCE__PROOF__01.json"
+      ]
+    },
+    {
+      "bytes": 1368,
+      "sha256": "031103f75bb6d33f1216938065613a1f9e3efdc76f4f9c23d092b9ee5c254594",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/FUNDING__STATEMENT__01.md"
+      ]
+    },
+    {
+      "bytes": 3550,
+      "sha256": "d560f9aefaefe5a8d3dd34a8c3d669c57ab177bc4cfbc697e673715443288fff",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/GEN__09__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/GEN__09__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/GEN__09__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/GEN__09__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/GEN__09__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/GEN__09__CHANGES__01.md"
+      ]
+    },
+    {
+      "bytes": 5489,
+      "sha256": "1233db58d993d62a89404ceaf714098771232c1a91def54057c197673ea3f8a6",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 7992,
+      "sha256": "9037555d5cbc25535f2bf92861a5fae679c1e287038ba8f6b06509f1496f0680",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/PACKAGE__MANIFEST__LANE__01.json",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/PACKAGE__MANIFEST__LANE__01.json",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/PACKAGE__MANIFEST__LANE__01.json",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/PACKAGE__MANIFEST__LANE__01.json"
+      ]
+    },
+    {
+      "bytes": 1795,
+      "sha256": "b0a24d7ae93cb62ac3fdca2358e318eb895ed888ee4220d96729e33a02c4a15b",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/README.md"
+      ]
+    },
+    {
+      "bytes": 221,
+      "sha256": "7335264c2f18f77599932d9b9d6fda38505281f1445304134b7c94be86268dab",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__09/SPEC__MEMBER__01.md"
+      ]
+    },
+    {
+      "bytes": 1161,
+      "sha256": "9f7727f6c49bf75b383c23862a362add3ee394459c37196a9a78ef217a6e82f2",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/CONFORMANCE__PROOF__01.json"
+      ]
+    },
+    {
+      "bytes": 1412,
+      "sha256": "d688927f7bdb1df765a43bc6ca09a7e78f5c2bc4e043f0dc55e5576438a4a951",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/FUNDING__STATEMENT__01.md"
+      ]
+    },
+    {
+      "bytes": 4604,
+      "sha256": "d0ff4bbccd77a4ac7deae3710dd9181fce46f145b5946d35dcfa3a874eeae73f",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/GEN__10__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/GEN__10__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/GEN__10__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/GEN__10__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/GEN__10__CHANGES__01.md"
+      ]
+    },
+    {
+      "bytes": 8253,
+      "sha256": "7be7f2475db22cef8864a8f96f578737fdb395f52014885d7ef9e41440fe6b2a",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 2452,
+      "sha256": "13d450cb5bfe4a2ce92e534a4e6c192a33c3d16cd2b62268edcbdd2c12a4455b",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/README.md"
+      ]
+    },
+    {
+      "bytes": 7415,
+      "sha256": "47fa77fe035caf31fef423e6478c98ef4016142472eddd19a15c347bf6d52758",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/ROUTER__README__01.md"
+      ]
+    },
+    {
+      "bytes": 84316,
+      "sha256": "4c6eedd1a8b6f7f2c4c7baca754cbedff8eb866d7da984f12e721e936623b173",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/ROUTER__router.py"
+      ]
+    },
+    {
+      "bytes": 11334,
+      "sha256": "760bc0c79a58d8c06813f263b4b02b894b8ca5cd1d741293dcc3e988388c229d",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/ROUTER__router_testkit.py",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/ROUTER__router_testkit.py"
+      ]
+    },
+    {
+      "bytes": 6034,
+      "sha256": "652976e8b1edac0417fec273aeafe1a906bcea8022e02d5f19ec19ce809557ec",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/ROUTER__seller.py",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/ROUTER__seller.py"
+      ]
+    },
+    {
+      "bytes": 12881,
+      "sha256": "d4ae9966a2aa6978fc737e7cc91e685bd6644ed6306adb522ad8697c93c66aa5",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/ROUTER__x402kit.py",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/ROUTER__x402kit.py"
+      ]
+    },
+    {
+      "bytes": 1240,
+      "sha256": "1495957eda85f25c177440464ce696928734ba702e54f373a905b3ca1ccf0491",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__10/SPEC__MEMBER__01.md"
+      ]
+    },
+    {
+      "bytes": 1161,
+      "sha256": "43ef210e8ea99e97e6faa04336072bba3d6f705d091cb87fd9d918b847f4c718",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/CONFORMANCE__PROOF__01.json"
+      ]
+    },
+    {
+      "bytes": 1397,
+      "sha256": "ff7c6e1b1f81c7006a2479faad4dbe92853da0049adb91a1449517ae1c95f849",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/FUNDING__STATEMENT__01.md"
+      ]
+    },
+    {
+      "bytes": 3654,
+      "sha256": "923df59b573aea9be0a2ddd248a1a323e42d3198666b4e7243a3d5f76a0f3022",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/GEN__11__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/GEN__11__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/GEN__11__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/GEN__11__CHANGES__01.md"
+      ]
+    },
+    {
+      "bytes": 8603,
+      "sha256": "684f38be960c2b2760aebe7aabb2d1ff5246c9d8356c5c8b2e8f76b0806b551e",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 2445,
+      "sha256": "3c0c5a0628c97cc3171578e23cb4c301e23337015439a270f5dc968d1f61159a",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/README.md"
+      ]
+    },
+    {
+      "bytes": 9238,
+      "sha256": "62fbeab0d20a400147c1504657fc18a7338fec47e8220f148bbe56e1f640f174",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/ROUTER__README__01.md"
+      ]
+    },
+    {
+      "bytes": 94075,
+      "sha256": "ce7d7fe33a6b7dbc1a35e6bdd5bfb9a2680d0f6c2d06a839cb6c842a741faa4d",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/ROUTER__router.py"
+      ]
+    },
+    {
+      "bytes": 1101,
+      "sha256": "b48559ca0c8f2d377fab3bb6bcf0e0f54113fecbd53501f1b2f266b6e23cb5c3",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__11/SPEC__MEMBER__01.md"
+      ]
+    },
+    {
+      "bytes": 1162,
+      "sha256": "a9999daf6dda5dea93b7de5441498d466dd9221c7e5d20cd56bd7b4cf49a97f5",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/CONFORMANCE__PROOF__01.json"
+      ]
+    },
+    {
+      "bytes": 1431,
+      "sha256": "026f2747ba916eb0387e35e02d870e269bbac55d45744ad125b7003f081cc31c",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/FUNDING__STATEMENT__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/FUNDING__STATEMENT__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/FUNDING__STATEMENT__01.md"
+      ]
+    },
+    {
+      "bytes": 6981,
+      "sha256": "fb940555c59bafe3b407d10a2bfc9a7c8353d49513c7626f9cc357278973d547",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/GEN__12__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/GEN__12__CHANGES__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/GEN__12__CHANGES__01.md"
+      ]
+    },
+    {
+      "bytes": 9669,
+      "sha256": "271657c790d9d306f6fcb3c1b2792ff149c6a8947ed4b0f61828aadb86f3649f",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 3816,
+      "sha256": "1f4c1d0702e260da661fc5162c994a0971bf49f45b5c39dddfb594d813d389cc",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/README.md"
+      ]
+    },
+    {
+      "bytes": 1300,
+      "sha256": "7d849d8f14cd610fdd9946f1519205f1182d2cda697ac39c86c07b3b270cb523",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__12/SPEC__MEMBER__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/SPEC__MEMBER__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/SPEC__MEMBER__01.md"
+      ]
+    },
+    {
+      "bytes": 8277,
+      "sha256": "1fcdb2f2e5288a24179efb385ad54c03ee62a1019c8bc29d8a11f48538351f09",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/CHAIN_EXPORT__battery_chain_export.py"
+      ]
+    },
+    {
+      "bytes": 14333,
+      "sha256": "b212c2234cad9298f9861376abef2e8c31b557c263b46550475026836ae9f8d4",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/CHAIN_EXPORT__chain_export.py"
+      ]
+    },
+    {
+      "bytes": 1162,
+      "sha256": "f2e314d1d97ad247796c584449b140befba15cf298a75049eb6291185252e8f2",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/CONFORMANCE__PROOF__01.json"
+      ]
+    },
+    {
+      "bytes": 3952,
+      "sha256": "17af5da6118049ab86b140cd847a1b73d8f44082880d2cbec689be3f41ce409f",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/CORRECTION__RECORD__FROZEN__TEST__01.md",
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/CORRECTION__RECORD__FROZEN__TEST__01.md"
+      ]
+    },
+    {
+      "bytes": 8817,
+      "sha256": "09f4c1db69e256a5bbd5acd8ab041263f2bf8b2bf040174100338c004dc743ac",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/ENDPOINT__compare_battery.py"
+      ]
+    },
+    {
+      "bytes": 9531,
+      "sha256": "2cc4b31d0b2afe3ec99a8ef501f41782284c85f35214940c710d43abf5542c73",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/GEN__13__CHANGES__01.md"
+      ]
+    },
+    {
+      "bytes": 11855,
+      "sha256": "5898fe8ccbacc7df3b2282260b7bb1ef3be4e6e5d7a429ff8de782a8de68b919",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 9340,
+      "sha256": "25c1d79fa6ddd2fb78e7505a7fcb20d782deac8e56bee53e11f776b77826dadd",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/PACKAGE__MANIFEST__LANE__01.json"
+      ]
+    },
+    {
+      "bytes": 4637,
+      "sha256": "15d43f5da1718fd24f43b0e5bc6a780032a1bdd5db3d6b024f1a73a04e55b103",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/README.md"
+      ]
+    },
+    {
+      "bytes": 12156,
+      "sha256": "9a52e88777382641307e4a1a058c01eab76f500842bdcd3c35318352550b6038",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/VERIFY__battery_verify.py"
+      ]
+    },
+    {
+      "bytes": 45293,
+      "sha256": "95075f0ff5125798f295f90070df116b106efcf1d4a78de5af7c9bce836cc5c5",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__13/VERIFY__verify.py"
+      ]
+    },
+    {
+      "bytes": 1162,
+      "sha256": "610bc86446e992c8805940263095e5afdad11e3594eae680c2126b511fbd0b7d",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/CONFORMANCE__PROOF__01.json"
+      ]
+    },
+    {
+      "bytes": 8972,
+      "sha256": "541fd313ab267bf87c35c39a4ad889ef8447b552a5ee14a26bfa60913b97048e",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/GEN__14__CHANGES__01.md"
+      ]
+    },
+    {
+      "bytes": 12297,
+      "sha256": "e119dbd7348a67d00b444c92772df86678e86b0f7607a65e9e2406f8ee4d8fa2",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 5578,
+      "sha256": "ea5fddeda525fc8c5d2532c9a2ad3f419a14fec4f81e1b35b6d49a6fe093a6c8",
+      "workspace_paths": [
+        "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__14/README.md"
+      ]
+    },
+    {
+      "bytes": 7862,
+      "sha256": "7dda3063f98b94cfb08a59a8b7a2a56e0bc69b3981ef99954836655968fbdcef",
+      "workspace_paths": [
+        "machine-economy-transfer/BUILD__RECORD__CAPABILITY__COMPONENT__01.md"
+      ]
+    },
+    {
+      "bytes": 4405,
+      "sha256": "a598deef01aac4129ae721d4e81095adb796e85c75e8f0fcf411e62240a208dd",
+      "workspace_paths": [
+        "machine-economy-transfer/CORRECTION__STATE__TRANSITION__FRAMING__01.md"
+      ]
+    },
+    {
+      "bytes": 10261,
+      "sha256": "115505625d41d696abacae4522a52f406bacdbd77c53c18bd84eb9ee25dbe3d8",
+      "workspace_paths": [
+        "machine-economy-transfer/ENTRY__PUSH__RECORD__01.md"
+      ]
+    },
+    {
+      "bytes": 3818,
+      "sha256": "39769fbcbd59d2ece1680d9892193ca6162a3e9d06bacc7a83ffcdbde7500684",
+      "workspace_paths": [
+        "machine-economy-transfer/LANE__HOME__ADDENDUM__01.md"
+      ]
+    },
+    {
+      "bytes": 1683,
+      "sha256": "3d066bd8323e933c129754acd3be755738b22d9605345b856960938b1cf4a181",
+      "workspace_paths": [
+        "machine-economy-transfer/LINKEDIN__POST__FROZEN__TEST__01.md"
+      ]
+    },
+    {
+      "bytes": 1980,
+      "sha256": "a5d3fd0f2093aad89018d3c976e2cfeb30b2dd4307aaffab0ec1c303add1447e",
+      "workspace_paths": [
+        "machine-economy-transfer/LINKEDIN__POST__FROZEN__TEST__02.md"
+      ]
+    },
+    {
+      "bytes": 2478,
+      "sha256": "271a503b1aa1e205369790f4de46ea57a5bef4d003f33963c68368bd2fbfb9ab",
+      "workspace_paths": [
+        "machine-economy-transfer/LINKEDIN__POST__FROZEN__TEST__03.md"
+      ]
+    },
+    {
+      "bytes": 4524,
+      "sha256": "ed2bf7eee905a6785305eb4bf4c9c968234536c80a3799b9e1516b4277c33816",
+      "workspace_paths": [
+        "machine-economy-transfer/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 6207,
+      "sha256": "8a8864e5afb7584501e7f2be4252801c106628d335d61424e6c9c95198c8ec81",
+      "workspace_paths": [
+        "machine-economy-transfer/build_package.py"
+      ]
+    },
+    {
+      "bytes": 10437,
+      "sha256": "3537f80d566c2b0fc9c53dcba1a4bbba65432ab31336c9d804c01851fb750212",
+      "workspace_paths": [
+        "machine-economy-transfer/capability-component/COMPONENT__INSTRUCTIONS__01.md"
+      ]
+    },
+    {
+      "bytes": 4990,
+      "sha256": "890b6ee1a2c2a76285bef9079b1c40b6fa5049a07c52303bad412f67c72d8c9b",
+      "workspace_paths": [
+        "machine-economy-transfer/capability-component/COMPONENT__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 5394,
+      "sha256": "0a75e8c42687f8afcfe8a537a9d8487bd52d8dbb29036251bc8b31f32f1d21e4",
+      "workspace_paths": [
+        "machine-economy-transfer/capability-component/component_battery.py"
+      ]
+    },
+    {
+      "bytes": 40576,
+      "sha256": "649ed88d0c9ee7a663efceae7c7c6d05d6fb3aba096acb7c9a7378c91e14661f",
+      "workspace_paths": [
+        "machine-economy-transfer/capability-component/crossing_component.py",
+        "machine-economy-transfer/capability-component/specimen_harness/crossing_component.py"
+      ]
+    },
+    {
+      "bytes": 1374,
+      "sha256": "ad26f8d4f03c0ea963cabf8e34668dba475a077e2d8ea186ed6b8ef104447bf6",
+      "workspace_paths": [
+        "machine-economy-transfer/capability-component/specimen_harness/TRANSCRIPT__01.json"
+      ]
+    },
+    {
+      "bytes": 1619,
+      "sha256": "7e3e9b43a4c6e91c88121a75c0c7f026263374c02e95c04f14dc507f629035ac",
+      "workspace_paths": [
+        "machine-economy-transfer/capability-component/specimen_harness/framework.py"
+      ]
+    },
+    {
+      "bytes": 4460,
+      "sha256": "a2f1cee135dea132f1047a279be2a212d5bfc6dd250f035b3e2bd7da4f3fdd43",
+      "workspace_paths": [
+        "machine-economy-transfer/capability-component/specimen_harness/run_harness.py"
+      ]
+    },
+    {
+      "bytes": 3316,
+      "sha256": "4e38f5e5653e649acdccb23a6c82b6544e6a70aacdaf326d6711119f8a30f408",
+      "workspace_paths": [
+        "machine-economy-transfer/lane-home/OPERATOR__SLOTS.md",
+        "machine-economy-transfer/package/OPERATOR__SLOTS.md"
+      ]
+    },
+    {
+      "bytes": 4460,
+      "sha256": "6dd5963fd59b4352ec3303027ab3c5e6fb408efcf81ef5e4cfd913b6cb46e842",
+      "workspace_paths": [
+        "machine-economy-transfer/lane-home/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 5811,
+      "sha256": "4ae25bd42664b489791b7fdf1eb80c007230468303e2d9581d379c1cfa996674",
+      "workspace_paths": [
+        "machine-economy-transfer/lane-home/README.md",
+        "machine-economy-transfer/package/README.md"
+      ]
+    },
+    {
+      "bytes": 7088,
+      "sha256": "d69cb4a128b0b04fde86ca384d4427add6ce84607c48eb404c8af86df28fb87f",
+      "workspace_paths": [
+        "machine-economy-transfer/lane-home/batteries/settlement_battery.py",
+        "machine-economy-transfer/package/batteries/settlement_battery.py",
+        "machine-economy-transfer/proof-instance/batteries/settlement_battery.py",
+        "machine-economy-transfer/proof-lane/clone/machine-economy-8374/batteries/settlement_battery.py",
+        "machine-economy-transfer/proof-lane/instance-defect-run1/batteries/settlement_battery.py",
+        "machine-economy-transfer/proof-lane/instance/batteries/settlement_battery.py",
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/batteries/settlement_battery.py",
+        "machine-economy-transfer/proof-lane/throwaway/batteries/settlement_battery.py"
+      ]
+    },
+    {
+      "bytes": 6141,
+      "sha256": "59bd26f3c928df918d7d6a7c1ccd8e09be7ae0e656c46296cacc15a02a4393d0",
+      "workspace_paths": [
+        "machine-economy-transfer/lane-home/operation/config.template.json",
+        "machine-economy-transfer/package/operation/config.template.json",
+        "machine-economy-transfer/proof-instance/operation/config.template.json",
+        "machine-economy-transfer/proof-lane/clone/machine-economy-8374/operation/config.template.json",
+        "machine-economy-transfer/proof-lane/instance-defect-run1/operation/config.template.json",
+        "machine-economy-transfer/proof-lane/instance/operation/config.template.json",
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/operation/config.template.json",
+        "machine-economy-transfer/proof-lane/throwaway/operation/config.template.json"
+      ]
+    },
+    {
+      "bytes": 176389,
+      "sha256": "918a30004e78b841a5046224e68fac5f054a9afcaf2813e7bbb1a879cbc0831f",
+      "workspace_paths": [
+        "machine-economy-transfer/lane-home/operation/endpoint.py"
+      ]
+    },
+    {
+      "bytes": 16481,
+      "sha256": "7a37e4c4b325f8005e2229d94e55c569d4c464708aaa553278cfb19f2690b403",
+      "workspace_paths": [
+        "machine-economy-transfer/lane-home/operation/public_proxy.py"
+      ]
+    },
+    {
+      "bytes": 5813,
+      "sha256": "9af07de969aff14d1273d4b188f2ba8cbfa2fd87e74405505c161ede1606be19",
+      "workspace_paths": [
+        "machine-economy-transfer/lane-home/signing/README.md",
+        "machine-economy-transfer/package/signing/README.md",
+        "machine-economy-transfer/proof-instance/signing/README.md"
+      ]
+    },
+    {
+      "bytes": 3003,
+      "sha256": "082887c28bf998ce347cbe8712dc0bd8ce10fda3ce87650ad80d62049a11fc3c",
+      "workspace_paths": [
+        "machine-economy-transfer/lane-home/signing/config.template.json",
+        "machine-economy-transfer/package/signing/config.template.json",
+        "machine-economy-transfer/proof-instance/signing/config.template.json"
+      ]
+    },
+    {
+      "bytes": 1271,
+      "sha256": "33f6eaf739b34790e6d24eafa2760849d22fc459528c1c055031b067be1bacf8",
+      "workspace_paths": [
+        "machine-economy-transfer/notice_pairing_gen08.md"
+      ]
+    },
+    {
+      "bytes": 3419,
+      "sha256": "23dcb8e074725d6acb3b22332f88295d8c76d218ea1aef74eef7050d94a53530",
+      "workspace_paths": [
+        "machine-economy-transfer/package/FUNDS__PROJECTION__01.md"
+      ]
+    },
+    {
+      "bytes": 123721,
+      "sha256": "395969e8e6936fbd70e0f6bc8fb47103aa250ca6e3e854cab51c564e0b4a0030",
+      "workspace_paths": [
+        "machine-economy-transfer/package/operation/endpoint.py",
+        "machine-economy-transfer/proof-lane/clone/machine-economy-8374/operation/endpoint.py",
+        "machine-economy-transfer/proof-lane/instance-defect-run1/operation/endpoint.py",
+        "machine-economy-transfer/proof-lane/instance/operation/endpoint.py",
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/operation/endpoint.py",
+        "machine-economy-transfer/proof-lane/throwaway/operation/endpoint.py"
+      ]
+    },
+    {
+      "bytes": 14144,
+      "sha256": "9707caea1012dd8a03c35b51b9f4535eb1ba022f5026d9019529d698eb0407ee",
+      "workspace_paths": [
+        "machine-economy-transfer/package/operation/public_proxy.py",
+        "machine-economy-transfer/proof-instance/operation/public_proxy.py",
+        "machine-economy-transfer/proof-lane/clone/machine-economy-8374/operation/public_proxy.py",
+        "machine-economy-transfer/proof-lane/instance-defect-run1/operation/public_proxy.py",
+        "machine-economy-transfer/proof-lane/instance/operation/public_proxy.py",
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/operation/public_proxy.py",
+        "machine-economy-transfer/proof-lane/throwaway/operation/public_proxy.py"
+      ]
+    },
+    {
+      "bytes": 7210,
+      "sha256": "577f42728a57806285f2b79286871c15342e75eea866a42700ed7e7d8786fbc1",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-instance/fund_and_settle.py"
+      ]
+    },
+    {
+      "bytes": 221,
+      "sha256": "4d802c575d4a2dab19509140680880bf85d298e58e7acc3ab167b243b6ee9543",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-instance/instance_payer.json"
+      ]
+    },
+    {
+      "bytes": 6116,
+      "sha256": "3ba952cbdd1b475dffddd877a2e24400fe934a460470091d121cd79ac7de049c",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-instance/operation/config.json"
+      ]
+    },
+    {
+      "bytes": 122513,
+      "sha256": "641da49271581416a619aa2741b21e1d2402954d8044f7f8db494bcc1f6eacd7",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-instance/operation/endpoint.py"
+      ]
+    },
+    {
+      "bytes": 22,
+      "sha256": "a2d3cf6c839b076c59ce29e09124edf22959540c4382425357b914ffea9e87fc",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-instance/operation/public-url.txt"
+      ]
+    },
+    {
+      "bytes": 391,
+      "sha256": "f8e3e510f01f6a9cc08fce88387b1b6b7ce85f404ef63973992afeaa8895fa70",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-instance/operation/settlement_relayer.json"
+      ]
+    },
+    {
+      "bytes": 3010,
+      "sha256": "68db1915241103752b622b99dc08d3ffab104c1c6ddbc50b22188ae393cf4e11",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-instance/signing/config.json"
+      ]
+    },
+    {
+      "bytes": 7575,
+      "sha256": "3f5e350d5ffc46f5befb2fc71b11d77c4909ae39ec56a6355a14cb484fd68928",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/clone/machine-economy-8374/PACKAGE__MANIFEST__01.json"
+      ]
+    },
+    {
+      "bytes": 5020,
+      "sha256": "f211e2fb61fc19049fa1ab7b5e02e786b6dd99435620966cee76df29d6dcde2d",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/clone/machine-economy-8374/components/continuity-watch/continuity_watch.sh",
+        "machine-economy-transfer/proof-lane/instance-defect-run1/components/continuity-watch/continuity_watch.sh",
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/components/continuity-watch/continuity_watch.sh",
+        "machine-economy-transfer/proof-lane/throwaway/components/continuity-watch/continuity_watch.sh"
+      ]
+    },
+    {
+      "bytes": 5282,
+      "sha256": "2b34aafb463395a0013a70f0ff9e2665845d22d3c26ee45083061b1c6a8dcb95",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/clone/machine-economy-8374/components/continuity-watch/funds_projection.py",
+        "machine-economy-transfer/proof-lane/instance-defect-run1/components/continuity-watch/funds_projection.py",
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/components/continuity-watch/funds_projection.py",
+        "machine-economy-transfer/proof-lane/throwaway/components/continuity-watch/funds_projection.py"
+      ]
+    },
+    {
+      "bytes": 4553,
+      "sha256": "917cc5e64f9371f972aa4dce7d00485a1c3343a3b216445b18880a94c15e787e",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/fund_instance.py"
+      ]
+    },
+    {
+      "bytes": 4684,
+      "sha256": "fda078635fcb68494bd3758922338577ad028f1360425ce2b5e58e799e54a49b",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/fund_instance2.py"
+      ]
+    },
+    {
+      "bytes": 3152,
+      "sha256": "478e6488fa5d48a24fcb6a7edaff1d743a3d9ef9266e5a675d9513f34d019b1b",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/instance-defect-run1/HOST__RECORD__01.json"
+      ]
+    },
+    {
+      "bytes": 264,
+      "sha256": "523583f9c711f82d338988750b5c1e69f91c967dc575061fc66d26e74d6dadcf",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/instance-defect-run1/continuity/funds_accounting.json"
+      ]
+    },
+    {
+      "bytes": 6116,
+      "sha256": "d98cf18ca0a18763ed9e65fd7495698dd25cc4112d4d602ba7f1986e8d6cf7e6",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/instance-defect-run1/operation/config.json",
+        "machine-economy-transfer/proof-lane/instance/operation/config.json"
+      ]
+    },
+    {
+      "bytes": 391,
+      "sha256": "f4df60c2d5122c4cd2eac8dbf8198a7ab3330daf903f21f7928565e3076aa13f",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/instance-defect-run1/operation/settlement_relayer.json"
+      ]
+    },
+    {
+      "bytes": 312,
+      "sha256": "7aec337d9dda5b0ff77b3dade28a7aa958bda791b5775a879697f7e5a2c82648",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/instance-defect-run1/operation/specimen_payer.json"
+      ]
+    },
+    {
+      "bytes": 2263,
+      "sha256": "4033cd84e77ff78ca786badc172dbc68e7764faaaaac7ccbd85c80fb70c080f8",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/instance-defect-run1/signing/config.json"
+      ]
+    },
+    {
+      "bytes": 17470,
+      "sha256": "d1e6f3b94f83dc8b207c45ab88b102cb323905a362776f33d43f1773fd4f85ee",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/instance-defect-run1/signing/lane_signing.py",
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/signing/lane_signing.py"
+      ]
+    },
+    {
+      "bytes": 459,
+      "sha256": "cad68d328720fcc3f74e89b215483abf0eb89968695a9e17fb35dfbec744cfff",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/instance-defect-run1/systemd/lane8374-endpoint.service",
+        "machine-economy-transfer/proof-lane/instance/systemd/lane8374-endpoint.service"
+      ]
+    },
+    {
+      "bytes": 524,
+      "sha256": "34737af66c98b2b6f332312c7cde79a96771d5084aa1edd517e6c8171f98a878",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/instance-defect-run1/systemd/lane8374-public-proxy.service",
+        "machine-economy-transfer/proof-lane/instance/systemd/lane8374-public-proxy.service"
+      ]
+    },
+    {
+      "bytes": 563,
+      "sha256": "3b8ef3e98500610c0302db22068886171139dad5e473acc9ccdcba9388a316d7",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/instance-defect-run1/systemd/lane8374-signing.service",
+        "machine-economy-transfer/proof-lane/instance/systemd/lane8374-signing.service"
+      ]
+    },
+    {
+      "bytes": 3152,
+      "sha256": "0b2285231bfbcf9550aa56c1e8184f68e5bf64d8c53905199e5b7faceb541777",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/instance/HOST__RECORD__01.json"
+      ]
+    },
+    {
+      "bytes": 311,
+      "sha256": "0278f6eff336c35a032eb297311956cb0f31930a50a80d83359af0a729263bf4",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/instance/continuity/funds_accounting.json"
+      ]
+    },
+    {
+      "bytes": 391,
+      "sha256": "3f757f6fc2ef9855ca5f70313522b7d41b939dc240e6fc6112856b3de8833b81",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/instance/operation/settlement_relayer.json"
+      ]
+    },
+    {
+      "bytes": 312,
+      "sha256": "86cffc4966c9d3af3da0a799a2e7117c158c5313df646d5a95cc0e6526a9924c",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/instance/operation/specimen_payer.json"
+      ]
+    },
+    {
+      "bytes": 2263,
+      "sha256": "af5a6e05b7ff8e516fcb31cf3cabc50e3c3b54c753350d735739540e011315ed",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/instance/signing/config.json"
+      ]
+    },
+    {
+      "bytes": 3569,
+      "sha256": "e035a7ddda8182c3b0988c9e2fc81f363fde7afd5448796873dbd6abf90e6b98",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/main_host_stdout.txt"
+      ]
+    },
+    {
+      "bytes": 3286,
+      "sha256": "ce65c53e3e4b67f487bddb1ea3e7822f9987f87587884fcac2f50bcdec8af219",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/settled_crossing.py"
+      ]
+    },
+    {
+      "bytes": 3160,
+      "sha256": "3bbf9b41733d0b24e4deccaa617020ee40b49a9637f0d437e3d2268f562a33bc",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/HOST__RECORD__01.json"
+      ]
+    },
+    {
+      "bytes": 6116,
+      "sha256": "71b105f7dd4e3da6ff73ce0ac24640db5caff948b8e6cdf4729dcc405f63285b",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/operation/config.json",
+        "machine-economy-transfer/proof-lane/throwaway/operation/config.json"
+      ]
+    },
+    {
+      "bytes": 22,
+      "sha256": "1efc699d4a84dae5aa92476f2e8e6655b9d18b0b19240745be6dcff9edc7cec3",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/operation/public-url.txt",
+        "machine-economy-transfer/proof-lane/throwaway/operation/public-url.txt"
+      ]
+    },
+    {
+      "bytes": 391,
+      "sha256": "81b08ceeb1efbb136d4fc3425fd962304437f566854faf069e53d66905bb2e1c",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/operation/settlement_relayer.json"
+      ]
+    },
+    {
+      "bytes": 312,
+      "sha256": "28664ac7c3512f01ad1c050e6c5725f171b80ea9818bf384e48635fcdc7d6d5a",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/operation/specimen_payer.json"
+      ]
+    },
+    {
+      "bytes": 2265,
+      "sha256": "435318d52d7ea1be5247eaaf6954100290cf9cde2c19fe2f3203bc293160d461",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/signing/config.json"
+      ]
+    },
+    {
+      "bytes": 461,
+      "sha256": "2d01f1cf43fbc888d5d768b4312ad92ec7bcdd362e4408e93b6cb4f1bef5a420",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/systemd/lane8374t-endpoint.service",
+        "machine-economy-transfer/proof-lane/throwaway/systemd/lane8374t-endpoint.service"
+      ]
+    },
+    {
+      "bytes": 527,
+      "sha256": "87c1a3ada1d7f9b2c70665546e30d685e9e6da666cee948213ac2d4b1b93c3c8",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/systemd/lane8374t-public-proxy.service",
+        "machine-economy-transfer/proof-lane/throwaway/systemd/lane8374t-public-proxy.service"
+      ]
+    },
+    {
+      "bytes": 565,
+      "sha256": "98d771f2954e897c320c2fbcc4bd86bd5bb7e15f4750401e706e90c71bbbd04f",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/throwaway-defect-run1/systemd/lane8374t-signing.service",
+        "machine-economy-transfer/proof-lane/throwaway/systemd/lane8374t-signing.service"
+      ]
+    },
+    {
+      "bytes": 3160,
+      "sha256": "20d27add415985686ca8660e58fe0d6c915df65f9d9677fe698c3fec227e4a7d",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/throwaway/HOST__RECORD__01.json"
+      ]
+    },
+    {
+      "bytes": 391,
+      "sha256": "999194d89edc56606e73e94ebac7f949d57ecc4e194ddfaaae63947977e812ef",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/throwaway/operation/settlement_relayer.json"
+      ]
+    },
+    {
+      "bytes": 312,
+      "sha256": "da5284d77583a7f00aa21186b7e5020bc4c857716fdb47bfd10f6546ce48ceae",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/throwaway/operation/specimen_payer.json"
+      ]
+    },
+    {
+      "bytes": 2265,
+      "sha256": "632786c5d206c3ec87c502bb0d59bd060902d61a7f0cd32db1819abe28b0e0cd",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/throwaway/signing/config.json"
+      ]
+    },
+    {
+      "bytes": 3583,
+      "sha256": "68407b8874ca609643eddf7e51eb2fd3f11cae19d9e9b57a92fb929b3a369d30",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/throwaway_host_record.json"
+      ]
+    },
+    {
+      "bytes": 3583,
+      "sha256": "dfb2df786c5e67aa7aeb3bf48742b20877b12790098d799fb739ecb99f321277",
+      "workspace_paths": [
+        "machine-economy-transfer/proof-lane/throwaway_host_stdout.txt"
+      ]
+    },
+    {
+      "bytes": 4975,
+      "sha256": "76714e790b6c1250141c507fc22e9147d3595604109413bde88c6facc5f612c8",
+      "workspace_paths": [
+        "machine-economy-transfer/pushroot.muse-github-snapshot-sync.json"
+      ]
+    }
+  ]
+}

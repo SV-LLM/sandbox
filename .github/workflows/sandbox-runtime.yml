@@ -87,3 +87,8 @@ jobs:
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
         run: python -B tests/test_work_cycle_binding.py
+
+      - name: Q55 source-census immutable Git readback and refusal controls (offline)
+        run: |
+          python3 -B tests/test_q55_source_census.py -q
+          python3 -B -O tests/test_q55_source_census.py -q
