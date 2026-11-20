@@ -138,3 +138,13 @@ Coordination/build record only — distinct from authenticated admission,
 runtime execution, sovereign KV writes, and independently verified
 completion. Queue anchors: BUILD-Q-24…Q-27, Q-32/Q-35, Q-49, Q-50
 (StegVerse-Labs/.github #3443; pairing #3472).
+
+
+## Q57 MCP verify source candidate
+
+The dependency-free stdio MCP projection and local deterministic packaging live
+in `machine-economy-8374/mcp-verify/` (relative to repository root). It forwards
+one tool to the existing public checker and preserves its evidence bounds.
+Source handoff: `docs/MACHINE_ECONOMY_MCP_VERIFY_MIRROR_HANDOFF.md`.
+Native Q57 admission, live packaged acceptance and listing publication remain
+separate from this source candidate; no new resident runtime is introduced.

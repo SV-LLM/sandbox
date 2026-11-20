@@ -1,0 +1,26 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.StegVerse/verify-x402-resource",
+  "title": "8374 Verify",
+  "description": "Read-only x402 evidence checks with replay state, checked locations, and explicit evidence bounds.",
+  "version": "0.1.0",
+  "websiteUrl": "https://8374.stegverse.org/verify",
+  "repository": {
+    "url": "https://github.com/SV-LLM/sandbox",
+    "source": "github",
+    "subfolder": "machine-economy-8374/mcp-verify"
+  },
+  "packages": [{
+    "registryType": "pypi",
+    "identifier": "stegverse-verify-mcp",
+    "version": "0.1.0",
+    "transport": {"type": "stdio"},
+    "runtimeHint": "uvx"
+  }],
+  "_meta": {"io.modelcontextprotocol.registry/publisher-provided": {
+    "preparation_status": "SOURCE_CANDIDATE_NOT_PUBLISHED_OR_SUBMITTED",
+    "ownership_verified": false,
+    "package_available": false,
+    "requires": ["owner namespace and distribution acceptance", "license/terms determination", "accepted artifact publication", "live packaged battery", "non-author review"]
+  }}
+}

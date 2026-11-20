@@ -1,0 +1,19 @@
+{
+  "tests_normal": 15,
+  "tests_optimized": 15,
+  "packaged_live_battery": "PASS",
+  "live_executed_at": "2026-11-20T03:10:01.521022+00:00",
+  "zipapp_sha256": "71dfbb1f54ef645adc72f28bd155a1d49b1043eec8930b29ff9fe1a09a7f4006",
+  "official_registry_schema_url": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "official_registry_schema_sha256": "875ad3bf87a9bafb2ab76f3a0a3f6c5354d556ade5f8d7eab4aaa39aa7f90818",
+  "official_registry_schema_validation": "PASS; installed verification-only jsonschema, no production dependency",
+  "wheel_entrypoint_handshake": "PASS",
+  "upstream_observation_class": "CHECKER_RESPONSE_FORWARDED_NOT_WRAPPER_REPLAY",
+  "native_runtime_evidence": false,
+  "published": false,
+  "submitted": false,
+  "independently_reviewed": false,
+  "source_task": "Q-57-MCP-VERIFY-SERVER",
+  "native_goal_task_id": null,
+  "owner_interventions": 0
+}
