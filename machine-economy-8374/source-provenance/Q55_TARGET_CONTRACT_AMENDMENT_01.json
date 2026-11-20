@@ -1,0 +1,155 @@
+{
+ "schema": "stegverse.q55-target-contract-amendment/v1",
+ "document": "Q55_TARGET_CONTRACT_AMENDMENT_01",
+ "author_lane": "Claude (Muse lane), original owner of Q55_PAYLOAD_RETURN_01",
+ "filed_under": "TASK Q55-TARGET-CONTRACT-AMENDMENT, claimed #3443 comment 7030475456; repair requested by BUILD-Q55-EXACT-PAYLOAD-CONSUME-20261119, result #3443 comment 7029819684",
+ "source_pins_unchanged": {
+  "payload_request_sha256": "f1de0a03439f37f043aa69e86c0bf87590a16aef66372cc995f280dc31e1c770",
+  "workspace_census_sha256": "e7fe1f6369142d6097d14ffd5c7dc972ea59058df9c1d6bafcf241b9913c55b7",
+  "return_archive": "Q55_PAYLOAD_RETURN_01.zip, KV Drive 119Z8hactNLOoD0C8R530aUqbRSI1xv4T, SHA-256 6037247a83741f615e1dfb71faaea748c9d4612431911824afe95cf6bb2d62b7",
+  "original_return_manifest_sha256": "951d153606793e1037aabb99a9da10981aace864ed414a5aacaabb6125441217",
+  "consume_result": "SV-LLM/sandbox PR59 machine-economy-8374/source-provenance/Q55_RETURN_CONTRACT_RESULT_01.json, SHA-256 c029d0a1c958291d9506483e73cbd1e90b91f8d30b15eef643774453890c92bc, native_revision_observed ad97ee94bada03365579fc1170a45d5ccbc73030, PR59 head bc3d372f604627d53d87676abd1c011703893052"
+ },
+ "choice_rule": "For each destination receiving conflicting candidates, exactly one payload is chosen or none is. The rule keys on lineage and role, never on timestamp or size: (R1) operation/package content takes the candidate from the latest coherent assembly in its own lineage \u2014 the call-site assembly (lane-callsite-8374: the instance instantiated from the lane branch on 2026-11-19, batteries passing, settled PAIR-000025) over the earlier transfer staging (machine-economy-transfer/lane-home); (R2) a provenance slot takes the highest generation of the lineage it records; (R3) a generation-bound self-description (a package manifest) or a repository-owned file (the repo root README) has no successor among candidates that describe other states \u2014 the native file stands and every candidate is ARCHIVAL.",
+ "add_semantics_correction": "In RETURN__MANIFEST__01, TARGET-ADD meant only 'no exact-bytes row in the census crosswalk', which does not entail absence from the native tree. Corrected semantics: TARGET-ADD applies only where the native tree at the pinned revision lacks the path, verified against the tree itself. All three ADD rows are corrected below; no TARGET-ADD dispositions remain.",
+ "decisions": [
+  {
+   "target": "README.md",
+   "native_blob": "db92e27e84454c85863cdc5da5cf14e0a7062add",
+   "decision": "NOT-APPLIED \u2014 native stands (R3: the candidate is the cloned repository README carried by the call-site tree, not a successor of the native file)",
+   "amended": [
+    {
+     "workspace_path": "lane-callsite-8374/README.md",
+     "sha256": "2440f56dd4c27ed06ae2c109b3005b1ea1758e1f2e1a3a55e0717c0140cdbebb",
+     "was": "TARGET-ADD",
+     "now": "ARCHIVAL"
+    }
+   ]
+  },
+  {
+   "target": "machine-economy-8374/PACKAGE__MANIFEST__01.json",
+   "native_blob": "56a83e4c606509519ce63c099e72b0442926e397",
+   "decision": "NOT-APPLIED \u2014 native GEN 14 manifest stands (R3: a manifest describes its own package state; both candidates are manifests of other states \u2014 the call-site package copy and the transfer package copy \u2014 and substituting either would falsify the current package's self-description)",
+   "amended": [
+    {
+     "workspace_path": "lane-callsite-8374/machine-economy-8374/PACKAGE__MANIFEST__01.json",
+     "sha256": "ae2494710e7c39244de32f7590018c363d5f838ce3530cb5270ef35602e32376",
+     "was": "TARGET-REPLACEMENT",
+     "now": "ARCHIVAL"
+    },
+    {
+     "workspace_path": "machine-economy-transfer/lane-home/PACKAGE__MANIFEST__01.json",
+     "sha256": "6dd5963fd59b4352ec3303027ab3c5e6fb408efcf81ef5e4cfd913b6cb46e842",
+     "was": "TARGET-REPLACEMENT",
+     "now": "ARCHIVAL"
+    }
+   ]
+  },
+  {
+   "target": "machine-economy-8374/README.md",
+   "native_blob": "cc6d75bca4283a8f3d1e2a444884310676d56745",
+   "decision": "CHOSEN: lane-callsite-8374 copy (R1 \u2014 latest coherent assembly describes the current package)",
+   "amended": [
+    {
+     "workspace_path": "lane-callsite-8374/machine-economy-8374/README.md",
+     "sha256": "c67b3e1b0935ed6a3a54b1201a1087e753e63bcb0c0cb45435df47f3328ed8dd",
+     "was": "TARGET-ADD",
+     "now": "TARGET-REPLACEMENT",
+     "role": "CHOSEN"
+    },
+    {
+     "workspace_path": "machine-economy-transfer/lane-home/README.md",
+     "sha256": "4ae25bd42664b489791b7fdf1eb80c007230468303e2d9581d379c1cfa996674",
+     "was": "TARGET-ADD",
+     "now": "ARCHIVAL"
+    }
+   ]
+  },
+  {
+   "target": "machine-economy-8374/operation/endpoint.py",
+   "native_blob": "2eb8e4de06f0a7d656bbfc84fc23423cc5089a80",
+   "decision": "CHOSEN: lane-callsite-8374 copy (R1)",
+   "amended": [
+    {
+     "workspace_path": "lane-callsite-8374/machine-economy-8374/operation/endpoint.py",
+     "sha256": "8fdb583225ff8ba9b58d2e9982acbcf745e5aa5f70a49987d4ae16a115ad2741",
+     "was": "TARGET-REPLACEMENT",
+     "now": "TARGET-REPLACEMENT",
+     "role": "CHOSEN"
+    },
+    {
+     "workspace_path": "machine-economy-transfer/lane-home/operation/endpoint.py",
+     "sha256": "918a30004e78b841a5046224e68fac5f054a9afcaf2813e7bbb1a879cbc0831f",
+     "was": "TARGET-REPLACEMENT",
+     "now": "ARCHIVAL"
+    }
+   ]
+  },
+  {
+   "target": "machine-economy-8374/operation/public_proxy.py",
+   "native_blob": "0e01cf21cff50abe3a268059fb9572db2ebc213b",
+   "decision": "CHOSEN: lane-callsite-8374 copy (R1)",
+   "amended": [
+    {
+     "workspace_path": "lane-callsite-8374/machine-economy-8374/operation/public_proxy.py",
+     "sha256": "a9150e0225b3781cf5e590f96d4d5fcc4e3db0aa4c0e1d95f26d57379710cb79",
+     "was": "TARGET-REPLACEMENT",
+     "now": "TARGET-REPLACEMENT",
+     "role": "CHOSEN"
+    },
+    {
+     "workspace_path": "machine-economy-transfer/lane-home/operation/public_proxy.py",
+     "sha256": "7a37e4c4b325f8005e2229d94e55c569d4c464708aaa553278cfb19f2690b403",
+     "was": "TARGET-REPLACEMENT",
+     "now": "ARCHIVAL"
+    }
+   ]
+  },
+  {
+   "target": "machine-economy-8374/source-provenance/gen14/ENDPOINT__SPEC__01.md",
+   "native_blob": "181256ff6af4430f19d2b4677f4dae30ca076d38",
+   "decision": "CHOSEN: GEN 05 copy (R2 \u2014 the provenance slot records the final state of the spec lineage)",
+   "amended": [
+    {
+     "workspace_path": "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__05/ENDPOINT__SPEC__01.md",
+     "sha256": "d0191e0412247ce2a18e596035d302cf28bcae61fa9417f1dc9ac227d157eb09",
+     "was": "TARGET-REPLACEMENT",
+     "now": "TARGET-REPLACEMENT",
+     "role": "CHOSEN"
+    },
+    {
+     "workspace_path": "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__01/ENDPOINT__SPEC__01.md",
+     "sha256": "8a8747a6dcd02454963e41818184c914d8b16a35faf80c6d07ffd46db72bc2fc",
+     "was": "TARGET-REPLACEMENT",
+     "now": "ARCHIVAL"
+    },
+    {
+     "workspace_path": "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__02/ENDPOINT__SPEC__01.md",
+     "sha256": "72f9a6b675d9cb18b939ec6955c2123028045ff7188037caca1d16a7ae11daae",
+     "was": "TARGET-REPLACEMENT",
+     "now": "ARCHIVAL"
+    },
+    {
+     "workspace_path": "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__03/ENDPOINT__SPEC__01.md",
+     "sha256": "e338b99dff67f11ef55419515319a6d9507f47a4ed45338c8ce95eba551ee0d4",
+     "was": "TARGET-REPLACEMENT",
+     "now": "ARCHIVAL"
+    },
+    {
+     "workspace_path": "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__04/ENDPOINT__SPEC__01.md",
+     "sha256": "9eef8c121e683acb74f1ddf711e35927fc8bcccd7267dd5855e4e23a00f141ea",
+     "was": "TARGET-REPLACEMENT",
+     "now": "ARCHIVAL"
+    }
+   ]
+  }
+ ],
+ "amended_disposition_counts": {
+  "TARGET-REPLACEMENT": 20,
+  "TARGET-ADD": 0,
+  "ARCHIVAL": 475,
+  "NOT-REQUIRED": 2,
+  "total_paths": 497
+ },
+ "bounds": "Disposition amendment only. No payload bytes change; the return archive and its manifest stand as filed (this amendment supersedes the 14 listed per-path dispositions and no others). No import, merge, runtime, release, or propagation is performed or claimed; applying the amended contract is the integrating lane's act, verifiable by re-running the PR59 contract check against this amendment."
+}

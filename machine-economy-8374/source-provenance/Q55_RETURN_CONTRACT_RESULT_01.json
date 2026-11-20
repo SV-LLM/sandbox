@@ -1,0 +1,457 @@
+{
+  "schema": "stegverse.q55-return-contract-check/v1",
+  "authority": "NONE",
+  "request_sha256": "f1de0a03439f37f043aa69e86c0bf87590a16aef66372cc995f280dc31e1c770",
+  "return_archive_sha256": "6037247a83741f615e1dfb71faaea748c9d4612431911824afe95cf6bb2d62b7",
+  "return_manifest_sha256": "951d153606793e1037aabb99a9da10981aace864ed414a5aacaabb6125441217",
+  "native_revision_observed": "ad97ee94bada03365579fc1170a45d5ccbc73030",
+  "requested_payloads": 265,
+  "returned_payloads_verified": 263,
+  "returned_payload_bytes_verified": 2084953,
+  "held_live_state_dispositions": 2,
+  "workspace_paths_dispositioned": 497,
+  "disposition_counts": {
+    "TARGET-ADD": 3,
+    "ARCHIVAL": 465,
+    "TARGET-REPLACEMENT": 27,
+    "NOT-REQUIRED": 2
+  },
+  "target_rows": 30,
+  "distinct_targets": 19,
+  "targets": [
+    {
+      "target": "README.md",
+      "native_blob": "db92e27e84454c85863cdc5da5cf14e0a7062add",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "lane-callsite-8374/README.md",
+          "sha256": "2440f56dd4c27ed06ae2c109b3005b1ea1758e1f2e1a3a55e0717c0140cdbebb",
+          "bytes": 17330,
+          "action": "TARGET-ADD"
+        }
+      ],
+      "distinct_payloads": 1,
+      "conditions": [
+        "TARGET_ADD_ALREADY_EXISTS"
+      ]
+    },
+    {
+      "target": "machine-economy-8374/OPERATOR__SLOTS.md",
+      "native_blob": "92e521f9856927673c4aa5f046b272778ae11303",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "machine-economy-transfer/lane-home/OPERATOR__SLOTS.md",
+          "sha256": "4e38f5e5653e649acdccb23a6c82b6544e6a70aacdaf326d6711119f8a30f408",
+          "bytes": 3316,
+          "action": "TARGET-REPLACEMENT"
+        }
+      ],
+      "distinct_payloads": 1,
+      "conditions": []
+    },
+    {
+      "target": "machine-economy-8374/PACKAGE__MANIFEST__01.json",
+      "native_blob": "56a83e4c606509519ce63c099e72b0442926e397",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "lane-callsite-8374/machine-economy-8374/PACKAGE__MANIFEST__01.json",
+          "sha256": "ae2494710e7c39244de32f7590018c363d5f838ce3530cb5270ef35602e32376",
+          "bytes": 7992,
+          "action": "TARGET-REPLACEMENT"
+        },
+        {
+          "workspace_path": "machine-economy-transfer/lane-home/PACKAGE__MANIFEST__01.json",
+          "sha256": "6dd5963fd59b4352ec3303027ab3c5e6fb408efcf81ef5e4cfd913b6cb46e842",
+          "bytes": 4460,
+          "action": "TARGET-REPLACEMENT"
+        }
+      ],
+      "distinct_payloads": 2,
+      "conditions": [
+        "MULTIPLE_DIFFERENT_PAYLOADS_ONE_TARGET"
+      ]
+    },
+    {
+      "target": "machine-economy-8374/README.md",
+      "native_blob": "cc6d75bca4283a8f3d1e2a444884310676d56745",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "lane-callsite-8374/machine-economy-8374/README.md",
+          "sha256": "c67b3e1b0935ed6a3a54b1201a1087e753e63bcb0c0cb45435df47f3328ed8dd",
+          "bytes": 7238,
+          "action": "TARGET-ADD"
+        },
+        {
+          "workspace_path": "machine-economy-transfer/lane-home/README.md",
+          "sha256": "4ae25bd42664b489791b7fdf1eb80c007230468303e2d9581d379c1cfa996674",
+          "bytes": 5811,
+          "action": "TARGET-ADD"
+        }
+      ],
+      "distinct_payloads": 2,
+      "conditions": [
+        "MULTIPLE_DIFFERENT_PAYLOADS_ONE_TARGET",
+        "TARGET_ADD_ALREADY_EXISTS"
+      ]
+    },
+    {
+      "target": "machine-economy-8374/batteries/agreement_battery.py",
+      "native_blob": "c910b99ed061c1af7344d7426fd6180f71702c14",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "machine-economy-endpoint/agreement_battery.py",
+          "sha256": "bc7c3601adbbb802db2dcd666c5efc132a89952a3b81540f7fae09df6302dac6",
+          "bytes": 6935,
+          "action": "TARGET-REPLACEMENT"
+        }
+      ],
+      "distinct_payloads": 1,
+      "conditions": []
+    },
+    {
+      "target": "machine-economy-8374/batteries/settlement_battery.py",
+      "native_blob": "3d188c159d40adf079859b165f1285f4d6b62fc9",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "machine-economy-transfer/lane-home/batteries/settlement_battery.py",
+          "sha256": "d69cb4a128b0b04fde86ca384d4427add6ce84607c48eb404c8af86df28fb87f",
+          "bytes": 7088,
+          "action": "TARGET-REPLACEMENT"
+        }
+      ],
+      "distinct_payloads": 1,
+      "conditions": []
+    },
+    {
+      "target": "machine-economy-8374/batteries/x402_battery.py",
+      "native_blob": "d53aa67d24242635c5dc5c414951ba3bb196cc06",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "machine-economy-endpoint/x402_battery.py",
+          "sha256": "40cb116263fe9596c44ac812dbb01de36012b03e729ced8764a0c210673d914b",
+          "bytes": 9378,
+          "action": "TARGET-REPLACEMENT"
+        }
+      ],
+      "distinct_payloads": 1,
+      "conditions": []
+    },
+    {
+      "target": "machine-economy-8374/batteries/x402_v2_battery.py",
+      "native_blob": "79eebd29138e98d555325fd84358ddf23ddc8a27",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "machine-economy-endpoint/x402_v2_battery.py",
+          "sha256": "470aa065130ec5c5ba00b098b62a8becf81c8bff972c941a4309484628d923f6",
+          "bytes": 10153,
+          "action": "TARGET-REPLACEMENT"
+        }
+      ],
+      "distinct_payloads": 1,
+      "conditions": []
+    },
+    {
+      "target": "machine-economy-8374/operation/cf_tunnel_supervisor.py",
+      "native_blob": "83aa061f0caac88681338bdc059db2bc5be3cc68",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "machine-economy-endpoint/cf_tunnel_supervisor.py",
+          "sha256": "90f0e82928afe5d38bf0546c47ca81bd9ed0995930ab8f837a4a629145b97c0e",
+          "bytes": 18179,
+          "action": "TARGET-REPLACEMENT"
+        },
+        {
+          "workspace_path": "machine-economy-transfer/lane-home/operation/cf_tunnel_supervisor.py",
+          "sha256": "90f0e82928afe5d38bf0546c47ca81bd9ed0995930ab8f837a4a629145b97c0e",
+          "bytes": 18179,
+          "action": "TARGET-REPLACEMENT"
+        }
+      ],
+      "distinct_payloads": 1,
+      "conditions": []
+    },
+    {
+      "target": "machine-economy-8374/operation/config.template.json",
+      "native_blob": "9942adf48f3fdc782c8c57e61a58df3f72cad35a",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "machine-economy-transfer/lane-home/operation/config.template.json",
+          "sha256": "59bd26f3c928df918d7d6a7c1ccd8e09be7ae0e656c46296cacc15a02a4393d0",
+          "bytes": 6141,
+          "action": "TARGET-REPLACEMENT"
+        }
+      ],
+      "distinct_payloads": 1,
+      "conditions": []
+    },
+    {
+      "target": "machine-economy-8374/operation/endpoint.py",
+      "native_blob": "2eb8e4de06f0a7d656bbfc84fc23423cc5089a80",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "lane-callsite-8374/machine-economy-8374/operation/endpoint.py",
+          "sha256": "8fdb583225ff8ba9b58d2e9982acbcf745e5aa5f70a49987d4ae16a115ad2741",
+          "bytes": 178966,
+          "action": "TARGET-REPLACEMENT"
+        },
+        {
+          "workspace_path": "machine-economy-transfer/lane-home/operation/endpoint.py",
+          "sha256": "918a30004e78b841a5046224e68fac5f054a9afcaf2813e7bbb1a879cbc0831f",
+          "bytes": 176389,
+          "action": "TARGET-REPLACEMENT"
+        }
+      ],
+      "distinct_payloads": 2,
+      "conditions": [
+        "MULTIPLE_DIFFERENT_PAYLOADS_ONE_TARGET"
+      ]
+    },
+    {
+      "target": "machine-economy-8374/operation/funds.py",
+      "native_blob": "71fa634c5e045b54f6cd43971ddb9ff2a127f4d6",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "lane-callsite-8374/machine-economy-8374/operation/funds.py",
+          "sha256": "274ec65f04669aeec7a67fdf7a87fef6a23e59bb3ebee6ba26a0378dd64f7a51",
+          "bytes": 10489,
+          "action": "TARGET-REPLACEMENT"
+        }
+      ],
+      "distinct_payloads": 1,
+      "conditions": []
+    },
+    {
+      "target": "machine-economy-8374/operation/offer.base.json",
+      "native_blob": "89d5332566f77a68143e6891d6f5d3d92e3f9a16",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "lane-callsite-8374/machine-economy-8374/operation/offer.base.json",
+          "sha256": "2b18d98c8a3b8601c1703f1352a9a0e4646c79d5c85e37dc4e9989e49a7392b2",
+          "bytes": 20107,
+          "action": "TARGET-REPLACEMENT"
+        },
+        {
+          "workspace_path": "machine-economy-transfer/lane-home/operation/offer.base.json",
+          "sha256": "2b18d98c8a3b8601c1703f1352a9a0e4646c79d5c85e37dc4e9989e49a7392b2",
+          "bytes": 20107,
+          "action": "TARGET-REPLACEMENT"
+        }
+      ],
+      "distinct_payloads": 1,
+      "conditions": []
+    },
+    {
+      "target": "machine-economy-8374/operation/public_proxy.py",
+      "native_blob": "0e01cf21cff50abe3a268059fb9572db2ebc213b",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "lane-callsite-8374/machine-economy-8374/operation/public_proxy.py",
+          "sha256": "a9150e0225b3781cf5e590f96d4d5fcc4e3db0aa4c0e1d95f26d57379710cb79",
+          "bytes": 16560,
+          "action": "TARGET-REPLACEMENT"
+        },
+        {
+          "workspace_path": "machine-economy-transfer/lane-home/operation/public_proxy.py",
+          "sha256": "7a37e4c4b325f8005e2229d94e55c569d4c464708aaa553278cfb19f2690b403",
+          "bytes": 16481,
+          "action": "TARGET-REPLACEMENT"
+        }
+      ],
+      "distinct_payloads": 2,
+      "conditions": [
+        "MULTIPLE_DIFFERENT_PAYLOADS_ONE_TARGET"
+      ]
+    },
+    {
+      "target": "machine-economy-8374/operation/tunnel_supervisor.py",
+      "native_blob": "4543d68c52bec4afb12c9e15f1be73222f1936bf",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "machine-economy-endpoint/tunnel_supervisor.py",
+          "sha256": "11b62560e63a339d43a031869bd9d718a8fc10d8f8804ed744cdab757ed138b5",
+          "bytes": 6446,
+          "action": "TARGET-REPLACEMENT"
+        },
+        {
+          "workspace_path": "machine-economy-transfer/lane-home/operation/tunnel_supervisor.py",
+          "sha256": "11b62560e63a339d43a031869bd9d718a8fc10d8f8804ed744cdab757ed138b5",
+          "bytes": 6446,
+          "action": "TARGET-REPLACEMENT"
+        }
+      ],
+      "distinct_payloads": 1,
+      "conditions": []
+    },
+    {
+      "target": "machine-economy-8374/router/README.md",
+      "native_blob": "a8302c2eaa99806e13fe3fe50ee2e41de9a9e4cb",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "machine-economy-endpoint/README.md",
+          "sha256": "bd5d2247e67f4fa909a8049ba5903a4576bad1526a0a04b432bc80e16a59943e",
+          "bytes": 10297,
+          "action": "TARGET-REPLACEMENT"
+        }
+      ],
+      "distinct_payloads": 1,
+      "conditions": []
+    },
+    {
+      "target": "machine-economy-8374/signing/README.md",
+      "native_blob": "bd7eb725a45c021c4b6aba2c26e3ad33ff8f1a6c",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "machine-economy-transfer/lane-home/signing/README.md",
+          "sha256": "9af07de969aff14d1273d4b188f2ba8cbfa2fd87e74405505c161ede1606be19",
+          "bytes": 5813,
+          "action": "TARGET-REPLACEMENT"
+        }
+      ],
+      "distinct_payloads": 1,
+      "conditions": []
+    },
+    {
+      "target": "machine-economy-8374/signing/config.template.json",
+      "native_blob": "55ede146157432e589c6b88b0581b5053f63f9e5",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "machine-economy-transfer/lane-home/signing/config.template.json",
+          "sha256": "082887c28bf998ce347cbe8712dc0bd8ce10fda3ce87650ad80d62049a11fc3c",
+          "bytes": 3003,
+          "action": "TARGET-REPLACEMENT"
+        }
+      ],
+      "distinct_payloads": 1,
+      "conditions": []
+    },
+    {
+      "target": "machine-economy-8374/source-provenance/gen14/ENDPOINT__SPEC__01.md",
+      "native_blob": "181256ff6af4430f19d2b4677f4dae30ca076d38",
+      "native_mode": "100644",
+      "choices": [
+        {
+          "workspace_path": "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__01/ENDPOINT__SPEC__01.md",
+          "sha256": "8a8747a6dcd02454963e41818184c914d8b16a35faf80c6d07ffd46db72bc2fc",
+          "bytes": 5910,
+          "action": "TARGET-REPLACEMENT"
+        },
+        {
+          "workspace_path": "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__02/ENDPOINT__SPEC__01.md",
+          "sha256": "72f9a6b675d9cb18b939ec6955c2123028045ff7188037caca1d16a7ae11daae",
+          "bytes": 6883,
+          "action": "TARGET-REPLACEMENT"
+        },
+        {
+          "workspace_path": "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__03/ENDPOINT__SPEC__01.md",
+          "sha256": "e338b99dff67f11ef55419515319a6d9507f47a4ed45338c8ce95eba551ee0d4",
+          "bytes": 9280,
+          "action": "TARGET-REPLACEMENT"
+        },
+        {
+          "workspace_path": "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__04/ENDPOINT__SPEC__01.md",
+          "sha256": "9eef8c121e683acb74f1ddf711e35927fc8bcccd7267dd5855e4e23a00f141ea",
+          "bytes": 11515,
+          "action": "TARGET-REPLACEMENT"
+        },
+        {
+          "workspace_path": "machine-economy-entry-suite/MACHINE__ECONOMY__ENTRY__SUITE__GEN__05/ENDPOINT__SPEC__01.md",
+          "sha256": "d0191e0412247ce2a18e596035d302cf28bcae61fa9417f1dc9ac227d157eb09",
+          "bytes": 12315,
+          "action": "TARGET-REPLACEMENT"
+        }
+      ],
+      "distinct_payloads": 5,
+      "conditions": [
+        "MULTIPLE_DIFFERENT_PAYLOADS_ONE_TARGET"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "target": "README.md",
+      "conditions": [
+        "TARGET_ADD_ALREADY_EXISTS"
+      ],
+      "candidate_hashes": [
+        "2440f56dd4c27ed06ae2c109b3005b1ea1758e1f2e1a3a55e0717c0140cdbebb"
+      ]
+    },
+    {
+      "target": "machine-economy-8374/PACKAGE__MANIFEST__01.json",
+      "conditions": [
+        "MULTIPLE_DIFFERENT_PAYLOADS_ONE_TARGET"
+      ],
+      "candidate_hashes": [
+        "6dd5963fd59b4352ec3303027ab3c5e6fb408efcf81ef5e4cfd913b6cb46e842",
+        "ae2494710e7c39244de32f7590018c363d5f838ce3530cb5270ef35602e32376"
+      ]
+    },
+    {
+      "target": "machine-economy-8374/README.md",
+      "conditions": [
+        "MULTIPLE_DIFFERENT_PAYLOADS_ONE_TARGET",
+        "TARGET_ADD_ALREADY_EXISTS"
+      ],
+      "candidate_hashes": [
+        "4ae25bd42664b489791b7fdf1eb80c007230468303e2d9581d379c1cfa996674",
+        "c67b3e1b0935ed6a3a54b1201a1087e753e63bcb0c0cb45435df47f3328ed8dd"
+      ]
+    },
+    {
+      "target": "machine-economy-8374/operation/endpoint.py",
+      "conditions": [
+        "MULTIPLE_DIFFERENT_PAYLOADS_ONE_TARGET"
+      ],
+      "candidate_hashes": [
+        "8fdb583225ff8ba9b58d2e9982acbcf745e5aa5f70a49987d4ae16a115ad2741",
+        "918a30004e78b841a5046224e68fac5f054a9afcaf2813e7bbb1a879cbc0831f"
+      ]
+    },
+    {
+      "target": "machine-economy-8374/operation/public_proxy.py",
+      "conditions": [
+        "MULTIPLE_DIFFERENT_PAYLOADS_ONE_TARGET"
+      ],
+      "candidate_hashes": [
+        "7a37e4c4b325f8005e2229d94e55c569d4c464708aaa553278cfb19f2690b403",
+        "a9150e0225b3781cf5e590f96d4d5fcc4e3db0aa4c0e1d95f26d57379710cb79"
+      ]
+    },
+    {
+      "target": "machine-economy-8374/source-provenance/gen14/ENDPOINT__SPEC__01.md",
+      "conditions": [
+        "MULTIPLE_DIFFERENT_PAYLOADS_ONE_TARGET"
+      ],
+      "candidate_hashes": [
+        "72f9a6b675d9cb18b939ec6955c2123028045ff7188037caca1d16a7ae11daae",
+        "8a8747a6dcd02454963e41818184c914d8b16a35faf80c6d07ffd46db72bc2fc",
+        "9eef8c121e683acb74f1ddf711e35927fc8bcccd7267dd5855e4e23a00f141ea",
+        "d0191e0412247ce2a18e596035d302cf28bcae61fa9417f1dc9ac227d157eb09",
+        "e338b99dff67f11ef55419515319a6d9507f47a4ed45338c8ce95eba551ee0d4"
+      ]
+    }
+  ],
+  "target_contract_consistent": false,
+  "source_import_performed": false,
+  "source_target_mapping_verified": false,
+  "full_migration_verified": false,
+  "next_action": "Original owner chooses one exact hash per conflicting target or archives/reassigns each older version; correct ADD to existing-path semantics; refresh native pin; independent review then explicit atomic source integration."
+}

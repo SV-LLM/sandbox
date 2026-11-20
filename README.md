@@ -106,3 +106,86 @@ public-source inputs. `scripts/q55_source_census.py` reproduces this readback
 without importing or executing product files. Existing byte equality does not
 choose a destination path or prove complete migration. Continue through the
 [canonical migration handoff](docs/MACHINE_ECONOMY_WORKSPACE_MIGRATION_MIRROR_HANDOFF.md).
+
+
+## Q55 returned-payload target contract — 2026-11-19
+
+The pinned source return verifies 263 payloads (2,084,953 bytes), with all 497 source paths dispositioned and two live-state exclusions. Its 30 target rows name 19 destinations: five have conflicting payload versions, and two ADD destinations already exist (six distinct affected files). No source payload is imported. See `machine-economy-8374/source-provenance/Q55_RETURN_CONTRACT_RESULT_01.json`, the offline `scripts/q55_return_contract.py` validator and the current workspace migration mirror handoff for exact owner repairs. Payload custody stays in the existing Ecosystem KV. This source-only contract check neither admits a native Goal nor verifies full migration.
+
+## Q55 owner amendment consumed — 2026-11-19
+
+The original owner's `Q55_TARGET_CONTRACT_AMENDMENT_01.json` (8,234 bytes,
+SHA256 `f799cd9702f6be93f00b62728cce352137ac4098d9e5d8d1c45280b96ea69c41`,
+Ecosystem KV `1PomsV3ZXPlSb0NEbqZvL5S42UXkykAbd`, original #3443/7030821442)
+supersedes exactly fourteen path dispositions. Its lineage rule chooses one
+active payload per conflicting target or keeps native source unchanged. It does
+not change the return ZIP or historical manifest. Claim #3472/7031408870 consumes
+that new owner input on existing PR59; it grants no native execution authority.
+
+The checker now accepts an optional pinned amendment plus the pinned historical
+contract result. It verifies unchanged request/census/archive/manifest lineage,
+each original path/hash/disposition/target, original target blob references,
+unique chosen payloads or explicit native-stands decisions, and recomputed
+disposition totals. Active chosen targets must retain their recorded native
+predecessor. No amendment is inferred from a generation label or timestamp.
+The current root README may evolve because the owner explicitly chose NOT-APPLIED;
+the returned cloned README never replaces it. The GEN14 package manifest also
+stays native; integrating changed product files later requires a deliberate
+manifest refresh rather than substituting another package state's manifest.
+
+Actual byte check at immutable PR59 predecessor
+`bc3d372f604627d53d87676abd1c011703893052` (Git tree
+`5ab888fead0e36cb99c40960ace7060205867cfc`, 313 complete recursive entries):
+263 returned payloads / 2,084,953 bytes verified; all 497 source paths covered;
+20 TARGET-REPLACEMENT, 0 TARGET-ADD, 475 ARCHIVAL, 2 NOT-REQUIRED; twenty active
+rows resolve to seventeen destinations; no target-contract findings. The two
+live-state exclusions remain exclusions. The prior inconsistent result is
+preserved under its original filename. The new
+`machine-economy-8374/source-provenance/Q55_AMENDED_RETURN_CONTRACT_RESULT_01.json`
+records the amended computation; the amendment is preserved alongside it.
+
+Reproduce with the original ZIP from its existing custody location and a complete
+GitHub tree authenticated at the immutable revision below (the checker does not
+authenticate an arbitrary caller-supplied tree):
+
+```bash
+python3 -I -B scripts/q55_return_contract.py \
+  --request machine-economy-8374/source-provenance/Q55_MISSING_SOURCE_PAYLOAD_REQUEST_01.json \
+  --request-sha256 f1de0a03439f37f043aa69e86c0bf87590a16aef66372cc995f280dc31e1c770 \
+  --return-zip /path/to/Q55_PAYLOAD_RETURN_01.zip \
+  --return-sha256 6037247a83741f615e1dfb71faaea748c9d4612431911824afe95cf6bb2d62b7 \
+  --native-tree /path/to/authenticated-bc3d372f-tree.json \
+  --revision bc3d372f604627d53d87676abd1c011703893052 \
+  --amendment machine-economy-8374/source-provenance/Q55_TARGET_CONTRACT_AMENDMENT_01.json \
+  --amendment-sha256 f799cd9702f6be93f00b62728cce352137ac4098d9e5d8d1c45280b96ea69c41 \
+  --prior-result machine-economy-8374/source-provenance/Q55_RETURN_CONTRACT_RESULT_01.json \
+  --output /tmp/q55-amended-contract.json
+```
+
+Thirteen offline tests pass ordinary and optimized Python, including refusal of
+tampered lineage, incomplete/ambiguous choices, count corruption, unsafe/duplicate
+paths and changed active-target predecessors. These are author checks of this
+source change, not independent review. A consistent target contract does not
+establish product semantics, complete workspace parity, native admission,
+protected integration, package conformance or runtime execution. All payloads
+remain unimported/unexecuted. `source_target_mapping_verified` and
+`full_migration_verified` remain false.
+
+Next: non-CODEX exact-head review; existing source owner integrates the coherent
+source delta on a fresh protected head, deliberately refreshes the package
+manifest, tests the actual integrated source and reads it back. Runtime/custody,
+Registry admission and Organization-ledger transitions retain their own owners.
+Q55 native Goal/COSV remain UNBOUND; context parent G326 PROPOSED/null claim/fence
+and its historical 20/20 decomposition are not borrowed as execution authority.
+No merge, release, deployment, payment, provider operation or user action occurred.
+
+
+## 2026-11-20 Q55 non-author returns and checker hardening
+
+At source head f4e00876c8c5ecb39638b00b3990771138e4657c, ClaudeCode S473 (KV596) returned VALIDATED, bounded STATIC; Gemini S194B returned VERIFIED-CLEANROOM-BOUNDED. The latter independently passed 13 ordinary and 13 optimized tests and reproduced the 13,209-byte amended result exactly. These grades remain attached to that earlier head; this later change is not independently accepted by the author.
+
+This delta addresses Gemini observations O-S194B-Q55-01 through 03: every active TARGET-REPLACEMENT now retains the pinned prior native blob, including targets not explicitly amended; a changed unamended predecessor yields ACTIVE_TARGET_NATIVE_PREDECESSOR_CHANGED. CHOSEN drift keeps its existing finding, and native-stands targets remain inactive and may retain current native bytes. Amendment row roles must be omitted or CHOSEN; arbitrary archival-role tokens are rejected. Malformed overlay/prior-result structures now raise ValueError for direct callers, while the CLI keeps its existing NON-ALLOW envelope.
+
+Validation: 16 tests passed in ordinary and optimized Python, including the independent reviewer's unamended-predecessor mutation, invalid archival roles and malformed direct-call structures. The actual pinned 263-payload/497-path return remains consistent (20 active rows, 17 targets, zero findings), with ordinary/optimized output equal. Against the current f4e00876 native tree, the result differs from the immutable prior result only in the observed native revision and the inactive native-stands root README blob. Neither original amendment nor original result is rewritten; no returned product payload is extracted or imported. Source pin/manifest refresh, protected integration and actual integrated execution remain the original owner's separate acts. New source head requires its own qualified non-author review.
+
+Review custody and attribution: StegVerse-Labs/.github #3451/7033425457; original peer bytes and full pins in Drive 11NgDIW7h8d1f9ULc1Bjz1MyqUdfz1jag. Same-task worker claim: #3472/7033457011. Native Goal/COSV for Q55 remain UNBOUND; context parent remains PROPOSED, authority NONE.
