@@ -1,0 +1,9 @@
+test_ambiguous_effect_keeps_reservation_no_retry (test_pilot_integration.Tests.test_ambiguous_effect_keeps_reservation_no_retry) ... ok
+test_credential_shaped_result_never_written (test_pilot_integration.Tests.test_credential_shaped_result_never_written) ... ok
+test_pair_slice_preserves_exact_lines_and_rejects_path (test_pilot_integration.Tests.test_pair_slice_preserves_exact_lines_and_rejects_path) ... ok
+test_single_call_retains_refusal_and_does_not_replay (test_pilot_integration.Tests.test_single_call_retains_refusal_and_does_not_replay) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.002s
+
+OK

@@ -1,0 +1,6 @@
+source: /workspace/scratch/11cfea4a0c07/q60/machine-economy-8374/pilot-kit/bundle/export.ndjson
+entries: 124
+pairs: 62
+terminal_anchor_recomputed: 5513a484b9709c531143b886d47dc7d5cc75beec526ac0ffeac35d4759d64080
+terminal_anchor_expected: 5513a484b9709c531143b886d47dc7d5cc75beec526ac0ffeac35d4759d64080
+verdict: MATCH
