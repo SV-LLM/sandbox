@@ -1,0 +1,11 @@
+test_assertion_not_verified_and_failure_supersedes_old_success (test_badge.Tests.test_assertion_not_verified_and_failure_supersedes_old_success) ... ok
+test_existing_http_handler_updates_cache_and_serves_three_cases (test_badge.Tests.test_existing_http_handler_updates_cache_and_serves_three_cases) ... ok
+test_false_absence_and_malformed_shapes (test_badge.Tests.test_false_absence_and_malformed_shapes) ... ok
+test_stale_and_evicted_unknown (test_badge.Tests.test_stale_and_evicted_unknown) ... ok
+test_svg_never_includes_target_or_external_text (test_badge.Tests.test_svg_never_includes_target_or_external_text) ... ok
+test_three_canonical_cases_and_exact_resource_scope (test_badge.Tests.test_three_canonical_cases_and_exact_resource_scope) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.512s
+
+OK

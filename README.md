@@ -83,3 +83,11 @@ The existing W07 continuation is `validating`, COSV `30000000021222` in the Org
 Registry; PR #47 task scope/assignment and authentic WorkerCoordinator claim/fence
 remain unresolved. This candidate does not activate Sandbox, publish the SDK
 route, modify Registry state, or authorize a merge.
+
+
+## Q59 verdict badge and receipt discovery source
+
+The existing `machine-economy-8374/verify-page/` candidate adds a bounded
+checker-observation badge and publication-ready receipt-discovery profile.
+Read `docs/MACHINE_ECONOMY_BADGE_DISCOVERY_MIRROR_HANDOFF.md` for exact
+source evidence and the existing origin-owner publication leg. No new service.

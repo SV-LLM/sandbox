@@ -87,3 +87,8 @@ jobs:
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
         run: python -B tests/test_work_cycle_binding.py
+
+      - name: Q59 badge and receipt discovery controls (local synthetic HTTP only)
+        run: |
+          python -B -m unittest discover -s machine-economy-8374/verify-page -p test_badge.py
+          python -B -O -m unittest discover -s machine-economy-8374/verify-page -p test_badge.py

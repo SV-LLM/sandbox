@@ -85,3 +85,23 @@ router services are untouched by this build. Through the public
 tunnel, source IPs collapse to the tunnel loopback, so the check
 rate limit also acts as a global cap on the public surface (the
 same posture as the proxy's own crossing limit).
+
+
+## Q59 source candidate: cache-only badge and discovery profile
+
+`GET /badge?url=<exact-resource>` renders only cachedchecker verdict + UTCdate.
+Cache300seconds/256entries; unprobed/stale/evicted/refused state notchecked.
+The badge makes NO networkcheck; invoke existing `/verify/check` first.
+Assertion/discovery are recordpresent, not Replay-Verified. BadgeHTTPno-store;
+cache populated only by checker-handler observations. This is no certificate.
+`GET /receipt-discovery` serves RECEIPT_DISCOVERY_SPEC.md; an ABSENTpage links it.
+Recommended conventions are distinguished from currentactualprobe behavior.
+
+Run `python3 -m unittest -v test_badge.py` and optimizedequivalent here.6controls
+include actualthrowawayHTTP3-casebattery; no productionmutations or paidcalls.
+Existingoriginowner deploys verify.py, verdict_badge.py and RECEIPT_DISCOVERY_SPEC.md
+together into the existingverify service source directory, preserves existing
+unit/environment/port8798, and admits only GET/HEAD /badge and /receipt-discovery
+through existingproxy. Sourceauthor performs no restart/publication. Owner must
+readback actualoriginSVG/spec/ABSENTlink/expiry/refusal after guardedintegration.
+No newlistener/host/scheduler/framework/credential. Sourcecandidate only.

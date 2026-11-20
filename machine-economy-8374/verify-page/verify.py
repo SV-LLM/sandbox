@@ -98,6 +98,8 @@ house pattern (settlement.py). Stdlib only.
 import base64, html, ipaddress, json, os, re, socket, threading, time
 import urllib.error, urllib.parse, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from verdict_badge import BadgeCache
+BADGES = BadgeCache()
 
 PORT = int(os.environ.get("VERIFY_PORT", "8798"))
 OWN_ORIGIN = os.environ.get("VERIFY_OWN_ORIGIN",
@@ -1406,6 +1408,9 @@ function showResult(el, d) {{
     }}
     h += '</p>';
   }}
+  if (d.proof && d.proof.record_state === "none") {{
+    h += '<p><a href="/receipt-discovery">How to publish discoverable receipts</a></p>';
+  }}
   if (d.proof && d.proof.replay) {{
     h += '<p>receipt chain: ' + esc(d.proof.replay.pairs) +
       ' pairs, replay ' + esc(d.proof.replay.verdict) +
@@ -1484,12 +1489,14 @@ class H(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
 
-    def _send(self, status, body, ctype):
+    def _send(self, status, body, ctype, cache_control=None):
         b = body if isinstance(body, bytes) else body.encode()
         try:
             self.send_response(status)
             self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(b)))
+            if cache_control is not None:
+                self.send_header("Cache-Control", cache_control)
             self.end_headers()
             if self.command != "HEAD":
                 self.wfile.write(b)
@@ -1502,6 +1509,15 @@ class H(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = self.path.split("?", 1)[0]
+        if path == "/badge":
+            qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            url = (qs.get("url") or [""])[0]
+            self._send(200, BADGES.svg(url), "image/svg+xml", cache_control="no-store")
+            return
+        if path == "/receipt-discovery":
+            with open(os.path.join(os.path.dirname(__file__), "RECEIPT_DISCOVERY_SPEC.md"), "rb") as f:
+                self._send(200, f.read(), "text/plain; charset=utf-8")
+            return
         if path == "/health":
             self._json(200, {"status": "ok",
                              "service": "verify-page"})
@@ -1524,13 +1540,17 @@ class H(BaseHTTPRequestHandler):
                                  "failure_code": "VERIFY_URL_REQUIRED"})
                 return
             try:
-                self._json(200, run_check(url))
+                result = run_check(url)
+                BADGES.record(url, result)
+                self._json(200, result)
             except SSRFRefusal as e:
+                BADGES.record(url, {"failure_code": "VERIFY_SSRF_REFUSED"})
                 self._json(400, {"resource": url,
                                  "error": "target refused",
                                  "failure_code": "VERIFY_SSRF_REFUSED",
                                  "reason": str(e)})
             except Exception as e:  # never crash on a bad target
+                BADGES.record(url, {"failure_code": "VERIFY_CHECK_FAILED"})
                 self._json(502, {"resource": url,
                                  "error": "check failed",
                                  "failure_code": "VERIFY_CHECK_FAILED",
