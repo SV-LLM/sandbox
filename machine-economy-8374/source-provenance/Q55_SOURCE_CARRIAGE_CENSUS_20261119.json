@@ -1,0 +1,709 @@
+{
+  "schema": "stegverse.q55-source-carriage-census/v1",
+  "task": "BUILD-Q-55",
+  "classification": "coordination-only",
+  "authority": "NONE",
+  "repository": "SV-LLM/sandbox",
+  "branch": "machine-economy-8374",
+  "observed_head": "f99d69e21937cb5db20bc1ba31f07985c7c6f089",
+  "tree_truncated": false,
+  "suite_library_source": "Drive 1vMM3Xh_hW9w52CTzboD-dMJBfz4_PLTw",
+  "suite_zip_sha256": "19f9628575200fb30088edcb1ea9c832445cb0fc11d5297814dc2cd71d0fbd40",
+  "suite_manifest_sha256": "e119dbd7348a67d00b444c92772df86678e86b0f7607a65e9e2406f8ee4d8fa2",
+  "members": [
+    {
+      "suite_member": "CHAIN_EXPORT__INSTALL__01.sh",
+      "bytes": 325,
+      "sha256": "ef828583f2afa44f5a10a92ae6ae4d8a5f8788126b13afafbdea60200aea4b89",
+      "manifest_pin_matches": true,
+      "git_blob": "cab9172b5a9cdbffd189fdadfb39cca23c738bc5",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/chain-export/install.sh",
+          "mode": "100644",
+          "size": 325
+        }
+      ]
+    },
+    {
+      "suite_member": "CHAIN_EXPORT__README__01.md",
+      "bytes": 3043,
+      "sha256": "6a9786d0d2f7c14d1ca4db28b719261d4956aa57e52a2c48be9a17e3ceab128f",
+      "manifest_pin_matches": true,
+      "git_blob": "04572d408c1de8dba9b41a4641f03265823cbce5",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/chain-export/README.md",
+          "mode": "100644",
+          "size": 3043
+        }
+      ]
+    },
+    {
+      "suite_member": "CHAIN_EXPORT__SYSTEMD__UNIT__01.service",
+      "bytes": 487,
+      "sha256": "6caf83440f8a49a057d342e3f9b956d2a95989d3e3f36b69821cdb1197ca891f",
+      "manifest_pin_matches": true,
+      "git_blob": "126c775e3cd433a7962e67f4bf9cbbb71997ca2a",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/chain-export/systemd/chain-export.service",
+          "mode": "100644",
+          "size": 487
+        }
+      ]
+    },
+    {
+      "suite_member": "CHAIN_EXPORT__battery_chain_export.py",
+      "bytes": 10151,
+      "sha256": "e646054768bbd6b2d81a0bed4e08a1f5d92f61aacecc42d4846ff1090ad35c19",
+      "manifest_pin_matches": true,
+      "git_blob": "bdaa9c4e5a48f81c36447d8245ca7194b7cbe34a",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/chain-export/battery_chain_export.py",
+          "mode": "100644",
+          "size": 10151
+        }
+      ]
+    },
+    {
+      "suite_member": "CHAIN_EXPORT__chain_export.py",
+      "bytes": 15343,
+      "sha256": "f7a9708c90a92d9fd3a5430eca28e488340e86a60c7c6c3a514f8a6b42ebc9d5",
+      "manifest_pin_matches": true,
+      "git_blob": "60e258b7afd192f1c3b57bec6b226737d9228776",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/chain-export/chain_export.py",
+          "mode": "100644",
+          "size": 15343
+        }
+      ]
+    },
+    {
+      "suite_member": "CHAIN_EXPORT__verify_chain.py",
+      "bytes": 15515,
+      "sha256": "24669106d134b607dc7b707568c303e368ff99018d2c5ed7c45dab67a4dffe25",
+      "manifest_pin_matches": true,
+      "git_blob": "6caf8e6a97c9aa42c0265b7db5e067e65b0455de",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/chain-export/verify_chain.py",
+          "mode": "100644",
+          "size": 15515
+        }
+      ]
+    },
+    {
+      "suite_member": "CONFORMANCE__PROOF__01.json",
+      "bytes": 1162,
+      "sha256": "610bc86446e992c8805940263095e5afdad11e3594eae680c2126b511fbd0b7d",
+      "manifest_pin_matches": true,
+      "git_blob": "997f12b1520ab85ffa9e611e1aea4bdf312943b9",
+      "native_matches": []
+    },
+    {
+      "suite_member": "CORRECTION__RECORD__FROZEN__TEST__01.md",
+      "bytes": 3952,
+      "sha256": "17af5da6118049ab86b140cd847a1b73d8f44082880d2cbec689be3f41ce409f",
+      "manifest_pin_matches": true,
+      "git_blob": "14008de60dd2696e203226e25ad95eae92cf2621",
+      "native_matches": []
+    },
+    {
+      "suite_member": "ENDPOINT__SPEC__01.md",
+      "bytes": 16025,
+      "sha256": "cc4c8b7118dfddd85a226b8c781bee39257cc3ebb4c968bcc328ae365dfb3bb9",
+      "manifest_pin_matches": true,
+      "git_blob": "181256ff6af4430f19d2b4677f4dae30ca076d38",
+      "native_matches": []
+    },
+    {
+      "suite_member": "ENDPOINT__compare_battery.py",
+      "bytes": 12640,
+      "sha256": "7fb4e6d77551fb2a8fe5fef79b6e6e8b8df806bf9b7e42f789d933dee62617bf",
+      "manifest_pin_matches": true,
+      "git_blob": "6cac3f4ae919316492a0e6f7a4cf2678429c4c8c",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/operation/compare_battery.py",
+          "mode": "100644",
+          "size": 12640
+        }
+      ]
+    },
+    {
+      "suite_member": "ENDPOINT__endpoint.py",
+      "bytes": 210025,
+      "sha256": "6361910e125ef577d4e01b6866137e8d941dde9b6153f8f43d56913e36a26dd3",
+      "manifest_pin_matches": true,
+      "git_blob": "2eb8e4de06f0a7d656bbfc84fc23423cc5089a80",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/operation/endpoint.py",
+          "mode": "100644",
+          "size": 210025
+        }
+      ]
+    },
+    {
+      "suite_member": "ENDPOINT__public_proxy.py",
+      "bytes": 25725,
+      "sha256": "2be7af5e9e67d45a8714666dacdf683ad6e71b55679d717c81727d3b52582974",
+      "manifest_pin_matches": true,
+      "git_blob": "0e01cf21cff50abe3a268059fb9572db2ebc213b",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/operation/public_proxy.py",
+          "mode": "100644",
+          "size": 25725
+        }
+      ]
+    },
+    {
+      "suite_member": "ENDPOINT__staleness_battery.py",
+      "bytes": 7282,
+      "sha256": "e2f2493068e8de0ad6531b75cd67b1f567465f63b2d8eeec45d933b74a40b80d",
+      "manifest_pin_matches": true,
+      "git_blob": "6e6046f7a14d0dc679818c880c9206c6d1fbd317",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/operation/staleness_battery.py",
+          "mode": "100644",
+          "size": 7282
+        }
+      ]
+    },
+    {
+      "suite_member": "ENTRY__BASIS__01.md",
+      "bytes": 6995,
+      "sha256": "1ad2e33beb5195acb005d2884f192eb65c06a6e78730cee851ee2715a3531e05",
+      "manifest_pin_matches": true,
+      "git_blob": "988ed64efc63162859a61e9ed1123bfd87bd1504",
+      "native_matches": []
+    },
+    {
+      "suite_member": "FUNDING__STATEMENT__01.md",
+      "bytes": 1431,
+      "sha256": "026f2747ba916eb0387e35e02d870e269bbac55d45744ad125b7003f081cc31c",
+      "manifest_pin_matches": true,
+      "git_blob": "3fa22235505c72fb533c8badc1a6a02681b65ee6",
+      "native_matches": []
+    },
+    {
+      "suite_member": "GEN__02__CHANGES__01.md",
+      "bytes": 4953,
+      "sha256": "01746819a05fce4d12913c0e2e2702cb124c2f850ca1ab9daaf82a0e1ab36745",
+      "manifest_pin_matches": true,
+      "git_blob": "f777210b78fb96a2bd5eda27e3ee42d4beba1b99",
+      "native_matches": []
+    },
+    {
+      "suite_member": "GEN__03__CHANGES__01.md",
+      "bytes": 6968,
+      "sha256": "88fdaf418b408dece4cbc5fce3f7d38e44d180e49f3c34f19599bb1610bcd980",
+      "manifest_pin_matches": true,
+      "git_blob": "3a17a4b49f8467ece2ce58a54aa110a31eea575c",
+      "native_matches": []
+    },
+    {
+      "suite_member": "GEN__04__CHANGES__01.md",
+      "bytes": 8178,
+      "sha256": "21a398e9ec527fa898f7ba91730541736862ef1560e1c5f373e6792b82327094",
+      "manifest_pin_matches": true,
+      "git_blob": "ec5ed1a9467491c144706749ec7529c72821937c",
+      "native_matches": []
+    },
+    {
+      "suite_member": "GEN__05__CHANGES__01.md",
+      "bytes": 6462,
+      "sha256": "36f499eb47f27da6d88c91a42a4d2b98c2b078db87b7a55244a7b9f75f45599a",
+      "manifest_pin_matches": true,
+      "git_blob": "c2bdf6c7730d0edd139edcf86bf6a13735a6c432",
+      "native_matches": []
+    },
+    {
+      "suite_member": "GEN__06__CHANGES__01.md",
+      "bytes": 17816,
+      "sha256": "b556cb15d8822b86112636898d4f92ac1109093d7c820f0200efb3e0d4724f0d",
+      "manifest_pin_matches": true,
+      "git_blob": "2a01ff21212c552661004251ad48408cb926c80f",
+      "native_matches": []
+    },
+    {
+      "suite_member": "GEN__07__CHANGES__01.md",
+      "bytes": 3249,
+      "sha256": "d00c4ef01c740e7d9daaf915cca6f730027ce23770ec36e728169512f2543d2e",
+      "manifest_pin_matches": true,
+      "git_blob": "a2477c3d54762c8772d58b501820e4b6dbd0ad90",
+      "native_matches": []
+    },
+    {
+      "suite_member": "GEN__08__CHANGES__01.md",
+      "bytes": 3226,
+      "sha256": "4e326cbae0d157b8f1c9be244b10076086f86105002b25e1b76dc98792f52705",
+      "manifest_pin_matches": true,
+      "git_blob": "808e65e29ea40b54495a6f0af58a7b3a62910fbc",
+      "native_matches": []
+    },
+    {
+      "suite_member": "GEN__09__CHANGES__01.md",
+      "bytes": 3550,
+      "sha256": "d560f9aefaefe5a8d3dd34a8c3d669c57ab177bc4cfbc697e673715443288fff",
+      "manifest_pin_matches": true,
+      "git_blob": "73ce4cceca71195acec933b0e3c7897aea4181cd",
+      "native_matches": []
+    },
+    {
+      "suite_member": "GEN__10__CHANGES__01.md",
+      "bytes": 4604,
+      "sha256": "d0ff4bbccd77a4ac7deae3710dd9181fce46f145b5946d35dcfa3a874eeae73f",
+      "manifest_pin_matches": true,
+      "git_blob": "05c72b3be79ae27184035b48b7f3984555e6ec22",
+      "native_matches": []
+    },
+    {
+      "suite_member": "GEN__11__CHANGES__01.md",
+      "bytes": 3654,
+      "sha256": "923df59b573aea9be0a2ddd248a1a323e42d3198666b4e7243a3d5f76a0f3022",
+      "manifest_pin_matches": true,
+      "git_blob": "f1f23202f74acf0c3c56084a668db6275892aac8",
+      "native_matches": []
+    },
+    {
+      "suite_member": "GEN__12__CHANGES__01.md",
+      "bytes": 6981,
+      "sha256": "fb940555c59bafe3b407d10a2bfc9a7c8353d49513c7626f9cc357278973d547",
+      "manifest_pin_matches": true,
+      "git_blob": "0553fa49f0b7e6fb684c519a1cf49a393c768ebd",
+      "native_matches": []
+    },
+    {
+      "suite_member": "GEN__14__CHANGES__01.md",
+      "bytes": 8972,
+      "sha256": "541fd313ab267bf87c35c39a4ad889ef8447b552a5ee14a26bfa60913b97048e",
+      "manifest_pin_matches": true,
+      "git_blob": "3eee775980d90834b35dfb9ef6aa425b103d1acc",
+      "native_matches": []
+    },
+    {
+      "suite_member": "LANE__OPERATION__BUILD__RECORD__01.md",
+      "bytes": 12716,
+      "sha256": "62b6181e6801da4ec5ab27d4eb304abadf99c59eec41ba5bb4a6093f6615852b",
+      "manifest_pin_matches": true,
+      "git_blob": "e80e6c6d2beb4594ec078c3257771833563a155f",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/LANE__OPERATION__BUILD__RECORD__01.md",
+          "mode": "100644",
+          "size": 12716
+        }
+      ]
+    },
+    {
+      "suite_member": "LANE__SUBSTANTIATION__01.md",
+      "bytes": 4764,
+      "sha256": "c92b76d5a8c5b9d12c8436a19d4decac15212ce0f3827785439e22a39c7e458b",
+      "manifest_pin_matches": true,
+      "git_blob": "a37484631c377e1d08f5b84dbddd9ae945b4051d",
+      "native_matches": []
+    },
+    {
+      "suite_member": "OFFER__MACHINE__READABLE__01.json",
+      "bytes": 17527,
+      "sha256": "5ee1996cd0be0bb0601e9d2e99bf3acd7f2ded35d1e560a25b4969ffd6d5be69",
+      "manifest_pin_matches": true,
+      "git_blob": "e13f49580936af7f115449001133f0211f36aeea",
+      "native_matches": []
+    },
+    {
+      "suite_member": "PACKAGE__MANIFEST__LANE__01.json",
+      "bytes": 9343,
+      "sha256": "cb86d47fc6fe547e5c36ed98935e2b3256ed8b40a176e247e02e2ed0f52ef826",
+      "manifest_pin_matches": true,
+      "git_blob": "56a83e4c606509519ce63c099e72b0442926e397",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/PACKAGE__MANIFEST__01.json",
+          "mode": "100644",
+          "size": 9343
+        }
+      ]
+    },
+    {
+      "suite_member": "PAIR__FIRST__BUILD__RECORD__01.md",
+      "bytes": 10352,
+      "sha256": "d68b22fb9d8f476fab94d7429d086a0aced2301a15911ac6b64b46e68e459f6f",
+      "manifest_pin_matches": true,
+      "git_blob": "e853e675a6ddc0f0eed4b069b3d5e105a1f8c52d",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/PAIR__FIRST__BUILD__RECORD__01.md",
+          "mode": "100644",
+          "size": 10352
+        }
+      ]
+    },
+    {
+      "suite_member": "README.md",
+      "bytes": 5578,
+      "sha256": "ea5fddeda525fc8c5d2532c9a2ad3f419a14fec4f81e1b35b6d49a6fe093a6c8",
+      "manifest_pin_matches": true,
+      "git_blob": "ddbcc78c18b5a99258f618e7e0388156ef4457fb",
+      "native_matches": []
+    },
+    {
+      "suite_member": "REFERENCES__01.md",
+      "bytes": 209,
+      "sha256": "91831b57b0142dbc3c8c7a71fb3d62996495735b0aab5727bd2c9703f20fd588",
+      "manifest_pin_matches": true,
+      "git_blob": "12a6000268068fdbcd7b7c3cd80bb66a055334d0",
+      "native_matches": []
+    },
+    {
+      "suite_member": "ROUTER__DISCOVERY__FEED__RECORD__01.md",
+      "bytes": 8427,
+      "sha256": "2d3194a3b3124f8cd5cdb5b1381ccbe825498a450f24e15b95b1dec305ef4f5f",
+      "manifest_pin_matches": true,
+      "git_blob": "02987680877c29ce58e4616cfb74d84eb7dd9a25",
+      "native_matches": []
+    },
+    {
+      "suite_member": "ROUTER__INSTALL__01.sh",
+      "bytes": 374,
+      "sha256": "2ec2f03f33bae15a138d5bb61702a923fe4bed03c972c1c3a630dc68c9211a29",
+      "manifest_pin_matches": true,
+      "git_blob": "38bbdc51f524df2f4eec239e4f18ee509115264d",
+      "native_matches": []
+    },
+    {
+      "suite_member": "ROUTER__PRODUCTION__CARRY__RECORD__01.md",
+      "bytes": 6875,
+      "sha256": "ff931e833b266fd76ddccab09ffced2ad6c2b2f79556249c517949e1057f1b6a",
+      "manifest_pin_matches": true,
+      "git_blob": "bbaa231b4d7fd51648f3fe3be8da4f6eea57477e",
+      "native_matches": []
+    },
+    {
+      "suite_member": "ROUTER__PRODUCTION__CONFIG__TEMPLATE__01.json",
+      "bytes": 1466,
+      "sha256": "449c0a0c45b90413a7b4c35aafb750d0c830cbf29afa931cefc73f321fb31739",
+      "manifest_pin_matches": true,
+      "git_blob": "a59c479a10dd5eb1fc4ed1acd978c739faccde4b",
+      "native_matches": []
+    },
+    {
+      "suite_member": "ROUTER__README__01.md",
+      "bytes": 12685,
+      "sha256": "311eeb0563419d9629dcf7c40f3395c1c4c62d868feb8e085e53e3a47aca8f29",
+      "manifest_pin_matches": true,
+      "git_blob": "a8302c2eaa99806e13fe3fe50ee2e41de9a9e4cb",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/router/README.md",
+          "mode": "100644",
+          "size": 12685
+        }
+      ]
+    },
+    {
+      "suite_member": "ROUTER__SYSTEMD__UNIT__01.service",
+      "bytes": 533,
+      "sha256": "e060e958afd02dcf3da5debd7462a5c9098fb462e3ecd7acc8579b8d01852070",
+      "manifest_pin_matches": true,
+      "git_blob": "6e9ec53f259576f70d90c293080e0bbcab61ef3b",
+      "native_matches": []
+    },
+    {
+      "suite_member": "ROUTER__battery1_registry.py",
+      "bytes": 5741,
+      "sha256": "f55741d3a76e62b1d083412cacbab18883a6f045f748e72dc46f71442b04c03a",
+      "manifest_pin_matches": true,
+      "git_blob": "cd4d683377590f3f7b5a01edc437de3ca6f6b614",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/router/battery1_registry.py",
+          "mode": "100644",
+          "size": 5741
+        }
+      ]
+    },
+    {
+      "suite_member": "ROUTER__battery2_relay.py",
+      "bytes": 4706,
+      "sha256": "da6ef569d3700a59170848eedf22097ca2e55ac5972a52c234c25a6cf5aece4f",
+      "manifest_pin_matches": true,
+      "git_blob": "a5e684747ebb84053ba9b43fad34da43c9fdcd63",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/router/battery2_relay.py",
+          "mode": "100644",
+          "size": 4706
+        }
+      ]
+    },
+    {
+      "suite_member": "ROUTER__battery3_settle.py",
+      "bytes": 9396,
+      "sha256": "3dd747dc1488d57d9b6f58ac0d91d01febfe1606d0c9b26ae2861c55a1dd9a87",
+      "manifest_pin_matches": true,
+      "git_blob": "8676ce83386fc5a9f9643329738c3c049ca90e9f",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/router/battery3_settle.py",
+          "mode": "100644",
+          "size": 9396
+        }
+      ]
+    },
+    {
+      "suite_member": "ROUTER__battery4_failclosed.py",
+      "bytes": 8516,
+      "sha256": "c142f665bc4a95d6acfc7182e95b5f5d38aa5d00dee0f23261a082e23918aa16",
+      "manifest_pin_matches": true,
+      "git_blob": "6f27482531a31c1790171d1290fe99fe4f587f1b",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/router/battery4_failclosed.py",
+          "mode": "100644",
+          "size": 8516
+        }
+      ]
+    },
+    {
+      "suite_member": "ROUTER__battery5_discovery.py",
+      "bytes": 8995,
+      "sha256": "a58ee075f46dbe847cc78003219736bb0f163bfc61759e46b1c53bede3cd6852",
+      "manifest_pin_matches": true,
+      "git_blob": "22f2699031807415366ee97edc3fa4bd3cd75ffb",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/router/battery5_discovery.py",
+          "mode": "100644",
+          "size": 8995
+        }
+      ]
+    },
+    {
+      "suite_member": "ROUTER__battery6_dialects.py",
+      "bytes": 15358,
+      "sha256": "30c4ef0d9172401f98b8a50129b3c6260efbb1fce771ef3935a9fccf9dda84b5",
+      "manifest_pin_matches": true,
+      "git_blob": "93874cef1ade55aecebc56144f8f137dfac74ff8",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/router/battery6_dialects.py",
+          "mode": "100644",
+          "size": 15358
+        }
+      ]
+    },
+    {
+      "suite_member": "ROUTER__battery7_large_response.py",
+      "bytes": 8756,
+      "sha256": "012b543e7bd67d37a7b0de611261089b1b1e9173d148a5ecc8a7ae2381acc079",
+      "manifest_pin_matches": true,
+      "git_blob": "39a8c7701648488c56933b938ef067fb1b6a8ee0",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/router/battery7_large_response.py",
+          "mode": "100644",
+          "size": 8756
+        }
+      ]
+    },
+    {
+      "suite_member": "ROUTER__keccak_pure.py",
+      "bytes": 2597,
+      "sha256": "a666adeef5310d5db82d6b879803704bf436083c45933a2f9c3bcba96be9b0af",
+      "manifest_pin_matches": true,
+      "git_blob": "14983711e0dac9d007c0480b5408e4388a16e441",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/operation/keccak_pure.py",
+          "mode": "100644",
+          "size": 2597
+        },
+        {
+          "path": "machine-economy-8374/router/keccak_pure.py",
+          "mode": "100644",
+          "size": 2597
+        }
+      ]
+    },
+    {
+      "suite_member": "ROUTER__replay_router.py",
+      "bytes": 943,
+      "sha256": "c307317eafa53170cc0f4452363714796ccc13b238d487ee14c55a1cdb7cf134",
+      "manifest_pin_matches": true,
+      "git_blob": "faecaca5bc04739cbe92f76929b4e00bb3840b18",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/router/replay_router.py",
+          "mode": "100644",
+          "size": 943
+        }
+      ]
+    },
+    {
+      "suite_member": "ROUTER__router.py",
+      "bytes": 128156,
+      "sha256": "f03bd92d59d7fec10b5ee4388ec6d9e1ced46fa084229c9f8e91af66dea9066b",
+      "manifest_pin_matches": true,
+      "git_blob": "62cd912e3ad4030b5ac23f536e98686c540ab3df",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/router/router.py",
+          "mode": "100644",
+          "size": 128156
+        }
+      ]
+    },
+    {
+      "suite_member": "ROUTER__router_testkit.py",
+      "bytes": 11535,
+      "sha256": "e832aa8cb8609e75835876f88ee1d1f66e6a2810c3317936f58254634aff50e5",
+      "manifest_pin_matches": true,
+      "git_blob": "51ac5a62db26b71ce6fe96df0967a8f552bace31",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/router/router_testkit.py",
+          "mode": "100644",
+          "size": 11535
+        }
+      ]
+    },
+    {
+      "suite_member": "ROUTER__seller.py",
+      "bytes": 9381,
+      "sha256": "84c9a7663f742405b2e5b1162a1792ba4e37a973cdb547715e124dc43fda8a84",
+      "manifest_pin_matches": true,
+      "git_blob": "6bae3232342dd4429adab9416bb42f2272ff096c",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/router/seller.py",
+          "mode": "100644",
+          "size": 9381
+        }
+      ]
+    },
+    {
+      "suite_member": "ROUTER__settlement.py",
+      "bytes": 25691,
+      "sha256": "b0c78d08a224ed9a91fe7949972af6e1ae9e299a45c9279ce041d9c81918ad28",
+      "manifest_pin_matches": true,
+      "git_blob": "565fe5fdaae4f92f5ac0cb9bdc5c458582988f7a",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/operation/settlement.py",
+          "mode": "100644",
+          "size": 25691
+        },
+        {
+          "path": "machine-economy-8374/router/settlement.py",
+          "mode": "100644",
+          "size": 25691
+        }
+      ]
+    },
+    {
+      "suite_member": "ROUTER__setup_dev.py",
+      "bytes": 3535,
+      "sha256": "a1c19254560d1ca9ca9c7d5f983e472233ff2e578f7faefa310cce854a3036a4",
+      "manifest_pin_matches": true,
+      "git_blob": "1495efc6bc3919173063764803fef9b926047736",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/router/setup_dev.py",
+          "mode": "100644",
+          "size": 3535
+        }
+      ]
+    },
+    {
+      "suite_member": "ROUTER__x402kit.py",
+      "bytes": 18838,
+      "sha256": "d1c2c6742ab4781c51777ba6eddfe3f29784e0850e5436202df5feb91a27633d",
+      "manifest_pin_matches": true,
+      "git_blob": "4d9e8d6ac69183358e3549f4be875f8cb58bfcd9",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/router/x402kit.py",
+          "mode": "100644",
+          "size": 18838
+        }
+      ]
+    },
+    {
+      "suite_member": "SPEC__MEMBER__01.md",
+      "bytes": 1300,
+      "sha256": "7d849d8f14cd610fdd9946f1519205f1182d2cda697ac39c86c07b3b270cb523",
+      "manifest_pin_matches": true,
+      "git_blob": "affcce39e8a5c751b118d4b82d4790c2e0af58eb",
+      "native_matches": []
+    },
+    {
+      "suite_member": "SUITE__CHARTER__01.md",
+      "bytes": 359,
+      "sha256": "2a54bb195c4c2ba84e1b4d656cbbb2d61913c6ebb4eea76f23cdb69036f8abb3",
+      "manifest_pin_matches": true,
+      "git_blob": "237a3df1399ccf6c473f8c549f091e06db914cdb",
+      "native_matches": []
+    },
+    {
+      "suite_member": "TRANSFER__PACKAGE__BUILD__RECORD__01.md",
+      "bytes": 12801,
+      "sha256": "294f0628c8ca7616a7cf05eb8c84af55ebb16fc4cd81a86b4c48e636d25f7879",
+      "manifest_pin_matches": true,
+      "git_blob": "3f4f9745a305933317e356b137658ef1a6dd27dc",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/TRANSFER__PACKAGE__BUILD__RECORD__01.md",
+          "mode": "100644",
+          "size": 12801
+        }
+      ]
+    },
+    {
+      "suite_member": "VERIFY__battery_verify.py",
+      "bytes": 22028,
+      "sha256": "77ea51147ba48b4d91ccef5d61fb90e1a3f7903d20c2c5aead339d677323ddc1",
+      "manifest_pin_matches": true,
+      "git_blob": "0a7a16daecb20c429c150291fda9a01e8f3c9a17",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/verify-page/battery_verify.py",
+          "mode": "100644",
+          "size": 22028
+        }
+      ]
+    },
+    {
+      "suite_member": "VERIFY__verify.py",
+      "bytes": 65434,
+      "sha256": "3be9b9cff4be6156659a3681811da3b5e49a46f8d71833a63eb351cf306f341f",
+      "manifest_pin_matches": true,
+      "git_blob": "14a8b48f12e6ccd52e7e695762b77f013e3d0ef2",
+      "native_matches": [
+        {
+          "path": "machine-economy-8374/verify-page/verify.py",
+          "mode": "100644",
+          "size": 65434
+        }
+      ]
+    },
+    {
+      "suite_member": "self_check.py",
+      "bytes": 2913,
+      "sha256": "9f9207293b11f928fed46d5fe9a1a5ef41074825a90825588b97a1298bb32f7e",
+      "manifest_pin_matches": true,
+      "git_blob": "e06cf28777f214b9624202dac3eff54ed55f3568",
+      "native_matches": []
+    }
+  ],
+  "workspace_parity": "UNVERIFIED_NO_EXACT_WORKSPACE_CENSUS_FILED",
+  "production_execution": "NOT_PERFORMED",
+  "custody_material": "NOT_READ_OR_CARRIED",
+  "remediation": "Original coordinator publishes source-only path/size/SHA256 census and missing nonsecret source bytes for Q55; compare to pinned native branch, carry only genuine deltas through reviewed candidate."
+}

@@ -1,0 +1,30 @@
+{
+  "service": "8374-router",
+  "routing_name": "8374.@router",
+  "identity": "8374@StegVerse.ai",
+  "port": 8797,
+  "payTo": "0x7721aB66161e60fCcA59CCe2A86817cbdd9b16Be",
+  "payTo_note": "8374's declared receptor (public record).",
+  "network": "eip155:8453",
+  "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  "scheme": "exact",
+  "tiers_micro_usdc": {
+    "receipt-only": 500,
+    "full-evaluation": 15000
+  },
+  "current_policy": "ME-POLICY-01",
+  "settlement": {
+    "enabled": true,
+    "mode": "self-relayer",
+    "build": "ROUTER-V1",
+    "relayer_key_file": "<SLOT: production gas-only relayer key file \u2014 held in production state on the carrying node, outside this suite; no key material is carried here>",
+    "rpc_primary": "https://mainnet.base.org",
+    "rpc_fallback": "https://base-rpc.publicnode.com",
+    "sweep_interval_seconds": 60
+  },
+  "self_origin": "https://8374.stegverse.org",
+  "production_receipts_dir": "<SLOT: production endpoint receipts dir on the carrying node>",
+  "production_config_path": "<SLOT: production endpoint config path on the carrying node>",
+  "production_offer_path": "<SLOT: production endpoint offer path on the carrying node>",
+  "template_note": "Production configuration TEMPLATE carried by MACHINE__ECONOMY__ENTRY__SUITE GEN 10. Public values are stated as public record; every slot is filled at the carrying node from production state. This file carries no key material and no bearer reference."
+}

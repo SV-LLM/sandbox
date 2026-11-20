@@ -83,3 +83,8 @@ The existing W07 continuation is `validating`, COSV `30000000021222` in the Org
 Registry; PR #47 task scope/assignment and authentic WorkerCoordinator claim/fence
 remain unresolved. This candidate does not activate Sandbox, publish the SDK
 route, modify Registry state, or authorize a merge.
+
+
+## Machine-economy source migration (Q55)
+
+[Workspace migration handoff](docs/MACHINE_ECONOMY_WORKSPACE_MIGRATION_MIRROR_HANDOFF.md) records the GEN14/native-source byte census and remaining exact workspace-census requirement. This candidate carries six public source-provenance members; it does not install services or establish workspace/production parity.
