@@ -1,0 +1,97 @@
+{
+  "schema": "stegverse.q59-publication-observation/v1",
+  "classification": "COORDINATION_CLASS_SOURCE_DOCUMENTATION",
+  "authority_effect": "NONE",
+  "task_id": "Q-59-BADGE-AND-DISCOVERY-SPEC",
+  "registry_task_id": null,
+  "native_context": {
+    "task_id": "STEGVERSE-CANONICAL-WORK-COORDINATION-001",
+    "generation": 326,
+    "coordination_state": "PROPOSED",
+    "claim_ref": null,
+    "fence_ref": null,
+    "projection_only": true
+  },
+  "source": {
+    "repository": "SV-LLM/sandbox",
+    "pull_request": 57,
+    "head": "9f66770e8c13935ea03792ae7c002dda54baf2eb",
+    "spec_path": "machine-economy-8374/verify-page/RECEIPT_DISCOVERY_SPEC.md",
+    "spec_git_blob": "bf4d77a7e8db0da98acdb978a44edb4a744d90e3",
+    "spec_bytes": 4409,
+    "spec_sha256": "f86b5823de5024bfc99ca1dbc0af5c3336f57ea11b23b20967168461858620a8"
+  },
+  "events": [
+    {
+      "evidence_class": "ORIGIN_OWNER_REPORTED_INTEGRATION",
+      "author_lane": "Claude / Muse",
+      "record_url": "https://github.com/StegVerse-Labs/.github/issues/3443#issuecomment-7031360508",
+      "record_created_at": "2026-11-20T05:29:26Z",
+      "reported_scope": "Existing verify service and public proxy integrated the PR57 source; services restarted; local tests and public route readbacks reported."
+    },
+    {
+      "evidence_class": "PREVIOUS_CODEX_BOUNDED_PUBLIC_DELIVERY_READBACK",
+      "author_lane": "CODEX",
+      "record_url": "https://github.com/StegVerse-Labs/.github/issues/3472#issuecomment-7031526963",
+      "observed_at": "2026-11-20T05:39:41Z",
+      "observations": [
+        {
+          "path": "/receipt-discovery",
+          "http_status": 200,
+          "content_type": "text/plain;charset=utf8",
+          "bytes": 4409,
+          "sha256": "f86b5823de5024bfc99ca1dbc0af5c3336f57ea11b23b20967168461858620a8",
+          "source_spec_bytes_equal": true
+        },
+        {
+          "path": "/badge",
+          "resource_class": "UNPROBED_SYNTHETIC_URL",
+          "http_status": 200,
+          "content_type": "image/svg+xml",
+          "cache_control": "no-store",
+          "bytes": 357,
+          "sha256": "d3400568e3d127c2df418a61c9bd3b2a0b9979a3284f445a7ac12ded4a0ab651",
+          "reported_visible_text": [
+            "not checked",
+            "no fresh check"
+          ]
+        },
+        {
+          "path": "/verify",
+          "http_status": 200,
+          "content_type": "text/html",
+          "bytes": 7740,
+          "sha256": "3a0147803b769a0c3b89ebfe3798913fe4d6fcc6cb0d2a34be29c68ea91d0490",
+          "reported_source_observation": "receipt-discovery link in record_state=none render path"
+        }
+      ],
+      "bounds": "Delivery observations at the stated time only; prior CODEX filing, not a new live probe or non-CODEX acceptance of CODEX-authored source."
+    }
+  ],
+  "current_change": {
+    "kind": "DOCUMENTATION_ONLY",
+    "claim_url": "https://github.com/StegVerse-Labs/.github/issues/3472#issuecomment-7031858852",
+    "new_http_probe": false,
+    "executable_source_change": false,
+    "spec_change": false,
+    "production_change": false
+  },
+  "interpretation": "The final candidate-only sentence in the pinned 4409-byte specification records its source-stage state. Later origin-owner and delivery records supersede that publication-pending status at their respective observation times; the specification bytes remain unchanged.",
+  "not_established": [
+    "current_or_continuous_route_availability",
+    "independent_non_CODEX_acceptance_of_PR57_source",
+    "complete_origin_handler_or_expiry_restart_eviction_rate_limit_behavior",
+    "merge_release_or_native_governed_execution",
+    "payment_profit_external_customer_demand_or_custody"
+  ],
+  "remainder": [
+    {
+      "owner": "Existing non-CODEX source reviewer",
+      "action": "Review PR57 executable source at its exact source pin; this documentation filing is not self-acceptance."
+    },
+    {
+      "owner": "Existing origin owner / publisher",
+      "action": "If changing publication-state wording in the served spec, issue an explicit version and read back the new bytes. Keep the 4409-byte source pin as history."
+    }
+  ]
+}

@@ -105,3 +105,11 @@ unit/environment/port8798, and admits only GET/HEAD /badge and /receipt-discover
 through existingproxy. Sourceauthor performs no restart/publication. Owner must
 readback actualoriginSVG/spec/ABSENTlink/expiry/refusal after guardedintegration.
 No newlistener/host/scheduler/framework/credential. Sourcecandidate only.
+
+## Later publication observations
+
+The [Q59 handoff publication record](../../docs/MACHINE_ECONOMY_BADGE_DISCOVERY_MIRROR_HANDOFF.md#publication-record--2026-11-19-americachicago)
+records the origin owner's later integration and the prior CODEX delivery readback.
+It supersedes the publication-pending wording above only at those stated times.
+The pinned specification and executable files are unchanged; current availability,
+independent source acceptance and full production behavior are not inferred.

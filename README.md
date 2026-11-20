@@ -91,3 +91,7 @@ The existing `machine-economy-8374/verify-page/` candidate adds a bounded
 checker-observation badge and publication-ready receipt-discovery profile.
 Read `docs/MACHINE_ECONOMY_BADGE_DISCOVERY_MIRROR_HANDOFF.md` for exact
 source evidence and the existing origin-owner publication leg. No new service.
+
+The [dated publication record](docs/MACHINE_ECONOMY_BADGE_DISCOVERY_MIRROR_HANDOFF.md#publication-record--2026-11-19-americachicago)
+carries the later origin-owner integration and prior bounded public readback.
+The source candidate and those dated observations remain separate evidence classes.
