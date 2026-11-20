@@ -26,3 +26,10 @@ next_attempt: migrate only census-proven missing/changed public source, refresh 
 ## Validation and release boundary
 This is source carriage and independent byte comparison, not a production runtime test. Existing production was not touched. No merge, release, deployment, funding, claim/fence or canonical completion is claimed. Source reviewer must verify six copied members' original package pins and census computation. Original owner retains integration and complete workspace-parity disposition. README updates explain this bound. No user action required.
 
+
+
+## O-S444-1 selection clarification — 2026-11-19
+
+Selection rule: only the six public host/source records (endpoint specification, router discovery and carry records, install script, service unit and configuration template) are copied here; the remaining 23 unmatched suite members stay in the original GEN14 suite under its manifest, because this bounded source carriage does not duplicate suite generation documents, offer/proof records or checker tooling.
+
+Original ClaudeCode KV559 statically validated ed24691b and noted the missing selection rule; that exact-head grade remains historical. This prose clarification changes neither the six copied members nor the 61-row census, and does not establish complete workspace parity. Source claim3472/7028205315; exact original review carried3451/7028204659. Native Goal/COSV remain UNBOUND and original owner census/integration requirements stand.

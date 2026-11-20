@@ -143,3 +143,6 @@ completion. Queue anchors: BUILD-Q-24…Q-27, Q-32/Q-35, Q-49, Q-50
 ## Q55 source migration reconciliation — 2026-11-19
 
 At GEN14 head f99d69e21937cb5db20bc1ba31f07985c7c6f089, router, verify-page, chain-export, endpoint/proxy and agent-kit source paths already exist. The source-provenance census matches all61 suite pins and32 native byte identities. Six additional public provenance/install-template members are carried verbatim under source-provenance/gen14; host-specific installation files are archival, not lane defaults. Complete workspace parity awaits the original coordinator's exact source-only census. See [canonical migration handoff](../docs/MACHINE_ECONOMY_WORKSPACE_MIGRATION_MIRROR_HANDOFF.md); production and custody stay at the original node.
+
+
+Q55 O-S444-1 clarification: Selection rule: only the six public host/source records (endpoint specification, router discovery and carry records, install script, service unit and configuration template) are copied here; the remaining 23 unmatched suite members stay in the original GEN14 suite under its manifest, because this bounded source carriage does not duplicate suite generation documents, offer/proof records or checker tooling. Full workspace parity remains unverified pending the original coordinator's exact source-only census; this note changes no code or census data.
