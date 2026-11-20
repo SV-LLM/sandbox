@@ -28,15 +28,31 @@ def inputs(collision=False,action='TARGET-REPLACEMENT',existing=True):
     return raw,z.getvalue(),tree
 
 
-def amended_inputs():
+def amended_inputs(unamended=False):
     q,z,t=inputs(collision=True)
+    if unamended:
+        req=json.loads(q)
+        with zipfile.ZipFile(io.BytesIO(z)) as f:
+            ret=json.loads(f.read('RETURN__MANIFEST__01.json'))
+            payloads={n:f.read(n) for n in f.namelist() if n.startswith('payloads/')}
+        data=b'unchosen existing target';digest=m.sha(data)
+        req['payload_requests'].append({'sha256':digest,'bytes':len(data),'workspace_paths':['tree/unamended']})
+        ret['payloads'].append({'sha256':digest,'bytes':len(data),'status':'RETURNED','bundle_path':'payloads/'+digest,
+            'workspace_paths':[{'path':'tree/unamended','target':'other.py','disposition':'TARGET-REPLACEMENT'}]})
+        q=json.dumps(req).encode();ret['request']['sha256']=m.sha(q)
+        out=io.BytesIO()
+        with zipfile.ZipFile(out,'w') as f:
+            f.writestr('RETURN__MANIFEST__01.json',json.dumps(ret))
+            for n,b in payloads.items():f.writestr(n,b)
+            f.writestr('payloads/'+digest,data)
+        z=out.getvalue();t['tree'].append({'path':'other.py','mode':'100644','type':'blob','sha':'7'*40})
     prior=m.evaluate(q,z,t,m.sha(q),m.sha(z),'d'*40)
     prior_bytes=json.dumps(prior).encode()
     with zipfile.ZipFile(io.BytesIO(z)) as f:
         manifest_bytes=f.read('RETURN__MANIFEST__01.json')
         manifest=json.loads(manifest_bytes)
     changes=[]
-    for i,p in enumerate(manifest['payloads']):
+    for i,p in enumerate(manifest['payloads'][:2]):
         changes.append({'workspace_path':'tree/source'+str(i),'sha256':p['sha256'],
                         'was':'TARGET-REPLACEMENT','now':'ARCHIVAL' if i else 'TARGET-REPLACEMENT',
                         **({'role':'CHOSEN'} if not i else {})})
@@ -48,7 +64,7 @@ def amended_inputs():
              ', native_revision_observed '+'d'*40+', PR59 head '+'e'*40},
        'decisions':[{'target':'target.py','native_blob':'b'*40,'decision':'CHOSEN: owner lineage',
                      'amended':changes}],
-       'amended_disposition_counts':{'TARGET-REPLACEMENT':1,'ARCHIVAL':1,'total_paths':2}}
+       'amended_disposition_counts':{'TARGET-REPLACEMENT':2 if unamended else 1,'ARCHIVAL':1,'total_paths':3 if unamended else 2}}
     return q,z,t,a,prior_bytes
 
 
@@ -132,6 +148,30 @@ class AmendmentTests(unittest.TestCase):
         r=self.run_amended(tree_change=lambda t:t['tree'][0].update(sha='9'*40))
         self.assertFalse(r['target_contract_consistent'])
         self.assertEqual(r['findings'][0]['conditions'],['CHOSEN_TARGET_NATIVE_PREDECESSOR_CHANGED'])
+
+    def test_unamended_active_predecessor_drift_refused_and_unchanged_passes(self):
+        q,z,t,a,prior=amended_inputs(unamended=True);raw=json.dumps(a).encode()
+        def evaluate():return m.evaluate(q,z,t,m.sha(q),m.sha(z),'f'*40,raw,m.sha(raw),prior)
+        self.assertTrue(evaluate()['target_contract_consistent'])
+        t['tree'][1]['sha']='8'*40
+        r=evaluate();self.assertFalse(r['target_contract_consistent'])
+        self.assertEqual(r['findings'],[{'target':'other.py',
+            'conditions':['ACTIVE_TARGET_NATIVE_PREDECESSOR_CHANGED'],
+            'candidate_hashes':[m.sha(b'unchosen existing target')]}])
+
+    def test_unknown_archival_role_refused(self):
+        for role in ['ARCHIVAL','anything',None,False,{},[]]:
+            with self.subTest(role=role),self.assertRaisesRegex(ValueError,'unknown amendment role'):
+                self.run_amended(lambda a:a['decisions'][0]['amended'][1].update(role=role))
+
+    def test_malformed_direct_amendment_inputs_raise_value_error(self):
+        q,z,t,a,prior=amended_inputs()
+        variants=[[],None,{},dict(a,source_pins_unchanged=None),dict(a,decisions=[None]),
+                  dict(a,decisions=[{'target':'target.py'}])]
+        for malformed in variants:
+            raw=json.dumps(malformed).encode()
+            with self.subTest(malformed=malformed),self.assertRaises(ValueError):
+                m.evaluate(q,z,t,m.sha(q),m.sha(z),'f'*40,raw,m.sha(raw),prior)
 
 
 if __name__=='__main__':unittest.main()

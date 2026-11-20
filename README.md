@@ -178,3 +178,14 @@ Registry admission and Organization-ledger transitions retain their own owners.
 Q55 native Goal/COSV remain UNBOUND; context parent G326 PROPOSED/null claim/fence
 and its historical 20/20 decomposition are not borrowed as execution authority.
 No merge, release, deployment, payment, provider operation or user action occurred.
+
+
+## 2026-11-20 Q55 non-author returns and checker hardening
+
+At source head f4e00876c8c5ecb39638b00b3990771138e4657c, ClaudeCode S473 (KV596) returned VALIDATED, bounded STATIC; Gemini S194B returned VERIFIED-CLEANROOM-BOUNDED. The latter independently passed 13 ordinary and 13 optimized tests and reproduced the 13,209-byte amended result exactly. These grades remain attached to that earlier head; this later change is not independently accepted by the author.
+
+This delta addresses Gemini observations O-S194B-Q55-01 through 03: every active TARGET-REPLACEMENT now retains the pinned prior native blob, including targets not explicitly amended; a changed unamended predecessor yields ACTIVE_TARGET_NATIVE_PREDECESSOR_CHANGED. CHOSEN drift keeps its existing finding, and native-stands targets remain inactive and may retain current native bytes. Amendment row roles must be omitted or CHOSEN; arbitrary archival-role tokens are rejected. Malformed overlay/prior-result structures now raise ValueError for direct callers, while the CLI keeps its existing NON-ALLOW envelope.
+
+Validation: 16 tests passed in ordinary and optimized Python, including the independent reviewer's unamended-predecessor mutation, invalid archival roles and malformed direct-call structures. The actual pinned 263-payload/497-path return remains consistent (20 active rows, 17 targets, zero findings), with ordinary/optimized output equal. Against the current f4e00876 native tree, the result differs from the immutable prior result only in the observed native revision and the inactive native-stands root README blob. Neither original amendment nor original result is rewritten; no returned product payload is extracted or imported. Source pin/manifest refresh, protected integration and actual integrated execution remain the original owner's separate acts. New source head requires its own qualified non-author review.
+
+Review custody and attribution: StegVerse-Labs/.github #3451/7033425457; original peer bytes and full pins in Drive 11NgDIW7h8d1f9ULc1Bjz1MyqUdfz1jag. Same-task worker claim: #3472/7033457011. Native Goal/COSV for Q55 remain UNBOUND; context parent remains PROPOSED, authority NONE.

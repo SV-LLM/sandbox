@@ -25,6 +25,16 @@ def safe(path):
 
 def amend_manifest(manifest, amendment_bytes, amendment_sha, prior_result_bytes,
                    request_sha, archive_sha, manifest_sha, census_sha):
+    """Normalize malformed overlay inputs for direct callers as well as the CLI."""
+    try:
+        return _amend_manifest(manifest, amendment_bytes, amendment_sha, prior_result_bytes,
+                               request_sha, archive_sha, manifest_sha, census_sha)
+    except (KeyError, TypeError, AttributeError) as exc:
+        raise ValueError('malformed amendment or pinned prior result') from exc
+
+
+def _amend_manifest(manifest, amendment_bytes, amendment_sha, prior_result_bytes,
+                    request_sha, archive_sha, manifest_sha, census_sha):
     """Apply a pinned owner disposition overlay, preserving the returned bytes."""
     if not amendment_sha or sha(amendment_bytes) != amendment_sha:
         raise ValueError('amendment digest mismatch')
@@ -77,6 +87,8 @@ def amend_manifest(manifest, amendment_bytes, amendment_sha, prior_result_bytes,
                 raise ValueError('amendment does not match original row')
             if change['now'] not in ('ARCHIVAL', 'TARGET-REPLACEMENT', 'TARGET-ADD'):
                 raise ValueError('unknown amended disposition')
+            if 'role' in change and change['role'] != 'CHOSEN':
+                raise ValueError('unknown amendment role')
             row['disposition'] = change['now']
             if change.get('role') == 'CHOSEN':
                 if change['now'] not in ('TARGET-REPLACEMENT', 'TARGET-ADD'):
@@ -193,6 +205,20 @@ def evaluate(request_bytes, archive_bytes, native_tree, request_sha, archive_sha
             if not decision['native_stands'] and decision['current_native_blob'] != decision['prior_native_blob']:
                 findings.append({'target': target, 'conditions': ['CHOSEN_TARGET_NATIVE_PREDECESSOR_CHANGED'],
                                  'candidate_hashes': [decision['chosen_sha256']]})
+        # Unamended active replacements carry the same pinned predecessor promise.
+        prior_targets = {x['target']: x for x in json.loads(prior_result_bytes)['targets']}
+        chosen_drift = {x['target'] for x in findings
+                        if 'CHOSEN_TARGET_NATIVE_PREDECESSOR_CHANGED' in x['conditions']}
+        for row in target_rows:
+            if not any(x['action'] == 'TARGET-REPLACEMENT' for x in row['choices']):
+                continue
+            if row['target'] not in prior_targets:
+                raise ValueError('active replacement missing from pinned prior result')
+            if (row['native_blob'] != prior_targets[row['target']]['native_blob'] and
+                    row['target'] not in chosen_drift):
+                findings.append({'target': row['target'],
+                                 'conditions': ['ACTIVE_TARGET_NATIVE_PREDECESSOR_CHANGED'],
+                                 'candidate_hashes': sorted({x['sha256'] for x in row['choices']})})
     return {'schema':'stegverse.q55-return-contract-check/v1','authority':'NONE',
         'request_sha256':request_sha,'return_archive_sha256':archive_sha,
         'return_manifest_sha256':sha(manifest_bytes),'native_revision_observed':revision,
