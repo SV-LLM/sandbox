@@ -1,5 +1,7 @@
 # Listing description draft — not published
 
+Owning App organization: StegVerse-org (principal amendment3443/7027442807).
+
 StegVerse connects exact suite evidence and machine-economy receipt publication
 to GitHub workflows. The Action checks pinned package integrity and declared
 conformance records, with optional execution of a separately approved checker.

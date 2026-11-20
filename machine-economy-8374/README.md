@@ -140,6 +140,6 @@ completion. Queue anchors: BUILD-Q-24…Q-27, Q-32/Q-35, Q-49, Q-50
 (StegVerse-Labs/.github #3443; pairing #3472).
 
 
-## Q56 Marketplace components — source candidate
+## Q56 GitHub App — source candidate
 
-`github-marketplace/` contains the reviewed-source Action wrapper, App webhook integration core, public adapters, fixture regressions and draft listing/price mapping. Read its README and [canonical Marketplace handoff](../docs/MACHINE_ECONOMY_GITHUB_MARKETPLACE_MIRROR_HANDOFF.md). No App/listing exists from this source; existing host/custody bindings, native identity, separate public Action repository root and owner pricing/support/publisher acts remain required. No runtime deployment, purchase, public registration or check-run publication was exercised.
+`github-marketplace/` contains App webhook integration source, public adapters, fixture regressions and draft listing/price mapping. Read its README and [canonical App handoff](../docs/MACHINE_ECONOMY_GITHUB_MARKETPLACE_MIRROR_HANDOFF.md). StegVerse-org is the principal-selected App owner. Existing host/custody, durable delivery, native identity, publisher and pricing/support/privacy bindings remain required. Earlier PR52 separately owns the Action; preserve its README additions on integration. No install, paid execution, router registration, check-run publication, deployment or listing was exercised.

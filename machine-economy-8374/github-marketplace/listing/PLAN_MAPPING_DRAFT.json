@@ -4,12 +4,43 @@
   "source": "Ecosystem KV SUITE__PRICE__SCHEDULE__01.md / Drive 1j0uBVIDs6cUCBvkpgh5CvPisCLiijJKU",
   "price_authorship": "PRINCIPAL_RESERVED",
   "mapping": [
-    {"class": "Introductory Session", "established_usd_per_use": 250, "established_subscription_usd_month": 500, "included_sessions": 3, "marketplace_plan": null, "decision": "nonrecurring use requires owner product-equivalence and billing decision"},
-    {"class": "Governed document run", "established_usd_per_use": 750, "marketplace_plan": null, "decision": "no recurring-plan conversion invented"},
-    {"class": "Collab participant seat", "established_usd_month_per_seat": 100, "marketplace_plan": null, "decision": "per-seat candidate only; owner product-equivalence and scope decision"},
-    {"class": "Eval Package", "established_usd_first_repo": 1500, "established_usd_additional_repo": 500, "marketplace_plan": null, "decision": "one-time establishment; no new subscription invented"},
-    {"class": "Governance Continuity", "established_usd_month_first_repo": 250, "established_usd_month_additional_repo": 100, "marketplace_plan": null, "decision": "candidate per-repo mapping needs owner first/additional-tier representation"}
+    {
+      "class": "Introductory Session",
+      "established_usd_per_use": 250,
+      "established_subscription_usd_month": 500,
+      "included_sessions": 3,
+      "marketplace_plan": null,
+      "decision": "nonrecurring use requires owner product-equivalence and billing decision"
+    },
+    {
+      "class": "Governed document run",
+      "established_usd_per_use": 750,
+      "marketplace_plan": null,
+      "decision": "no recurring-plan conversion invented"
+    },
+    {
+      "class": "Collab participant seat",
+      "established_usd_month_per_seat": 100,
+      "marketplace_plan": null,
+      "decision": "per-seat candidate only; owner product-equivalence and scope decision"
+    },
+    {
+      "class": "Eval Package",
+      "established_usd_first_repo": 1500,
+      "established_usd_additional_repo": 500,
+      "marketplace_plan": null,
+      "decision": "one-time establishment; no new subscription invented"
+    },
+    {
+      "class": "Governance Continuity",
+      "established_usd_month_first_repo": 250,
+      "established_usd_month_additional_repo": 100,
+      "marketplace_plan": null,
+      "decision": "candidate per-repo mapping needs owner first/additional-tier representation"
+    }
   ],
   "gate": "verified publisher, minimum installations, finalized scope and pricing, financial onboarding, owner submission",
-  "free_app_listing": "NOT_ASSUMED: GitHub says a free pricing plan is unavailable if the app offers paid service outside Marketplace"
+  "free_app_listing": "NOT_ASSUMED: GitHub says a free pricing plan is unavailable if the app offers paid service outside Marketplace",
+  "owning_app_organization": "StegVerse-org",
+  "owner_amendment": "StegVerse-Labs/.github#3443/7027442807"
 }

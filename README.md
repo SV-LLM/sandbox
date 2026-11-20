@@ -85,6 +85,6 @@ remain unresolved. This candidate does not activate Sandbox, publish the SDK
 route, modify Registry state, or authorize a merge.
 
 
-## GitHub Marketplace source candidate (Q56)
+## GitHub App source candidate (Q56)
 
-[Marketplace component handoff](docs/MACHINE_ECONOMY_GITHUB_MARKETPLACE_MIRROR_HANDOFF.md) describes the pinned-suite composite Action, authenticated webhook source core, neutral receipt check-run adapter, fixture tests and draft listing assets. Existing host/TVC/durable-delivery and owner publication bindings remain unestablished. This candidate adds no resident service or runtime authority.
+[Marketplace App handoff](docs/MACHINE_ECONOMY_GITHUB_MARKETPLACE_MIRROR_HANDOFF.md) describes authenticated webhook/public-adapter source, neutral receipt check runs, fixture tests and draft listing/price assets. Owning organization is StegVerse-org. Existing host/TVC/durable-delivery bindings remain required. The separate earlier Action source is PR52; no duplicate Action is retained here. No resident service or runtime authority is added.

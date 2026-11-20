@@ -17,85 +17,8 @@ def module(name, path):
     return m
 
 
-suite = module('suite', ROOT / 'action/verify_suite.py')
 app = module('app', ROOT / 'app/webhook_core.py')
 adapters = module('adapters', ROOT / 'app/public_adapters.py')
-
-
-class SuiteTests(unittest.TestCase):
-    def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
-        self.root = Path(self.temp.name)
-        elems = {k: {'pass': True} for k in ('E1_manifest_members_verify', 'E2_self_check_passes',
-                 'E2b_checker_carries_template_checks', 'E3_face_carries_projectid_funding',
-                 'E4_funding_statement', 'E5_proof_in_suite')}
-        self.files = {'README.md': 'ProjectID: test\nFunding: fixture\n',
-                      'FUNDING__STATEMENT__01.md': 'ProjectID: test\nFunding: fixture\ncommercial arrangement: none\n',
-                      'CONFORMANCE__PROOF__01.json': json.dumps({'elements': elems}),
-                      'self_check.py': 'print("fixture check")\n'}
-        for n, b in self.files.items():
-            (self.root/n).write_text(b)
-        self.repin()
-
-    def tearDown(self):
-        self.temp.cleanup()
-
-    def repin(self):
-        members = [{'file': n, 'bytes': len((self.root/n).read_bytes()),
-                    'sha256': suite.digest((self.root/n).read_bytes())} for n in self.files]
-        self.manifest = {'project_id': 'TEST', 'funding': 'fixture', 'members': members}
-        self.write_manifest()
-
-    def write_manifest(self):
-        raw = json.dumps(self.manifest).encode()
-        (self.root/'PACKAGE__MANIFEST__01.json').write_bytes(raw)
-        self.pin = suite.digest(raw)
-
-    def test_pinned_integrity_and_reviewed_execution(self):
-        result = suite.verify(self.root, self.pin, suite.digest((self.root/'self_check.py').read_bytes()), True)
-        self.assertEqual(result['checker'], 'PASS')
-        self.assertEqual(result['runtime_admission'], 'NOT_ESTABLISHED')
-
-    def test_corrupt_member_refused(self):
-        (self.root/'README.md').write_text('changed')
-        with self.assertRaises(ValueError): suite.verify(self.root, self.pin)
-
-    def test_wrong_manifest_pin_refused(self):
-        with self.assertRaises(ValueError): suite.verify(self.root, '0'*64)
-
-    def test_unlisted_hidden_file_refused(self):
-        (self.root/'.unexpected').write_text('untracked')
-        with self.assertRaises(ValueError): suite.verify(self.root, self.pin)
-
-    def test_parent_escape_refused(self):
-        self.manifest['members'][0]['file'] = '../secret'
-        self.write_manifest()
-        with self.assertRaises(ValueError): suite.verify(self.root, self.pin)
-
-    def test_symlink_refused(self):
-        (self.root/'README.md').unlink()
-        (self.root/'README.md').symlink_to(self.root/'self_check.py')
-        with self.assertRaises(ValueError): suite.verify(self.root, self.pin)
-
-    def test_duplicate_member_refused(self):
-        self.manifest['members'].append(self.manifest['members'][0])
-        self.write_manifest()
-        with self.assertRaises(ValueError): suite.verify(self.root, self.pin)
-
-    def test_checker_requires_separate_trust_pin(self):
-        with self.assertRaises(ValueError): suite.verify(self.root, self.pin, '', True)
-
-    def test_mutating_checker_refused(self):
-        (self.root/'self_check.py').write_text('from pathlib import Path\nPath("README.md").write_text("tampered")\n')
-        self.repin()
-        with self.assertRaises(ValueError): suite.verify(self.root, self.pin, suite.digest((self.root/'self_check.py').read_bytes()), True)
-
-    def test_false_conformance_assertion_refused(self):
-        p = json.loads((self.root/'CONFORMANCE__PROOF__01.json').read_text())
-        p['elements']['E4_funding_statement']['pass'] = False
-        (self.root/'CONFORMANCE__PROOF__01.json').write_text(json.dumps(p))
-        self.repin()
-        with self.assertRaises(ValueError): suite.verify(self.root, self.pin)
 
 
 class Fixtures:

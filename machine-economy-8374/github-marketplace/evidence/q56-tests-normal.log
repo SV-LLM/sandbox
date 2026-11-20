@@ -11,18 +11,8 @@ test_missing_signature_refused (__main__.AppTests.test_missing_signature_refused
 test_no_owner_origin_refused (__main__.AppTests.test_no_owner_origin_refused) ... ok
 test_receipt_surface_is_neutral_and_commit_bound (__main__.AppTests.test_receipt_surface_is_neutral_and_commit_bound) ... ok
 test_tampered_body_has_no_effect (__main__.AppTests.test_tampered_body_has_no_effect) ... ok
-test_checker_requires_separate_trust_pin (__main__.SuiteTests.test_checker_requires_separate_trust_pin) ... ok
-test_corrupt_member_refused (__main__.SuiteTests.test_corrupt_member_refused) ... ok
-test_duplicate_member_refused (__main__.SuiteTests.test_duplicate_member_refused) ... ok
-test_false_conformance_assertion_refused (__main__.SuiteTests.test_false_conformance_assertion_refused) ... ok
-test_mutating_checker_refused (__main__.SuiteTests.test_mutating_checker_refused) ... ok
-test_parent_escape_refused (__main__.SuiteTests.test_parent_escape_refused) ... ok
-test_pinned_integrity_and_reviewed_execution (__main__.SuiteTests.test_pinned_integrity_and_reviewed_execution) ... ok
-test_symlink_refused (__main__.SuiteTests.test_symlink_refused) ... ok
-test_unlisted_hidden_file_refused (__main__.SuiteTests.test_unlisted_hidden_file_refused) ... ok
-test_wrong_manifest_pin_refused (__main__.SuiteTests.test_wrong_manifest_pin_refused) ... ok
 
 ----------------------------------------------------------------------
-Ran 23 tests in 0.047s
+Ran 13 tests in 0.001s
 
 OK
