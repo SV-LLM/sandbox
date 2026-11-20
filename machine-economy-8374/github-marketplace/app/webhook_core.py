@@ -129,10 +129,15 @@ def handle(headers, body, *, secret, deliveries, bindings, router, github):
                       'provenance': 'NOT_ESTABLISHED_BY_REGISTRATION', 'authority_effect': 'NONE'}
         deliveries.finish(delivery, result)
         return result
-    except Exception:
+    except Exception as original_error:
         # Reservation stays consumed after an uncertain external effect. Recovery
         # reconciles existing evidence instead of replaying registration blindly.
-        deliveries.finish(delivery, {'disposition': 'AMBIGUOUS_RECONCILE', 'authority_effect': 'NONE'})
+        try:
+            deliveries.finish(delivery, {'disposition': 'AMBIGUOUS_RECONCILE', 'authority_effect': 'NONE'})
+        except Exception as recording_error:
+            # Preserve the original type/instance and retain the recording
+            # failure as its cause. The existing reservation remains consumed.
+            raise original_error from recording_error
         raise
 
 

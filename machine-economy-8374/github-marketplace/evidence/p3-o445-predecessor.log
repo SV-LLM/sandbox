@@ -1,0 +1,83 @@
+test_check_ignores_malformed_entries_before_authorized_match (__main__.AdapterTests.test_check_ignores_malformed_entries_before_authorized_match) ... ERROR
+test_check_rejects_repository_outside_installation (__main__.AdapterTests.test_check_rejects_repository_outside_installation) ... ok
+test_check_requires_installation_scoped_repository_then_posts (__main__.AdapterTests.test_check_requires_installation_scoped_repository_then_posts) ... ok
+test_malformed_entries_cannot_authorize_check_creation (__main__.AdapterTests.test_malformed_entries_cannot_authorize_check_creation) ... ERROR
+test_router_uses_only_fixed_public_registration (__main__.AdapterTests.test_router_uses_only_fixed_public_registration) ... ok
+test_cancelled_purchase_cannot_grant_entitlement (__main__.AppTests.test_cancelled_purchase_cannot_grant_entitlement) ... ok
+test_deleted_installation_disables (__main__.AppTests.test_deleted_installation_disables) ... ok
+test_duplicate_delivery_refused (__main__.AppTests.test_duplicate_delivery_refused) ... ok
+test_effect_error_survives_failed_ambiguity_record (__main__.AppTests.test_effect_error_survives_failed_ambiguity_record) ... ERROR
+test_event_header_cannot_reinterpret_installation_as_purchase (__main__.AppTests.test_event_header_cannot_reinterpret_installation_as_purchase) ... ok
+test_failed_external_effect_is_not_replayed (__main__.AppTests.test_failed_external_effect_is_not_replayed) ... ok
+test_installation_registers_only_bound_public_origin (__main__.AppTests.test_installation_registers_only_bound_public_origin) ... ok
+test_missing_signature_refused (__main__.AppTests.test_missing_signature_refused) ... ok
+test_no_owner_origin_refused (__main__.AppTests.test_no_owner_origin_refused) ... ok
+test_receipt_surface_is_neutral_and_commit_bound (__main__.AppTests.test_receipt_surface_is_neutral_and_commit_bound) ... ok
+test_tampered_body_has_no_effect (__main__.AppTests.test_tampered_body_has_no_effect) ... ok
+test_no_bindings_fail_closed (__main__.ReceiverTests.test_no_bindings_fail_closed) ... ok
+test_non_post_refused (__main__.ReceiverTests.test_non_post_refused) ... ok
+test_oversized_body_refused_before_read (__main__.ReceiverTests.test_oversized_body_refused_before_read) ... ok
+test_signed_delivery_replay_boundary (__main__.ReceiverTests.test_signed_delivery_replay_boundary) ... ok
+test_transfer_encoding_refused (__main__.ReceiverTests.test_transfer_encoding_refused) ... ok
+test_truncated_body_refused (__main__.ReceiverTests.test_truncated_body_refused) ... ok
+
+======================================================================
+ERROR: test_check_ignores_malformed_entries_before_authorized_match (__main__.AdapterTests.test_check_ignores_malformed_entries_before_authorized_match)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/6757916b9b0b/q56/tests/test_components.py", line 132, in test_check_ignores_malformed_entries_before_authorized_match
+    result = adapters.GitHubInstallation(lambda i: 'fixture-token').create_installation_check(7, 'owner/repo', {})
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/6757916b9b0b/q56/app/public_adapters.py", line 50, in create_installation_check
+    if any(r.get('full_name', '').lower() == repository.lower() for r in repos):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/6757916b9b0b/q56/app/public_adapters.py", line 50, in <genexpr>
+    if any(r.get('full_name', '').lower() == repository.lower() for r in repos):
+           ^^^^^
+AttributeError: 'NoneType' object has no attribute 'get'
+
+======================================================================
+ERROR: test_malformed_entries_cannot_authorize_check_creation (__main__.AdapterTests.test_malformed_entries_cannot_authorize_check_creation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/6757916b9b0b/q56/tests/test_components.py", line 147, in test_malformed_entries_cannot_authorize_check_creation
+    adapters.GitHubInstallation(lambda i: 'fixture-token').create_installation_check(7, 'owner/repo', {})
+  File "/workspace/scratch/6757916b9b0b/q56/app/public_adapters.py", line 50, in create_installation_check
+    if any(r.get('full_name', '').lower() == repository.lower() for r in repos):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/6757916b9b0b/q56/app/public_adapters.py", line 50, in <genexpr>
+    if any(r.get('full_name', '').lower() == repository.lower() for r in repos):
+           ^^^^^
+AttributeError: 'NoneType' object has no attribute 'get'
+
+======================================================================
+ERROR: test_effect_error_survives_failed_ambiguity_record (__main__.AppTests.test_effect_error_survives_failed_ambiguity_record)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/6757916b9b0b/q56/app/webhook_core.py", line 126, in handle
+    registered = router.register_public_origin(origin)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/6757916b9b0b/q56/tests/test_components.py", line 85, in fail_effect
+    raise original
+TimeoutError: fixture original effect failure
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/workspace/scratch/6757916b9b0b/q56/tests/test_components.py", line 90, in test_effect_error_survives_failed_ambiguity_record
+    with self.assertRaises(TimeoutError) as caught: self.call(h, b)
+                                                    ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/6757916b9b0b/q56/tests/test_components.py", line 50, in call
+    return app.handle(h, b, secret=self.secret, deliveries=self.f, bindings=self.f, router=self.f, github=self.f)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/6757916b9b0b/q56/app/webhook_core.py", line 135, in handle
+    deliveries.finish(delivery, {'disposition': 'AMBIGUOUS_RECONCILE', 'authority_effect': 'NONE'})
+  File "/workspace/scratch/6757916b9b0b/q56/tests/test_components.py", line 86, in fail_record
+    def fail_record(*args): raise recording
+                            ^^^^^^^^^^^^^^^
+RuntimeError: fixture finish unavailable
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.004s
+
+FAILED (errors=3)

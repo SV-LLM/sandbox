@@ -53,3 +53,13 @@ There is no plan activation, paid call, operator-route call, secret custody,
 hosted framework, external resident machine, listing or deployment. Support,
 contact, retention and commercial product equivalence require the original
 owner's finalized policies. See listing/ and the canonical Q56 handoff.
+
+## Review note O-S445-2 — 2026-11-19
+
+When an effect fails and recording its ambiguous result also fails, the original
+exception type and instance are preserved; the recording error is retained as
+its cause. The delivery reservation is not released. Malformed installation
+repository entries are ignored and cannot authorize check creation. Three
+targeted regressions fail on the previous source and pass on this repair; the
+complete local suite passes22tests in normal and optimized Python. These are
+author source results, with no live effect or host/custody binding implied.

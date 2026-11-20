@@ -88,3 +88,6 @@ route, modify Registry state, or authorize a merge.
 ## GitHub App source candidate (Q56)
 
 [Marketplace App handoff](docs/MACHINE_ECONOMY_GITHUB_MARKETPLACE_MIRROR_HANDOFF.md) describes authenticated webhook/public-adapter source, neutral receipt check runs, fixture tests and draft listing/price assets. Owning organization is StegVerse-org. Existing host/TVC/durable-delivery bindings remain required. The separate earlier Action source is PR52; no duplicate Action is retained here. No resident service or runtime authority is added.
+
+
+Q56 review continuation: O-S445-2 now has a bounded source repair preserving the original effect error if ambiguity recording fails and rejecting malformed installation repository entries. Three predecessor regressions fail before the repair; all22local tests pass after it. Original static acceptance at5c9e85f4 remains exact-head historical evidence; the new delta requires renewed review. See the same canonical Marketplace handoff.

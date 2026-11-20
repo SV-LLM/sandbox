@@ -38,3 +38,30 @@ README and this canonicalhandoff accompanysource. This is preparation/sourcecand
 Originalprincipalregistration3443/7027574188/pair3472/7027619181:8374 Governed Crossing,StegVerse-org,AppID5841786,publichttps://github.com/apps/8374-governed-crossing. Webhookinactive/privatekeyNOTgeneratedbydesignuntilreceiverexists. Supersedes any earlier unregistered wording; no Appregistration by this source lane.
 Scopedfollowupclaim3472/7027665715 adds app/receiver.py for an existing BaseHTTPRequestHandler-compatible host: bounded2MBPOST/JSON, framing/type/truncation refusals, originalTVCsecretresolver, durable core, genericfailureJSON, no listener ornewruntime. Sixreceiverfixtures include successfulsigneddeliveryandduplicate409. Total19tests normal/-O pass; actualhostroute/deadline/custody/authenticationremainunbound. Privatekeymustnotbecreatedorcarriedhere.
 Original19-testfinalreceiptandexactheadCIwillbefiledonPR53/currentreview3450/7027596099. Originalreviewsourcearchive18292B predatesreceiver, remainshistorical; use latecurrentarchive forcompletefinalsource. No Actionresurrection orsecondreviewidentity. Ownfourreleased7027649770; lateaddendumseparateandcarriedtoexistingCycle14writerfornextprefix-safeprojection.
+
+## Current continuation — O-S445-2 source repair, 2026-11-19
+
+CODEX Work visible prompt3; worker claim3472/7028131669. Original reviewer
+ClaudeCode KV561 notes O-S445-2; KV563 statically validates the immutable prior
+head5c9e85f4 and withdraws O-S445-1 as already documented. Their original grades
+remain historical exact-head evidence, not acceptance of this new delta.
+Original receipts: App3450/7028104434, Action3451/7028104677,
+owner3443/7028105036, pair3472/7028105340.
+
+The repair preserves the original effect exception if ambiguity recording fails,
+retaining the recording failure as its explicit cause. A reserved delivery is
+never released or blindly retried. The installation adapter guards non-dict
+entries and non-string full_name values; malformed entries cannot authorize a
+check-run. Three added regressions reproduce three errors on the prior code;
+all22tests pass locally under both normal and optimized Python on the repair.
+Predecessor failure log and current test logs are retained as author evidence.
+No production/network/credential effect, listener, host or authority is added.
+
+Existing late receiver continuity task3472/7027737048 is now FILED via
+recorder7028130980: all four current projections preserve every prefix and
+contain exactly one copy of the3730B original addendum. Their full raw remote
+readbacks matched; INDEX was written last without its current self-hash.
+Current native Q55/Q56 binding remains UNBOUND; registered parent PROPOSED is
+context only and its prior20/20 decomposition is not reset. Original host,
+custody, billing/revocation and publication requirements still stand. This new
+delta needs exact-head CI and renewed non-CODEX review on the existing task.

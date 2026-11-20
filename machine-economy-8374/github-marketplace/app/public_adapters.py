@@ -47,7 +47,8 @@ class GitHubInstallation:
             repos = listing.get('repositories')
             if not isinstance(repos, list):
                 raise ValueError('installation repository list invalid')
-            if any(r.get('full_name', '').lower() == repository.lower() for r in repos):
+            if any(isinstance(r, dict) and isinstance(r.get('full_name'), str)
+                   and r['full_name'].lower() == repository.lower() for r in repos):
                 found = True
                 break
             if len(repos) < 100:

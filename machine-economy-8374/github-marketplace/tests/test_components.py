@@ -77,6 +77,22 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.f.finished[-1][1]['disposition'], 'AMBIGUOUS_RECONCILE')
         with self.assertRaises(app.NonAllow): self.call(h, b)
 
+    def test_effect_error_survives_failed_ambiguity_record(self):
+        original = TimeoutError('fixture original effect failure')
+        recording = RuntimeError('fixture finish unavailable')
+        def fail_effect(origin):
+            self.f.calls.append('effect attempted')
+            raise original
+        def fail_record(*args): raise recording
+        self.f.register_public_origin = fail_effect
+        self.f.finish = fail_record
+        h, b = self.installation()
+        with self.assertRaises(TimeoutError) as caught: self.call(h, b)
+        self.assertIs(caught.exception, original)
+        self.assertIs(caught.exception.__cause__, recording)
+        with self.assertRaises(app.NonAllow): self.call(h, b)
+        self.assertEqual(self.f.calls, ['effect attempted'])
+
     def test_cancelled_purchase_cannot_grant_entitlement(self):
         h, b = self.payload({'action': 'cancelled', 'marketplace_purchase': {'account': {'id': 8}}}, 'marketplace_purchase')
         self.assertEqual(self.call(h, b)['entitlement'], 'NOT_GRANTED')
@@ -102,6 +118,37 @@ class AppTests(unittest.TestCase):
 
 
 class AdapterTests(unittest.TestCase):
+    def test_check_ignores_malformed_entries_before_authorized_match(self):
+        seen = []
+        original = adapters.request_json
+        def request(url, **kw):
+            seen.append(url)
+            if 'installation/repositories' in url:
+                return {'repositories': [None, 7, 'repo', {'full_name': None},
+                                         {'full_name': 123}, {'full_name': 'owner/repo'}]}
+            return {'id': 100}
+        adapters.request_json = request
+        try:
+            result = adapters.GitHubInstallation(lambda i: 'fixture-token').create_installation_check(7, 'owner/repo', {})
+        finally:
+            adapters.request_json = original
+        self.assertEqual(result, {'id': 100})
+        self.assertEqual(len(seen), 2)
+
+    def test_malformed_entries_cannot_authorize_check_creation(self):
+        seen = []
+        original = adapters.request_json
+        def request(url, **kw):
+            seen.append(url)
+            return {'repositories': [None, False, {'full_name': []}]}
+        adapters.request_json = request
+        try:
+            with self.assertRaisesRegex(ValueError, 'not in installation'):
+                adapters.GitHubInstallation(lambda i: 'fixture-token').create_installation_check(7, 'owner/repo', {})
+        finally:
+            adapters.request_json = original
+        self.assertEqual(len(seen), 1)
+
     def test_router_uses_only_fixed_public_registration(self):
         seen = []
         original = adapters.request_json

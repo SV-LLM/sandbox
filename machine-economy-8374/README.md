@@ -143,3 +143,6 @@ completion. Queue anchors: BUILD-Q-24…Q-27, Q-32/Q-35, Q-49, Q-50
 ## Q56 GitHub App — source candidate
 
 `github-marketplace/` contains App webhook integration source, public adapters, fixture regressions and draft listing/price mapping. Read its README and [canonical App handoff](../docs/MACHINE_ECONOMY_GITHUB_MARKETPLACE_MIRROR_HANDOFF.md). StegVerse-org is the principal-selected App owner. Existing host/custody, durable delivery, native identity, publisher and pricing/support/privacy bindings remain required. Earlier PR52 separately owns the Action; preserve its README additions on integration. No install, paid execution, router registration, check-run publication, deployment or listing was exercised.
+
+
+Q56 O-S445-2 continuation: original failure identity and delivery reservation are preserved across an ambiguity-recording failure; malformed installation repository entries cannot authorize a check. The same App candidate carries22passing local tests and a predecessor reproduction log. This remains source evidence only; existing host/TVC/billing/publication bindings stand.

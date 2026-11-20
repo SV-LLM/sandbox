@@ -1,9 +1,12 @@
+test_check_ignores_malformed_entries_before_authorized_match (__main__.AdapterTests.test_check_ignores_malformed_entries_before_authorized_match) ... ok
 test_check_rejects_repository_outside_installation (__main__.AdapterTests.test_check_rejects_repository_outside_installation) ... ok
 test_check_requires_installation_scoped_repository_then_posts (__main__.AdapterTests.test_check_requires_installation_scoped_repository_then_posts) ... ok
+test_malformed_entries_cannot_authorize_check_creation (__main__.AdapterTests.test_malformed_entries_cannot_authorize_check_creation) ... ok
 test_router_uses_only_fixed_public_registration (__main__.AdapterTests.test_router_uses_only_fixed_public_registration) ... ok
 test_cancelled_purchase_cannot_grant_entitlement (__main__.AppTests.test_cancelled_purchase_cannot_grant_entitlement) ... ok
 test_deleted_installation_disables (__main__.AppTests.test_deleted_installation_disables) ... ok
 test_duplicate_delivery_refused (__main__.AppTests.test_duplicate_delivery_refused) ... ok
+test_effect_error_survives_failed_ambiguity_record (__main__.AppTests.test_effect_error_survives_failed_ambiguity_record) ... ok
 test_event_header_cannot_reinterpret_installation_as_purchase (__main__.AppTests.test_event_header_cannot_reinterpret_installation_as_purchase) ... ok
 test_failed_external_effect_is_not_replayed (__main__.AppTests.test_failed_external_effect_is_not_replayed) ... ok
 test_installation_registers_only_bound_public_origin (__main__.AppTests.test_installation_registers_only_bound_public_origin) ... ok
@@ -19,6 +22,6 @@ test_transfer_encoding_refused (__main__.ReceiverTests.test_transfer_encoding_re
 test_truncated_body_refused (__main__.ReceiverTests.test_truncated_body_refused) ... ok
 
 ----------------------------------------------------------------------
-Ran 19 tests in 0.001s
+Ran 22 tests in 0.002s
 
 OK
