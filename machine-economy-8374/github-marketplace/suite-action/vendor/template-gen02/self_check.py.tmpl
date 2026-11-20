@@ -1,0 +1,196 @@
+#!/usr/bin/env python3
+"""Derived-suite self-check carried verbatim from SUITE__TEMPLATE GEN 02.
+Enforces:
+  1. Manifest integrity: every member verifies (size + SHA-256), zero unlisted files.
+  2. Spine & ProjectID consistency across README.md, FUNDING__STATEMENT__01.md,
+     PRICING__AND__ACCESS__01.md, COMPENSATION__BASIS__01.md, and LEDGER__01.json.
+  3. Spec 01 commercial schedule population (prices + immediate purchase URLs).
+  4. Spec 02 compensation basis population + per-generation integer meter readings
+     when accounts_for_errors is true.
+  5. KV__303 R-200-1 universal placeholder refusal: zero unpopulated '{{...}}' slot
+     tokens and zero 'TODO —' template placeholders across ALL suite text/JSON members
+     (including SUITE__CHARTER__01.md, SPEC__MEMBER__01.md, and REFERENCES__01.md).
+  6. KV__298 / R-200-1 cryptographic ledger hash-chain walk across LEDGER__01.json.
+"""
+import hashlib, json, os, re, sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+manifest = json.load(open(os.path.join(HERE, "PACKAGE__MANIFEST__01.json"), encoding="utf-8"))
+fails, passes = [], 0
+
+def check(name, ok, detail=""):
+    global passes
+    if ok:
+        passes += 1
+    else:
+        fails.append(f"{name}: {detail}")
+
+members = {m["file"]: m for m in manifest["members"]}
+for name, m in members.items():
+    p = os.path.join(HERE, name)
+    if not os.path.exists(p):
+        check(name, False, "missing")
+        continue
+    data = open(p, "rb").read()
+    check(
+        name,
+        len(data) == m["bytes"] and hashlib.sha256(data).hexdigest() == m["sha256"],
+        f"size/hash mismatch ({len(data)}B)",
+    )
+
+for name in sorted(os.listdir(HERE)):
+    if name == "PACKAGE__MANIFEST__01.json" or name.startswith(".") or name == "__pycache__":
+        continue
+    if os.path.isfile(os.path.join(HERE, name)):
+        check("listed:" + name, name in members, "file present but not in manifest")
+
+def body(n):
+    return open(os.path.join(HERE, n), encoding="utf-8").read()
+
+pid = manifest.get("project_id") or ""
+gen = manifest.get("generation") or ""
+check("ref:manifest-project", bool(pid), "manifest carries no project_id")
+check("ref:manifest-funding", bool(manifest.get("funding")), "manifest carries no funding field")
+
+# Universal placeholder check across all templated/prose/JSON members (KV__303 R-200-1)
+SLOT_RE = re.compile(r"\{\{[A-Z0-9_]+\}\}")
+TODO_STUB_RE = re.compile(r"\bTODO\s*(?:—|--|:)\s*", re.IGNORECASE)
+TEMPLATED_MEMBERS = [
+    "README.md",
+    "SUITE__CHARTER__01.md",
+    "FUNDING__STATEMENT__01.md",
+    "PRICING__AND__ACCESS__01.md",
+    "COMPENSATION__BASIS__01.md",
+    "SPEC__MEMBER__01.md",
+    "REFERENCES__01.md",
+    "LEDGER__01.json",
+]
+for req_m in TEMPLATED_MEMBERS:
+    check(f"gen02:member-present:{req_m}", req_m in members, f"required GEN 02 member {req_m} missing")
+
+for mname in sorted(members):
+    if mname.endswith((".md", ".json", ".txt")) and mname != "CONFORMANCE__PROOF__01.json":
+        txt = body(mname)
+        has_slot = bool(SLOT_RE.search(txt))
+        has_todo = bool(TODO_STUB_RE.search(txt))
+        check(
+            f"gen02:no-unpopulated-slots:{mname}",
+            not has_slot and not has_todo,
+            f"unpopulated slot or TODO stub remains in {mname}",
+        )
+
+if "SUITE__CHARTER__01.md" in members:
+    ch = body("SUITE__CHARTER__01.md")
+    m_purp = re.search(r"## Purpose\s+(.+?)\s+## Level discipline\s+(.+)", ch, re.S)
+    purp_ok = bool(m_purp and len(m_purp.group(1).strip()) >= 10 and len(m_purp.group(2).strip()) >= 10)
+    check("gen02:charter-populated", purp_ok, "charter Purpose or Level discipline empty/stub")
+
+readme = body("README.md") if "README.md" in members else ""
+check("ref:projectid-in-readme", f"ProjectID: {pid}" in readme, "README ProjectID missing or mismatched")
+check("ref:funding-in-readme", "Funding:" in readme, "README carries no Funding line")
+
+if "FUNDING__STATEMENT__01.md" in members:
+    fs = body("FUNDING__STATEMENT__01.md")
+    check(
+        "ref:funding-statement-content",
+        f"ProjectID: {pid}" in fs and "Funding:" in fs and "commercial arrangement" in fs.lower(),
+        "funding statement lacks matching ProjectID / Funding / arrangement lines",
+    )
+
+# Spec 01: PRICING__AND__ACCESS__01.md checks
+if "PRICING__AND__ACCESS__01.md" in members:
+    pr = body("PRICING__AND__ACCESS__01.md")
+    stripe_links = re.findall(r"https://buy\.stripe\.com/[A-Za-z0-9]+", pr)
+    check("gen02:pricing-projectid", f"SuiteProjectID: {pid}" in pr, "pricing SuiteProjectID mismatch")
+    check("gen02:pricing-purchasable-links", len(stripe_links) >= 8, f"expected >=8 purchase links, found {len(stripe_links)}")
+
+# Spec 02: COMPENSATION__BASIS__01.md checks
+if "COMPENSATION__BASIS__01.md" in members:
+    cb = body("COMPENSATION__BASIS__01.md")
+    m_acc = re.search(r"- `accounts_for_errors`:\s*(true|false)\b", cb)
+    m_sub = re.search(r"- `subject`:\s*(.+)", cb)
+    m_ins = re.search(r"- `meter_instruments`:\s*(.+)", cb)
+    m_cls = re.search(r"- `error_classes`:\s*(.+)", cb)
+    m_pid = re.search(r"- `suite_project_id`:\s*(.+)", cb)
+    acc_ok = m_acc is not None
+    check("gen02:comp-accounts-declared", acc_ok, "accounts_for_errors not true|false")
+    check(
+        "gen02:comp-projectid-consistent",
+        bool(m_pid and m_pid.group(1).strip() == pid),
+        "compensation basis suite_project_id does not match ProjectID",
+    )
+    if acc_ok:
+        is_true = m_acc.group(1) == "true"
+        vals = [m_sub.group(1).strip() if m_sub else "", m_ins.group(1).strip() if m_ins else "", m_cls.group(1).strip() if m_cls else ""]
+        if is_true:
+            check(
+                "gen02:comp-true-vars-populated",
+                all(v and v != "N/A (accounts_for_errors=false)" for v in vals),
+                "subject, meter_instruments, and error_classes required when accounts_for_errors=true",
+            )
+            rows = []
+            for line in cb.splitlines():
+                line_s = line.strip()
+                if line_s.startswith("|") and not line_s.startswith("| Generation") and not line_s.startswith("|---"):
+                    cols = [c.strip() for c in line_s.strip("|").split("|")]
+                    if len(cols) == 5:
+                        rows.append(cols)
+            check("gen02:comp-readings-present", len(rows) >= 1, "at least one readings row required when true")
+            parsed_ok = True
+            has_own_gen = False
+            for r_gen, r_date, r_json, r_tot, r_line in rows:
+                if r_gen == gen:
+                    has_own_gen = True
+                try:
+                    d = json.loads(r_json)
+                    tot = int(r_tot)
+                    if not isinstance(d, dict) or not d or any((not isinstance(v, int) or isinstance(v, bool) or v < 0) for v in d.values()):
+                        parsed_ok = False
+                    if tot < 0 or tot != sum(d.values()) or not r_line:
+                        parsed_ok = False
+                except Exception:
+                    parsed_ok = False
+            check("gen02:comp-readings-nonneg-ints", parsed_ok and bool(rows), "readings counts must parse as non-negative integers summing to total")
+            check("gen02:comp-own-generation-row", has_own_gen, f"readings row absent for current generation {gen}")
+        else:
+            check(
+                "gen02:comp-false-na-tokens",
+                all(v == "N/A (accounts_for_errors=false)" for v in vals),
+                "false claim must populate N/A token on subject/instruments/classes",
+            )
+
+# KV__298 / KV__303 R-200-1: LEDGER__01.json cryptographic hash-chain walk
+if "LEDGER__01.json" in members:
+    led = json.loads(body("LEDGER__01.json"))
+    check("gen02:ledger-projectid", led.get("project_id") == pid, "ledger project_id mismatch")
+    check("gen02:ledger-chaining-rule-stated", bool(led.get("chaining_rule")), "ledger chaining_rule missing")
+    entries = led.get("entries") or []
+    check("gen02:ledger-nonempty", len(entries) >= 1, "ledger has zero entries")
+    prev = "GENESIS"
+    chain_ok = True
+    chain_err = ""
+    for idx, e in enumerate(entries, 1):
+        if e.get("seq") != idx or e.get("prev") != prev:
+            chain_ok = False
+            chain_err = f"seq/prev break at entry {idx}"
+            break
+        no_hash = {k: v for k, v in e.items() if k != "hash"}
+        expected_h = hashlib.sha256((e["prev"] + json.dumps(no_hash, sort_keys=True)).encode("utf-8")).hexdigest()
+        if e.get("hash") != expected_h:
+            chain_ok = False
+            chain_err = f"hash mismatch at entry {idx}"
+            break
+        prev = expected_h
+    check("gen02:ledger-hash-chain-valid", chain_ok, chain_err)
+
+check("ref:proof-in-suite", "CONFORMANCE__PROOF__01.json" in members, "no in-suite conformance proof member")
+derived = manifest.get("derived_from") or {}
+check("ref:derived-from-template", bool(derived.get("template_manifest_sha256")), "no template derivation recorded in manifest")
+sc = os.path.join(HERE, "self_check.py")
+actual = hashlib.sha256(open(sc, "rb").read()).hexdigest() if os.path.exists(sc) else ""
+check("ref:self-check-is-templates", derived.get("self_check_sha256") == actual, "self_check.py differs from the template's checker")
+
+print(f"SELF-CHECK: {passes} PASS / {len(fails)} FAIL")
+for f in fails:
+    print("  FAIL", f)
+sys.exit(1 if fails else 0)

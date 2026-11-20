@@ -1,0 +1,17 @@
+{
+  "suite": "{{SUITE_NAME}}",
+  "project_id": "{{PROJECT_ID}}",
+  "generation": "{{GENERATION}}",
+  "rule": "Complete from this suite's genesis. Entries are cryptographically hash-chained; a sequence gap or hash break fails self_check.py and blocks conformance.",
+  "chaining_rule": "sha256((entry['prev'] + json.dumps({k: v for k, v in entry.items() if k != 'hash'}, sort_keys=True)).encode('utf-8')).hexdigest()",
+  "entries": [
+    {
+      "seq": 1,
+      "kind": "GENESIS",
+      "subject": "Derivation from SUITE__TEMPLATE GEN 02",
+      "detail": "{{LEDGER_GENESIS_DETAIL}}",
+      "prev": "GENESIS",
+      "hash": "{{LEDGER_GENESIS_HASH}}"
+    }
+  ]
+}

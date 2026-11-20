@@ -1,0 +1,13 @@
+# {{SUITE_NAME}} — {{GENERATION}}
+
+- Generation: {{GENERATION}}
+- ProjectID: {{PROJECT_ID}}
+- Funding: {{FUNDING_LINE}}. Full statement: FUNDING__STATEMENT__01.md.
+- Commercial schedule: PRICING__AND__ACCESS__01.md (PRICE SCHEDULE {{PRICE_SCHEDULE_VERSION}}).
+- Compensation basis: COMPENSATION__BASIS__01.md (`accounts_for_errors: {{ACCOUNTS_FOR_ERRORS}}`).
+- Source: {{SOURCE_LINE}}
+
+## Verification
+
+Run `python3 self_check.py`: it verifies every member against `PACKAGE__MANIFEST__01.json` (size + SHA-256), enforces zero unpopulated slot or `TODO` placeholder tokens across all members, walks the `LEDGER__01.json` SHA-256 hash chain from `GENESIS`, and checks ProjectID consistency, pricing schedule population, and compensation-basis meter invariants.
+Derived from `SUITE__TEMPLATE GEN 02` — the derivation and in-suite conformance proof (`CONFORMANCE__PROOF__01.json`) are bound in `PACKAGE__MANIFEST__01.json`.

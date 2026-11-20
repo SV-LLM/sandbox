@@ -138,3 +138,11 @@ Coordination/build record only — distinct from authenticated admission,
 runtime execution, sovereign KV writes, and independently verified
 completion. Queue anchors: BUILD-Q-24…Q-27, Q-32/Q-35, Q-49, Q-50
 (StegVerse-Labs/.github #3443; pairing #3472).
+
+## Q56 — portable suite GitHub Action candidate
+
+The [suite Action](github-marketplace/suite-action/README.md) wraps the filed
+suite instantiation/prove-conformance tools without contacting the running 8374
+service or changing payment, custody or router code. It is a portable source
+candidate, not a Marketplace listing or production deployment. Continue through
+[the canonical Action handoff](github-marketplace/SUITE_ACTION_MIRROR_HANDOFF.md).
