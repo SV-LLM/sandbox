@@ -1,0 +1,1183 @@
+{
+  "schema": "stegverse.replayability-index/v1",
+  "generated_at": "2026-11-20T03:25:33.388062+00:00",
+  "scope": "Bounded first edition: original12 distinct URLs from requested directory pages plus2Agent402 endpoints from the same-session corrected route-bearing catalog. No whole-directory or market census.",
+  "discovery_sources": [
+    {
+      "http_status": 200,
+      "received_at": "2026-11-20T03:17:59.133918+00:00",
+      "url": "https://scriptmasterlabs.com/x402-directory.json?limit=5&offset=0",
+      "body_sha256": "33d35b07202c4a39c3d8b3cb1b52c51f162e6e4f820e8e28254da8f8df01cee8",
+      "body_bytes": 22044,
+      "retry_after": null,
+      "source": "scriptmasterlabs",
+      "coverage": "SINGLE_REQUESTED_PAGE_NOT_FULL_DIRECTORY",
+      "pagination_as_published": {
+        "pagination": {
+          "total": 51733,
+          "limit": 5,
+          "offset": 0,
+          "next": "https://scriptmasterlabs.com/x402-directory.json?limit=5&offset=5"
+        }
+      },
+      "rows_extracted": 5,
+      "state": "PAGE_ENUMERATED"
+    },
+    {
+      "http_status": 200,
+      "received_at": "2026-11-20T03:18:02.710227+00:00",
+      "url": "https://agora402.io/api/v1/discover?limit=5&offset=0",
+      "body_sha256": "7f3ba9262387ed0f6cf6dec9db949d6f628199700a2c988b2a19df1da71014c6",
+      "body_bytes": 17992,
+      "retry_after": null,
+      "source": "agora",
+      "coverage": "SINGLE_REQUESTED_PAGE_NOT_FULL_DIRECTORY",
+      "pagination_as_published": {
+        "total": 55,
+        "count": 5,
+        "offset": 0
+      },
+      "rows_extracted": 5,
+      "state": "PAGE_ENUMERATED"
+    },
+    {
+      "http_status": 200,
+      "received_at": "2026-11-20T03:18:05.836983+00:00",
+      "url": "https://x402-list.com/api/v1/services?limit=5&page=1",
+      "body_sha256": "3cb2a1feaf545b4d538b17a4f740de127b936608be6f02c7f2e0c0bc8402c447",
+      "body_bytes": 36855,
+      "retry_after": null,
+      "source": "x402-list",
+      "coverage": "SINGLE_REQUESTED_PAGE_NOT_FULL_DIRECTORY",
+      "pagination_as_published": {
+        "meta": {
+          "total": 1350,
+          "page": 1,
+          "per_page": 25,
+          "total_pages": 54
+        }
+      },
+      "rows_extracted": 25,
+      "state": "PAGE_ENUMERATED"
+    },
+    {
+      "http_status": 200,
+      "received_at": "2026-11-20T03:18:14.807707+00:00",
+      "url": "https://402index.io/api/v1/services?limit=5&page=1",
+      "body_sha256": "abb617519a3958a86f2246867e2deb75d632a4e650d4dd7eaa4aa2962cf0d4d7",
+      "body_bytes": 5544,
+      "retry_after": null,
+      "source": "402-index",
+      "coverage": "SINGLE_REQUESTED_PAGE_NOT_FULL_DIRECTORY",
+      "pagination_as_published": {
+        "total": 57701,
+        "offset": 0
+      },
+      "rows_extracted": 5,
+      "state": "PAGE_ENUMERATED"
+    },
+    {
+      "http_status": 200,
+      "received_at": "2026-11-20T03:18:17.729527+00:00",
+      "url": "https://agent402.tools/api/index?perPage=5&page=1",
+      "body_sha256": "ee02c95b8906288be8a02b0575d4a32433e6736ad955f3fbc48cc3d174a99a9d",
+      "body_bytes": 16875,
+      "retry_after": null,
+      "source": "agent402",
+      "coverage": "SINGLE_REQUESTED_PAGE_NOT_FULL_DIRECTORY",
+      "pagination_as_published": {
+        "complete": false,
+        "page": 1,
+        "pages": 1541,
+        "sellerCount": 7701
+      },
+      "rows_extracted": 0,
+      "state": "UNAVAILABLE_OR_UNRECOGNIZED_NOT_EMPTY",
+      "failed_predicate": "HTTP200 page yielded zero recognized routes; array emptiness/complete coverage not established"
+    },
+    {
+      "http_status": 200,
+      "received_at": "2026-11-20T03:18:20.690995+00:00",
+      "url": "https://api.cdp.coinbase.com/platform/v2/x402/discovery/resources?limit=5&offset=0",
+      "body_sha256": "b5cedbbf82fd49be82cab3c7c2f606ea8e182835653ac7c13c60039d2a9ed80a",
+      "body_bytes": 56865,
+      "retry_after": null,
+      "source": "cdp-bazaar",
+      "coverage": "SINGLE_REQUESTED_PAGE_NOT_FULL_DIRECTORY",
+      "pagination_as_published": {
+        "pagination": {
+          "limit": 20,
+          "offset": 0,
+          "total": 37296
+        }
+      },
+      "rows_extracted": 20,
+      "state": "PAGE_ENUMERATED"
+    }
+  ],
+  "distinct_enumerated_urls": 60,
+  "selection_limit": 14,
+  "rows": [
+    {
+      "resource": "https://verdict.scriptmasterlabs.com/seal",
+      "advertisements": [
+        {
+          "resource": "https://verdict.scriptmasterlabs.com/seal",
+          "source": "scriptmasterlabs",
+          "advertised_terms": {
+            "networks": [
+              "Base",
+              "Arc"
+            ],
+            "accepts": [
+              {
+                "network": "eip155:8453",
+                "asset": "USDC",
+                "payTo": "0x5BBd32e0478e49A7540EF2D760E0B0F9AA6328b2",
+                "amount_atomic": "5000",
+                "amount_display": "0.005",
+                "scheme": "exact",
+                "asset_symbol": "USDC"
+              },
+              {
+                "network": "eip155:5042",
+                "asset": "USDC",
+                "payTo": "0x6756fC9A7abf9043bC4DdBB91121E12CEf1b108d",
+                "amount_atomic": "5000",
+                "amount_display": "0.005",
+                "scheme": "exact",
+                "asset_symbol": "USDC"
+              },
+              {
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0xc29185fa176357612f3194735753e520e91adc46",
+                "amount_atomic": "10000",
+                "amount_display": "0.01",
+                "scheme": "exact",
+                "asset_symbol": "USDC"
+              },
+              {
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x5BBd32e0478e49A7540EF2D760E0B0F9AA6328b2",
+                "amount_atomic": "10000",
+                "amount_display": "0.01",
+                "scheme": "exact",
+                "asset_symbol": "USDC"
+              },
+              {
+                "network": "eip155:5042",
+                "asset": "0x3600000000000000000000000000000000000000",
+                "payTo": "0xdF552716b7Ba795e93D4725804777594E61C7B4f",
+                "amount_atomic": "10000",
+                "amount_display": "0.01",
+                "scheme": "exact"
+              }
+            ]
+          }
+        }
+      ],
+      "checker_observation": {
+        "http_status": 200,
+        "received_at": "2026-11-20T03:18:25.138881+00:00",
+        "url": "https://8374.stegverse.org/verify/check?url=https%3A%2F%2Fverdict.scriptmasterlabs.com%2Fseal",
+        "body_sha256": "370bf9dfbf73d86793ddbdd9251b64650c7cb32b3c697b1ed38f7e0abc3e5d6b",
+        "body_bytes": 1686,
+        "retry_after": null,
+        "document": {
+          "resource": "https://verdict.scriptmasterlabs.com/seal",
+          "origin": "https://verdict.scriptmasterlabs.com",
+          "terms": {
+            "scheme": "exact",
+            "network": "eip155:8453",
+            "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            "payTo": "0x5BBd32e0478e49A7540EF2D760E0B0F9AA6328b2",
+            "amount": "5000",
+            "mimeType": null
+          },
+          "proof": {
+            "publishes_replayable_record": false,
+            "record_state": "none",
+            "method": "no record presented in the checked locations; nothing to recompute",
+            "evidence": [
+              "the 402 challenge carries extensions.bazaar (discovery metadata; not a transaction record)"
+            ],
+            "checked": [
+              {
+                "location": "https://verdict.scriptmasterlabs.com/seal",
+                "result": "GET answered HTTP 402"
+              },
+              {
+                "location": "https://verdict.scriptmasterlabs.com/seal",
+                "result": "402 challenge received via GET; terms recorded"
+              },
+              {
+                "location": "https://verdict.scriptmasterlabs.com/.well-known/x402",
+                "result": "HTTP 404"
+              },
+              {
+                "location": "https://verdict.scriptmasterlabs.com/openapi.json",
+                "result": "HTTP 200"
+              }
+            ],
+            "negative_result": "NOT_FOUND_IN_CHECKED_LOCATIONS",
+            "bounds": "bounds: unpaid GET and POST probes of the resource itself; the origin's /.well-known/x402 and /openapi.json; up to 3 named proof locations and up to 2 payment-manifest links followed one level; an MCP tools/list probe for MCP-shaped resources; 10 s timeouts, 512 KB response caps, at most 3 re-validated redirects per fetch. Locations outside this set were not checked."
+          },
+          "verdict": "x402 resource; no replayable transaction record found in the checked locations (NOT_FOUND_IN_CHECKED_LOCATIONS) -- the locations under 'checked' were probed within the stated bounds and none presented one; locations outside the checked set were not examined"
+        }
+      },
+      "verdict": "ABSENT_IN_CHECKED_LOCATIONS",
+      "verify_permalink": "https://8374.stegverse.org/verify?url=https%3A%2F%2Fverdict.scriptmasterlabs.com%2Fseal",
+      "evidence_class": "CHECKER_OBSERVATION_NOT_INDEPENDENT_INDEX_REPLAY"
+    },
+    {
+      "resource": "https://agora402.io/api/pay/1b52035f-4137-44c9-a1bf-eef24719e6eb",
+      "advertisements": [
+        {
+          "resource": "https://agora402.io/api/pay/1b52035f-4137-44c9-a1bf-eef24719e6eb",
+          "source": "agora",
+          "advertised_terms": {}
+        }
+      ],
+      "checker_observation": {
+        "http_status": 200,
+        "received_at": "2026-11-20T03:18:30.411255+00:00",
+        "url": "https://8374.stegverse.org/verify/check?url=https%3A%2F%2Fagora402.io%2Fapi%2Fpay%2F1b52035f-4137-44c9-a1bf-eef24719e6eb",
+        "body_sha256": "38153c0fa4030bf06261b26136a566ec15ee62b73d08a0b581b9dd39bd1c5f08",
+        "body_bytes": 1620,
+        "retry_after": null,
+        "document": {
+          "resource": "https://agora402.io/api/pay/1b52035f-4137-44c9-a1bf-eef24719e6eb",
+          "origin": "https://agora402.io",
+          "terms": {
+            "scheme": "exact",
+            "network": "base",
+            "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            "payTo": "0x3197aCdAd9575ECFD94Ab8E9b8398f329c78B2aF",
+            "amount": "20000",
+            "mimeType": "application/json"
+          },
+          "proof": {
+            "publishes_replayable_record": false,
+            "record_state": "none",
+            "method": "no record presented in the checked locations; nothing to recompute",
+            "evidence": [],
+            "checked": [
+              {
+                "location": "https://agora402.io/api/pay/1b52035f-4137-44c9-a1bf-eef24719e6eb",
+                "result": "GET answered HTTP 402"
+              },
+              {
+                "location": "https://agora402.io/api/pay/1b52035f-4137-44c9-a1bf-eef24719e6eb",
+                "result": "402 challenge received via GET; terms recorded"
+              },
+              {
+                "location": "https://agora402.io/.well-known/x402",
+                "result": "HTTP 404"
+              },
+              {
+                "location": "https://agora402.io/openapi.json",
+                "result": "HTTP 200"
+              }
+            ],
+            "negative_result": "NOT_FOUND_IN_CHECKED_LOCATIONS",
+            "bounds": "bounds: unpaid GET and POST probes of the resource itself; the origin's /.well-known/x402 and /openapi.json; up to 3 named proof locations and up to 2 payment-manifest links followed one level; an MCP tools/list probe for MCP-shaped resources; 10 s timeouts, 512 KB response caps, at most 3 re-validated redirects per fetch. Locations outside this set were not checked."
+          },
+          "verdict": "x402 resource; no replayable transaction record found in the checked locations (NOT_FOUND_IN_CHECKED_LOCATIONS) -- the locations under 'checked' were probed within the stated bounds and none presented one; locations outside the checked set were not examined"
+        }
+      },
+      "verdict": "ABSENT_IN_CHECKED_LOCATIONS",
+      "verify_permalink": "https://8374.stegverse.org/verify?url=https%3A%2F%2Fagora402.io%2Fapi%2Fpay%2F1b52035f-4137-44c9-a1bf-eef24719e6eb",
+      "evidence_class": "CHECKER_OBSERVATION_NOT_INDEPENDENT_INDEX_REPLAY"
+    },
+    {
+      "resource": "https://tollnode.com",
+      "advertisements": [
+        {
+          "resource": "https://tollnode.com",
+          "source": "x402-list",
+          "advertised_terms": {
+            "networks": [
+              "BSE"
+            ]
+          }
+        }
+      ],
+      "checker_observation": {
+        "http_status": 200,
+        "received_at": "2026-11-20T03:19:04.292929+00:00",
+        "url": "https://8374.stegverse.org/verify/check?url=https%3A%2F%2Ftollnode.com",
+        "body_sha256": "07be5a8f4e3d6b293d2d41014328414c68d3f90dda67f5b4be4ad5b8a7c9249d",
+        "body_bytes": 1643,
+        "retry_after": null,
+        "document": {
+          "resource": "https://tollnode.com",
+          "origin": "https://tollnode.com",
+          "terms": null,
+          "proof": {
+            "publishes_replayable_record": false,
+            "record_state": "none",
+            "method": "no record presented in the checked locations; nothing to recompute",
+            "evidence": [],
+            "checked": [
+              {
+                "location": "https://tollnode.com",
+                "result": "GET failed: URLError: <urlopen error [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1000)>"
+              },
+              {
+                "location": "https://tollnode.com",
+                "result": "POST (unpaid) answered HTTP 405"
+              },
+              {
+                "location": "https://tollnode.com/.well-known/x402",
+                "result": "HTTP 200"
+              },
+              {
+                "location": "https://tollnode.com/openapi.json",
+                "result": "HTTP 200"
+              },
+              {
+                "location": "https://tollnode.com",
+                "result": "MCP initialize answered HTTP 405; trying a bare tools/list"
+              },
+              {
+                "location": "https://tollnode.com",
+                "result": "MCP tools/list probe answered HTTP 405"
+              }
+            ],
+            "negative_result": "NOT_FOUND_IN_CHECKED_LOCATIONS",
+            "bounds": "bounds: unpaid GET and POST probes of the resource itself; the origin's /.well-known/x402 and /openapi.json; up to 3 named proof locations and up to 2 payment-manifest links followed one level; an MCP tools/list probe for MCP-shaped resources; 10 s timeouts, 512 KB response caps, at most 3 re-validated redirects per fetch. Locations outside this set were not checked."
+          },
+          "verdict": "no x402 terms found in the checked locations (no 402 challenge answered within the probe bounds); no replayable transaction record found in the checked locations (NOT_FOUND_IN_CHECKED_LOCATIONS) -- the locations under 'checked' were probed within the stated bounds and none presented one; locations outside the checked set were not examined"
+        }
+      },
+      "verdict": "ABSENT_IN_CHECKED_LOCATIONS",
+      "verify_permalink": "https://8374.stegverse.org/verify?url=https%3A%2F%2Ftollnode.com",
+      "evidence_class": "CHECKER_OBSERVATION_NOT_INDEPENDENT_INDEX_REPLAY"
+    },
+    {
+      "resource": "https://scout.hugen.tokyo/scout/hn",
+      "advertisements": [
+        {
+          "resource": "https://scout.hugen.tokyo/scout/hn",
+          "source": "402-index",
+          "advertised_terms": {}
+        }
+      ],
+      "checker_observation": {
+        "http_status": 502,
+        "received_at": "2026-11-20T03:20:07.490144+00:00",
+        "url": "https://8374.stegverse.org/verify/check?url=https%3A%2F%2Fscout.hugen.tokyo%2Fscout%2Fhn",
+        "body_sha256": "3ddef65c7011500b69b1d7f078c958c905b4681cdc50558039cabd1ab5b45ed8",
+        "body_bytes": 872,
+        "retry_after": "60",
+        "document": {
+          "type": "https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-5xx-errors/error-502/",
+          "title": "Error 502: Bad gateway",
+          "status": 502,
+          "detail": "The origin web server returned an invalid or incomplete response to Cloudflare. This typically indicates the origin is overloaded or misconfigured.",
+          "instance": "a5d44faeefd53426",
+          "error_code": 502,
+          "error_name": "origin_bad_gateway",
+          "error_category": "origin",
+          "ray_id": "a5d44faeefd53426",
+          "timestamp": "2026-11-20T03:20:07Z",
+          "zone": "8374.stegverse.org",
+          "cloudflare_error": true,
+          "retryable": true,
+          "retry_after": 60,
+          "owner_action_required": true,
+          "what_you_should_do": "**Wait and retry.** Back off for at least 60 seconds. If the error persists, the website operator should check their origin server health and configuration.",
+          "footer": "This error was generated by Cloudflare on behalf of the website owner."
+        }
+      },
+      "verdict": "REFUSED_OR_ERROR",
+      "verify_permalink": "https://8374.stegverse.org/verify?url=https%3A%2F%2Fscout.hugen.tokyo%2Fscout%2Fhn",
+      "evidence_class": "CHECKER_OBSERVATION_NOT_INDEPENDENT_INDEX_REPLAY"
+    },
+    {
+      "resource": "https://keyring-agent.blockchhub.link/api/send-native",
+      "advertisements": [
+        {
+          "resource": "https://keyring-agent.blockchhub.link/api/send-native",
+          "source": "cdp-bazaar",
+          "advertised_terms": {
+            "accepts": [
+              {
+                "amount": "50000",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "extra": {
+                  "name": "USD Coin",
+                  "version": "2"
+                },
+                "maxTimeoutSeconds": 3600,
+                "network": "eip155:8453",
+                "payTo": "0x17cd53C04D707eF0Dd615EF56c633f02915a7905",
+                "scheme": "exact"
+              }
+            ]
+          }
+        }
+      ],
+      "checker_observation": {
+        "http_status": 502,
+        "received_at": "2026-11-20T03:21:11.426710+00:00",
+        "url": "https://8374.stegverse.org/verify/check?url=https%3A%2F%2Fkeyring-agent.blockchhub.link%2Fapi%2Fsend-native",
+        "body_sha256": "4c29dba664455bf72bfcacd4fb786c4863894f1daa1d8bfffdf6bf21f98f7964",
+        "body_bytes": 872,
+        "retry_after": "60",
+        "document": {
+          "type": "https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-5xx-errors/error-502/",
+          "title": "Error 502: Bad gateway",
+          "status": 502,
+          "detail": "The origin web server returned an invalid or incomplete response to Cloudflare. This typically indicates the origin is overloaded or misconfigured.",
+          "instance": "a5d4513e78cd3426",
+          "error_code": 502,
+          "error_name": "origin_bad_gateway",
+          "error_category": "origin",
+          "ray_id": "a5d4513e78cd3426",
+          "timestamp": "2026-11-20T03:21:11Z",
+          "zone": "8374.stegverse.org",
+          "cloudflare_error": true,
+          "retryable": true,
+          "retry_after": 60,
+          "owner_action_required": true,
+          "what_you_should_do": "**Wait and retry.** Back off for at least 60 seconds. If the error persists, the website operator should check their origin server health and configuration.",
+          "footer": "This error was generated by Cloudflare on behalf of the website owner."
+        }
+      },
+      "verdict": "REFUSED_OR_ERROR",
+      "verify_permalink": "https://8374.stegverse.org/verify?url=https%3A%2F%2Fkeyring-agent.blockchhub.link%2Fapi%2Fsend-native",
+      "evidence_class": "CHECKER_OBSERVATION_NOT_INDEPENDENT_INDEX_REPLAY"
+    },
+    {
+      "resource": "https://sml-greenlight.onrender.com/api/x402/board",
+      "advertisements": [
+        {
+          "resource": "https://sml-greenlight.onrender.com/api/x402/board",
+          "source": "scriptmasterlabs",
+          "advertised_terms": {
+            "networks": [
+              "Base"
+            ],
+            "accepts": [
+              {
+                "network": "eip155:8453",
+                "asset": "USDC",
+                "payTo": "0x5BBd32e0478e49A7540EF2D760E0B0F9AA6328b2",
+                "amount_atomic": "30000",
+                "amount_display": "0.03",
+                "scheme": "exact",
+                "asset_symbol": "USDC"
+              },
+              {
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0xc29185fa176357612f3194735753e520e91adc46",
+                "amount_atomic": "50000",
+                "amount_display": "0.05",
+                "scheme": "exact",
+                "asset_symbol": "USDC"
+              }
+            ]
+          }
+        }
+      ],
+      "checker_observation": {
+        "http_status": 200,
+        "received_at": "2026-11-20T03:21:16.423642+00:00",
+        "url": "https://8374.stegverse.org/verify/check?url=https%3A%2F%2Fsml-greenlight.onrender.com%2Fapi%2Fx402%2Fboard",
+        "body_sha256": "2bc4d9b6f14a75e13c84f12616b4f5bb423c39b32209864ffb77d668aa654c67",
+        "body_bytes": 1710,
+        "retry_after": null,
+        "document": {
+          "resource": "https://sml-greenlight.onrender.com/api/x402/board",
+          "origin": "https://sml-greenlight.onrender.com",
+          "terms": {
+            "scheme": "exact",
+            "network": "eip155:8453",
+            "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            "payTo": "0x5BBd32e0478e49A7540EF2D760E0B0F9AA6328b2",
+            "amount": "5000",
+            "mimeType": null
+          },
+          "proof": {
+            "publishes_replayable_record": false,
+            "record_state": "none",
+            "method": "no record presented in the checked locations; nothing to recompute",
+            "evidence": [
+              "the 402 challenge carries extensions.bazaar (discovery metadata; not a transaction record)"
+            ],
+            "checked": [
+              {
+                "location": "https://sml-greenlight.onrender.com/api/x402/board",
+                "result": "GET answered HTTP 402"
+              },
+              {
+                "location": "https://sml-greenlight.onrender.com/api/x402/board",
+                "result": "402 challenge received via GET; terms recorded"
+              },
+              {
+                "location": "https://sml-greenlight.onrender.com/.well-known/x402",
+                "result": "HTTP 200"
+              },
+              {
+                "location": "https://sml-greenlight.onrender.com/openapi.json",
+                "result": "HTTP 200"
+              }
+            ],
+            "negative_result": "NOT_FOUND_IN_CHECKED_LOCATIONS",
+            "bounds": "bounds: unpaid GET and POST probes of the resource itself; the origin's /.well-known/x402 and /openapi.json; up to 3 named proof locations and up to 2 payment-manifest links followed one level; an MCP tools/list probe for MCP-shaped resources; 10 s timeouts, 512 KB response caps, at most 3 re-validated redirects per fetch. Locations outside this set were not checked."
+          },
+          "verdict": "x402 resource; no replayable transaction record found in the checked locations (NOT_FOUND_IN_CHECKED_LOCATIONS) -- the locations under 'checked' were probed within the stated bounds and none presented one; locations outside the checked set were not examined"
+        }
+      },
+      "verdict": "ABSENT_IN_CHECKED_LOCATIONS",
+      "verify_permalink": "https://8374.stegverse.org/verify?url=https%3A%2F%2Fsml-greenlight.onrender.com%2Fapi%2Fx402%2Fboard",
+      "evidence_class": "CHECKER_OBSERVATION_NOT_INDEPENDENT_INDEX_REPLAY"
+    },
+    {
+      "resource": "https://agora402.io/api/pay/57430a66-30d5-4cc3-85d7-42c75ccfc8ac",
+      "advertisements": [
+        {
+          "resource": "https://agora402.io/api/pay/57430a66-30d5-4cc3-85d7-42c75ccfc8ac",
+          "source": "agora",
+          "advertised_terms": {}
+        }
+      ],
+      "checker_observation": {
+        "http_status": 200,
+        "received_at": "2026-11-20T03:21:21.218518+00:00",
+        "url": "https://8374.stegverse.org/verify/check?url=https%3A%2F%2Fagora402.io%2Fapi%2Fpay%2F57430a66-30d5-4cc3-85d7-42c75ccfc8ac",
+        "body_sha256": "1d3ae8a3bfcce656afd238a828a4e1e8694de9a466d35bcad174155e3eccac75",
+        "body_bytes": 1620,
+        "retry_after": null,
+        "document": {
+          "resource": "https://agora402.io/api/pay/57430a66-30d5-4cc3-85d7-42c75ccfc8ac",
+          "origin": "https://agora402.io",
+          "terms": {
+            "scheme": "exact",
+            "network": "base",
+            "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            "payTo": "0x3197aCdAd9575ECFD94Ab8E9b8398f329c78B2aF",
+            "amount": "50000",
+            "mimeType": "application/json"
+          },
+          "proof": {
+            "publishes_replayable_record": false,
+            "record_state": "none",
+            "method": "no record presented in the checked locations; nothing to recompute",
+            "evidence": [],
+            "checked": [
+              {
+                "location": "https://agora402.io/api/pay/57430a66-30d5-4cc3-85d7-42c75ccfc8ac",
+                "result": "GET answered HTTP 402"
+              },
+              {
+                "location": "https://agora402.io/api/pay/57430a66-30d5-4cc3-85d7-42c75ccfc8ac",
+                "result": "402 challenge received via GET; terms recorded"
+              },
+              {
+                "location": "https://agora402.io/.well-known/x402",
+                "result": "HTTP 404"
+              },
+              {
+                "location": "https://agora402.io/openapi.json",
+                "result": "HTTP 200"
+              }
+            ],
+            "negative_result": "NOT_FOUND_IN_CHECKED_LOCATIONS",
+            "bounds": "bounds: unpaid GET and POST probes of the resource itself; the origin's /.well-known/x402 and /openapi.json; up to 3 named proof locations and up to 2 payment-manifest links followed one level; an MCP tools/list probe for MCP-shaped resources; 10 s timeouts, 512 KB response caps, at most 3 re-validated redirects per fetch. Locations outside this set were not checked."
+          },
+          "verdict": "x402 resource; no replayable transaction record found in the checked locations (NOT_FOUND_IN_CHECKED_LOCATIONS) -- the locations under 'checked' were probed within the stated bounds and none presented one; locations outside the checked set were not examined"
+        }
+      },
+      "verdict": "ABSENT_IN_CHECKED_LOCATIONS",
+      "verify_permalink": "https://8374.stegverse.org/verify?url=https%3A%2F%2Fagora402.io%2Fapi%2Fpay%2F57430a66-30d5-4cc3-85d7-42c75ccfc8ac",
+      "evidence_class": "CHECKER_OBSERVATION_NOT_INDEPENDENT_INDEX_REPLAY"
+    },
+    {
+      "resource": "https://data.killbounce.app",
+      "advertisements": [
+        {
+          "resource": "https://data.killbounce.app",
+          "source": "x402-list",
+          "advertised_terms": {
+            "networks": [
+              "BSE"
+            ]
+          }
+        }
+      ],
+      "checker_observation": {
+        "http_status": 200,
+        "received_at": "2026-11-20T03:22:18.255840+00:00",
+        "url": "https://8374.stegverse.org/verify/check?url=https%3A%2F%2Fdata.killbounce.app",
+        "body_sha256": "dfd1780681c9b57328cd20a881a7f2a7a76ec29d05792a9610f63b45bbe61f32",
+        "body_bytes": 2056,
+        "retry_after": null,
+        "document": {
+          "resource": "https://data.killbounce.app",
+          "origin": "https://data.killbounce.app",
+          "terms": null,
+          "proof": {
+            "publishes_replayable_record": false,
+            "record_state": "none",
+            "method": "no record presented in the checked locations; nothing to recompute",
+            "evidence": [],
+            "checked": [
+              {
+                "location": "https://data.killbounce.app",
+                "result": "GET failed: URLError: <urlopen error [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1000)>"
+              },
+              {
+                "location": "https://data.killbounce.app",
+                "result": "POST failed: URLError: <urlopen error [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1000)>"
+              },
+              {
+                "location": "https://data.killbounce.app/.well-known/x402",
+                "result": "fetch failed: URLError: <urlopen error [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1000)>"
+              },
+              {
+                "location": "https://data.killbounce.app/openapi.json",
+                "result": "fetch failed: URLError: <urlopen error [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1000)>"
+              },
+              {
+                "location": "https://data.killbounce.app",
+                "result": "MCP initialize probe failed at transport: URLError: <urlopen error [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1000)>; trying a bare tools/list"
+              },
+              {
+                "location": "https://data.killbounce.app",
+                "result": "MCP tools/list probe answered HTTP None"
+              }
+            ],
+            "negative_result": "NOT_FOUND_IN_CHECKED_LOCATIONS",
+            "bounds": "bounds: unpaid GET and POST probes of the resource itself; the origin's /.well-known/x402 and /openapi.json; up to 3 named proof locations and up to 2 payment-manifest links followed one level; an MCP tools/list probe for MCP-shaped resources; 10 s timeouts, 512 KB response caps, at most 3 re-validated redirects per fetch. Locations outside this set were not checked."
+          },
+          "verdict": "no x402 terms found in the checked locations (no 402 challenge answered within the probe bounds); no replayable transaction record found in the checked locations (NOT_FOUND_IN_CHECKED_LOCATIONS) -- the locations under 'checked' were probed within the stated bounds and none presented one; locations outside the checked set were not examined"
+        }
+      },
+      "verdict": "ABSENT_IN_CHECKED_LOCATIONS",
+      "verify_permalink": "https://8374.stegverse.org/verify?url=https%3A%2F%2Fdata.killbounce.app",
+      "evidence_class": "CHECKER_OBSERVATION_NOT_INDEPENDENT_INDEX_REPLAY"
+    },
+    {
+      "resource": "https://faucet.mutinynet.com/api/l402",
+      "advertisements": [
+        {
+          "resource": "https://faucet.mutinynet.com/api/l402",
+          "source": "402-index",
+          "advertised_terms": {}
+        }
+      ],
+      "checker_observation": {
+        "http_status": 200,
+        "received_at": "2026-11-20T03:22:32.212216+00:00",
+        "url": "https://8374.stegverse.org/verify/check?url=https%3A%2F%2Ffaucet.mutinynet.com%2Fapi%2Fl402",
+        "body_sha256": "ddb638fea1518a0349003c96bec57012df703c01c71fa4b16861880e4a1d1e35",
+        "body_bytes": 1811,
+        "retry_after": null,
+        "document": {
+          "resource": "https://faucet.mutinynet.com/api/l402",
+          "origin": "https://faucet.mutinynet.com",
+          "terms": null,
+          "proof": {
+            "publishes_replayable_record": false,
+            "record_state": "none",
+            "method": "no record presented in the checked locations; nothing to recompute",
+            "evidence": [],
+            "checked": [
+              {
+                "location": "https://faucet.mutinynet.com/api/l402",
+                "result": "GET answered HTTP 402"
+              },
+              {
+                "location": "https://faucet.mutinynet.com/api/l402",
+                "result": "402 challenge received via GET; terms not parseable"
+              },
+              {
+                "location": "https://faucet.mutinynet.com/.well-known/x402",
+                "result": "HTTP 404"
+              },
+              {
+                "location": "https://faucet.mutinynet.com/openapi.json",
+                "result": "fetch failed: URLError: <urlopen error [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1000)>"
+              },
+              {
+                "location": "https://faucet.mutinynet.com/api/l402",
+                "result": "MCP initialize answered HTTP 200"
+              },
+              {
+                "location": "https://faucet.mutinynet.com/api/l402",
+                "result": "MCP tools/list probe answered HTTP 200 but carried no tools result this probe could read"
+              }
+            ],
+            "negative_result": "NOT_FOUND_IN_CHECKED_LOCATIONS",
+            "bounds": "bounds: unpaid GET and POST probes of the resource itself; the origin's /.well-known/x402 and /openapi.json; up to 3 named proof locations and up to 2 payment-manifest links followed one level; an MCP tools/list probe for MCP-shaped resources; 10 s timeouts, 512 KB response caps, at most 3 re-validated redirects per fetch. Locations outside this set were not checked."
+          },
+          "verdict": "no x402 terms found in the checked locations (no 402 challenge answered within the probe bounds); no replayable transaction record found in the checked locations (NOT_FOUND_IN_CHECKED_LOCATIONS) -- the locations under 'checked' were probed within the stated bounds and none presented one; locations outside the checked set were not examined"
+        }
+      },
+      "verdict": "ABSENT_IN_CHECKED_LOCATIONS",
+      "verify_permalink": "https://8374.stegverse.org/verify?url=https%3A%2F%2Ffaucet.mutinynet.com%2Fapi%2Fl402",
+      "evidence_class": "CHECKER_OBSERVATION_NOT_INDEPENDENT_INDEX_REPLAY"
+    },
+    {
+      "resource": "https://keyring-agent.blockchhub.link/api/send-token",
+      "advertisements": [
+        {
+          "resource": "https://keyring-agent.blockchhub.link/api/send-token",
+          "source": "cdp-bazaar",
+          "advertised_terms": {
+            "accepts": [
+              {
+                "amount": "50000",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "extra": {
+                  "name": "USD Coin",
+                  "version": "2"
+                },
+                "maxTimeoutSeconds": 3600,
+                "network": "eip155:8453",
+                "payTo": "0x17cd53C04D707eF0Dd615EF56c633f02915a7905",
+                "scheme": "exact"
+              }
+            ]
+          }
+        }
+      ],
+      "checker_observation": {
+        "http_status": 200,
+        "received_at": "2026-11-20T03:22:36.763508+00:00",
+        "url": "https://8374.stegverse.org/verify/check?url=https%3A%2F%2Fkeyring-agent.blockchhub.link%2Fapi%2Fsend-token",
+        "body_sha256": "60d37753307dad82d55ded35dfc019e2df3439031927018a7357c62edfaf5f68",
+        "body_bytes": 1723,
+        "retry_after": null,
+        "document": {
+          "resource": "https://keyring-agent.blockchhub.link/api/send-token",
+          "origin": "https://keyring-agent.blockchhub.link",
+          "terms": {
+            "scheme": "exact",
+            "network": "eip155:8453",
+            "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            "payTo": "0x17cd53C04D707eF0Dd615EF56c633f02915a7905",
+            "amount": "50000",
+            "mimeType": null
+          },
+          "proof": {
+            "publishes_replayable_record": false,
+            "record_state": "none",
+            "method": "no record presented in the checked locations; nothing to recompute",
+            "evidence": [
+              "the 402 challenge carries extensions.bazaar (discovery metadata; not a transaction record)"
+            ],
+            "checked": [
+              {
+                "location": "https://keyring-agent.blockchhub.link/api/send-token",
+                "result": "GET answered HTTP 402"
+              },
+              {
+                "location": "https://keyring-agent.blockchhub.link/api/send-token",
+                "result": "402 challenge received via GET; terms recorded"
+              },
+              {
+                "location": "https://keyring-agent.blockchhub.link/.well-known/x402",
+                "result": "HTTP 404"
+              },
+              {
+                "location": "https://keyring-agent.blockchhub.link/openapi.json",
+                "result": "HTTP 200"
+              }
+            ],
+            "negative_result": "NOT_FOUND_IN_CHECKED_LOCATIONS",
+            "bounds": "bounds: unpaid GET and POST probes of the resource itself; the origin's /.well-known/x402 and /openapi.json; up to 3 named proof locations and up to 2 payment-manifest links followed one level; an MCP tools/list probe for MCP-shaped resources; 10 s timeouts, 512 KB response caps, at most 3 re-validated redirects per fetch. Locations outside this set were not checked."
+          },
+          "verdict": "x402 resource; no replayable transaction record found in the checked locations (NOT_FOUND_IN_CHECKED_LOCATIONS) -- the locations under 'checked' were probed within the stated bounds and none presented one; locations outside the checked set were not examined"
+        }
+      },
+      "verdict": "ABSENT_IN_CHECKED_LOCATIONS",
+      "verify_permalink": "https://8374.stegverse.org/verify?url=https%3A%2F%2Fkeyring-agent.blockchhub.link%2Fapi%2Fsend-token",
+      "evidence_class": "CHECKER_OBSERVATION_NOT_INDEPENDENT_INDEX_REPLAY"
+    },
+    {
+      "resource": "https://scriptdocs-mcp.onrender.com/mcp",
+      "advertisements": [
+        {
+          "resource": "https://scriptdocs-mcp.onrender.com/mcp",
+          "source": "scriptmasterlabs",
+          "advertised_terms": {
+            "networks": [
+              "Base",
+              "Solana",
+              "XRPL",
+              "Arc",
+              "Xahau"
+            ],
+            "accepts": [
+              {
+                "network": "eip155:8453",
+                "asset": "USDC",
+                "payTo": "0x5BBd32e0478e49A7540EF2D760E0B0F9AA6328b2",
+                "amount_atomic": "9000",
+                "amount_display": "0.009",
+                "scheme": "exact",
+                "asset_symbol": "USDC"
+              },
+              {
+                "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+                "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+                "payTo": "Hv4cEGpyyNJDvxvgBb3C8GkcwtouF1qUfPT13innuXty",
+                "amount_atomic": "9000",
+                "amount_display": "0.009",
+                "scheme": "exact",
+                "asset_symbol": "USDC"
+              },
+              {
+                "network": "xrpl:0",
+                "asset": "XRP",
+                "payTo": "rEmdJWrAWFtud1vFN8Zm8eWkgK4AVMWPiX",
+                "amount_atomic": "9431",
+                "amount_display": "0.009431",
+                "scheme": "exact",
+                "asset_symbol": "XRP"
+              },
+              {
+                "network": "eip155:5042",
+                "asset": "USDC",
+                "payTo": "0x6756fC9A7abf9043bC4DdBB91121E12CEf1b108d",
+                "amount_atomic": "9000",
+                "amount_display": "0.009",
+                "scheme": "exact",
+                "asset_symbol": "USDC"
+              },
+              {
+                "network": "xrpl:21337",
+                "asset": "XAH",
+                "payTo": "rEmdJWrAWFtud1vFN8Zm8eWkgK4AVMWPiX",
+                "amount_atomic": "902519",
+                "amount_display": "0.902519",
+                "scheme": "exact",
+                "asset_symbol": "XAH"
+              },
+              {
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0xc29185fa176357612f3194735753e520e91adc46",
+                "amount_atomic": "9000",
+                "amount_display": "0.009",
+                "scheme": "exact",
+                "asset_symbol": "USDC"
+              }
+            ]
+          }
+        }
+      ],
+      "checker_observation": {
+        "http_status": 200,
+        "received_at": "2026-11-20T03:22:42.280887+00:00",
+        "url": "https://8374.stegverse.org/verify/check?url=https%3A%2F%2Fscriptdocs-mcp.onrender.com%2Fmcp",
+        "body_sha256": "87f73d277601f7c1ab925b0e8c06eaf12214103b3c16f073c363640344a567d4",
+        "body_bytes": 1909,
+        "retry_after": null,
+        "document": {
+          "resource": "https://scriptdocs-mcp.onrender.com/mcp",
+          "origin": "https://scriptdocs-mcp.onrender.com",
+          "terms": null,
+          "proof": {
+            "publishes_replayable_record": false,
+            "record_state": "none",
+            "method": "no record presented in the checked locations; nothing to recompute",
+            "evidence": [
+              "MCP tools/list: 5 tool(s) published (docs_get_package_info, docs_get_readme, docs_search_docs, docs_check_vulnerabilities, docs_resolve_library); payment material present in the tool definitions (keywords: payment, price, usdc, x402)"
+            ],
+            "checked": [
+              {
+                "location": "https://scriptdocs-mcp.onrender.com/mcp",
+                "result": "GET answered HTTP 200"
+              },
+              {
+                "location": "https://scriptdocs-mcp.onrender.com/mcp",
+                "result": "POST (unpaid) answered HTTP 406"
+              },
+              {
+                "location": "https://scriptdocs-mcp.onrender.com/.well-known/x402",
+                "result": "HTTP 200"
+              },
+              {
+                "location": "https://scriptdocs-mcp.onrender.com/openapi.json",
+                "result": "HTTP 404"
+              },
+              {
+                "location": "https://scriptdocs-mcp.onrender.com/mcp",
+                "result": "MCP initialize answered HTTP 200"
+              },
+              {
+                "location": "https://scriptdocs-mcp.onrender.com/mcp",
+                "result": "MCP tools/list answered: 5 tool(s)"
+              }
+            ],
+            "negative_result": "NOT_FOUND_IN_CHECKED_LOCATIONS",
+            "bounds": "bounds: unpaid GET and POST probes of the resource itself; the origin's /.well-known/x402 and /openapi.json; up to 3 named proof locations and up to 2 payment-manifest links followed one level; an MCP tools/list probe for MCP-shaped resources; 10 s timeouts, 512 KB response caps, at most 3 re-validated redirects per fetch. Locations outside this set were not checked."
+          },
+          "verdict": "no x402 terms found in the checked locations (no 402 challenge answered within the probe bounds); no replayable transaction record found in the checked locations (NOT_FOUND_IN_CHECKED_LOCATIONS) -- the locations under 'checked' were probed within the stated bounds and none presented one; locations outside the checked set were not examined"
+        }
+      },
+      "verdict": "ABSENT_IN_CHECKED_LOCATIONS",
+      "verify_permalink": "https://8374.stegverse.org/verify?url=https%3A%2F%2Fscriptdocs-mcp.onrender.com%2Fmcp",
+      "evidence_class": "CHECKER_OBSERVATION_NOT_INDEPENDENT_INDEX_REPLAY"
+    },
+    {
+      "resource": "https://agora402.io/api/pay/46226909-64e9-4acd-a3fb-12f71052023d",
+      "advertisements": [
+        {
+          "resource": "https://agora402.io/api/pay/46226909-64e9-4acd-a3fb-12f71052023d",
+          "source": "agora",
+          "advertised_terms": {}
+        }
+      ],
+      "checker_observation": {
+        "http_status": 200,
+        "received_at": "2026-11-20T03:22:48.893744+00:00",
+        "url": "https://8374.stegverse.org/verify/check?url=https%3A%2F%2Fagora402.io%2Fapi%2Fpay%2F46226909-64e9-4acd-a3fb-12f71052023d",
+        "body_sha256": "0b12e56bbe3dfbd7000a981e7f1ef3f839a34ac96e632bcef55821c3c4b09b73",
+        "body_bytes": 1620,
+        "retry_after": null,
+        "document": {
+          "resource": "https://agora402.io/api/pay/46226909-64e9-4acd-a3fb-12f71052023d",
+          "origin": "https://agora402.io",
+          "terms": {
+            "scheme": "exact",
+            "network": "base",
+            "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            "payTo": "0x3197aCdAd9575ECFD94Ab8E9b8398f329c78B2aF",
+            "amount": "10000",
+            "mimeType": "application/json"
+          },
+          "proof": {
+            "publishes_replayable_record": false,
+            "record_state": "none",
+            "method": "no record presented in the checked locations; nothing to recompute",
+            "evidence": [],
+            "checked": [
+              {
+                "location": "https://agora402.io/api/pay/46226909-64e9-4acd-a3fb-12f71052023d",
+                "result": "GET answered HTTP 402"
+              },
+              {
+                "location": "https://agora402.io/api/pay/46226909-64e9-4acd-a3fb-12f71052023d",
+                "result": "402 challenge received via GET; terms recorded"
+              },
+              {
+                "location": "https://agora402.io/.well-known/x402",
+                "result": "HTTP 404"
+              },
+              {
+                "location": "https://agora402.io/openapi.json",
+                "result": "HTTP 200"
+              }
+            ],
+            "negative_result": "NOT_FOUND_IN_CHECKED_LOCATIONS",
+            "bounds": "bounds: unpaid GET and POST probes of the resource itself; the origin's /.well-known/x402 and /openapi.json; up to 3 named proof locations and up to 2 payment-manifest links followed one level; an MCP tools/list probe for MCP-shaped resources; 10 s timeouts, 512 KB response caps, at most 3 re-validated redirects per fetch. Locations outside this set were not checked."
+          },
+          "verdict": "x402 resource; no replayable transaction record found in the checked locations (NOT_FOUND_IN_CHECKED_LOCATIONS) -- the locations under 'checked' were probed within the stated bounds and none presented one; locations outside the checked set were not examined"
+        }
+      },
+      "verdict": "ABSENT_IN_CHECKED_LOCATIONS",
+      "verify_permalink": "https://8374.stegverse.org/verify?url=https%3A%2F%2Fagora402.io%2Fapi%2Fpay%2F46226909-64e9-4acd-a3fb-12f71052023d",
+      "evidence_class": "CHECKER_OBSERVATION_NOT_INDEPENDENT_INDEX_REPLAY"
+    },
+    {
+      "resource": "https://agent402.tools/api/extract",
+      "advertisements": [
+        {
+          "resource": "https://agent402.tools/api/extract",
+          "source": "agent402",
+          "advertised_terms": {
+            "price": 0.01,
+            "priceKnown": true
+          },
+          "seller_advertised_terms": {
+            "network": "base",
+            "networks": [
+              "eip155:8453",
+              "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+              "eip155:137",
+              "eip155:42161",
+              "eip155:143",
+              "eip155:42220",
+              "eip155:43114",
+              "eip155:1329",
+              "eip155:10",
+              "eip155:5042",
+              "eip155:57073",
+              "stellar:pubnet",
+              "algorand:wGHE2Pwdvd7S12BL5FaOP20EGYesN73k",
+              "eip155:4663"
+            ]
+          }
+        }
+      ],
+      "checker_observation": {
+        "http_status": 200,
+        "received_at": "2026-11-20T03:25:07.068251+00:00",
+        "url": "https://8374.stegverse.org/verify/check?url=https%3A%2F%2Fagent402.tools%2Fapi%2Fextract",
+        "body_sha256": "100af5326ec385891d58adba48d80caa7a3fe0eab491436e28d474d988cd2de6",
+        "body_bytes": 1659,
+        "retry_after": null,
+        "document": {
+          "resource": "https://agent402.tools/api/extract",
+          "origin": "https://agent402.tools",
+          "terms": null,
+          "proof": {
+            "publishes_replayable_record": false,
+            "record_state": "none",
+            "method": "no record presented in the checked locations; nothing to recompute",
+            "evidence": [],
+            "checked": [
+              {
+                "location": "https://agent402.tools/api/extract",
+                "result": "GET answered HTTP 402"
+              },
+              {
+                "location": "https://agent402.tools/api/extract",
+                "result": "402 challenge received via GET; terms not parseable"
+              },
+              {
+                "location": "https://agent402.tools/.well-known/x402",
+                "result": "fetch failed: URLError: <urlopen error [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1000)>"
+              },
+              {
+                "location": "https://agent402.tools/openapi.json",
+                "result": "HTTP 200"
+              },
+              {
+                "location": "https://agent402.tools/api/extract",
+                "result": "MCP tools/list probe answered HTTP 402 (payment-gated MCP endpoint)"
+              }
+            ],
+            "negative_result": "NOT_FOUND_IN_CHECKED_LOCATIONS",
+            "bounds": "bounds: unpaid GET and POST probes of the resource itself; the origin's /.well-known/x402 and /openapi.json; up to 3 named proof locations and up to 2 payment-manifest links followed one level; an MCP tools/list probe for MCP-shaped resources; 10 s timeouts, 512 KB response caps, at most 3 re-validated redirects per fetch. Locations outside this set were not checked."
+          },
+          "verdict": "no x402 terms found in the checked locations (no 402 challenge answered within the probe bounds); no replayable transaction record found in the checked locations (NOT_FOUND_IN_CHECKED_LOCATIONS) -- the locations under 'checked' were probed within the stated bounds and none presented one; locations outside the checked set were not examined"
+        }
+      },
+      "verdict": "ABSENT_IN_CHECKED_LOCATIONS",
+      "verify_permalink": "https://8374.stegverse.org/verify?url=https%3A%2F%2Fagent402.tools%2Fapi%2Fextract",
+      "evidence_class": "CHECKER_OBSERVATION_NOT_INDEPENDENT_INDEX_REPLAY"
+    },
+    {
+      "resource": "https://agent402.tools/api/meta",
+      "advertisements": [
+        {
+          "resource": "https://agent402.tools/api/meta",
+          "source": "agent402",
+          "advertised_terms": {
+            "price": 0.002,
+            "priceKnown": true
+          },
+          "seller_advertised_terms": {
+            "network": "base",
+            "networks": [
+              "eip155:8453",
+              "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+              "eip155:137",
+              "eip155:42161",
+              "eip155:143",
+              "eip155:42220",
+              "eip155:43114",
+              "eip155:1329",
+              "eip155:10",
+              "eip155:5042",
+              "eip155:57073",
+              "stellar:pubnet",
+              "algorand:wGHE2Pwdvd7S12BL5FaOP20EGYesN73k",
+              "eip155:4663"
+            ]
+          }
+        }
+      ],
+      "checker_observation": {
+        "http_status": 200,
+        "received_at": "2026-11-20T03:25:33.387827+00:00",
+        "url": "https://8374.stegverse.org/verify/check?url=https%3A%2F%2Fagent402.tools%2Fapi%2Fmeta",
+        "body_sha256": "024b807d603069ca966188a941e4ff266f1233c5a20ac7032eca711f910e7a28",
+        "body_bytes": 2003,
+        "retry_after": null,
+        "document": {
+          "resource": "https://agent402.tools/api/meta",
+          "origin": "https://agent402.tools",
+          "terms": {
+            "scheme": "exact",
+            "network": "eip155:8453",
+            "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            "payTo": "0xaBF4FAbd7c416fB67202E5f9002389Fc75e2a9D0",
+            "amount": "2000",
+            "mimeType": null
+          },
+          "proof": {
+            "publishes_replayable_record": false,
+            "record_state": "none",
+            "method": "no record presented in the checked locations; nothing to recompute",
+            "evidence": [
+              "the 402 challenge carries extensions.bazaar (discovery metadata; not a transaction record)"
+            ],
+            "checked": [
+              {
+                "location": "https://agent402.tools/api/meta",
+                "result": "GET answered HTTP 402"
+              },
+              {
+                "location": "https://agent402.tools/api/meta",
+                "result": "402 challenge received via GET; terms recorded"
+              },
+              {
+                "location": "https://agent402.tools/.well-known/x402",
+                "result": "fetch failed: URLError: <urlopen error [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1000)>"
+              },
+              {
+                "location": "https://agent402.tools/openapi.json",
+                "result": "fetch failed: URLError: <urlopen error [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1000)>"
+              },
+              {
+                "location": "https://json-schema.org/draft/2020-12/schema",
+                "result": "payment-manifest link; fetch failed: URLError: <urlopen error [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1000)>"
+              }
+            ],
+            "negative_result": "NOT_FOUND_IN_CHECKED_LOCATIONS",
+            "bounds": "bounds: unpaid GET and POST probes of the resource itself; the origin's /.well-known/x402 and /openapi.json; up to 3 named proof locations and up to 2 payment-manifest links followed one level; an MCP tools/list probe for MCP-shaped resources; 10 s timeouts, 512 KB response caps, at most 3 re-validated redirects per fetch. Locations outside this set were not checked."
+          },
+          "verdict": "x402 resource; no replayable transaction record found in the checked locations (NOT_FOUND_IN_CHECKED_LOCATIONS) -- the locations under 'checked' were probed within the stated bounds and none presented one; locations outside the checked set were not examined"
+        }
+      },
+      "verdict": "ABSENT_IN_CHECKED_LOCATIONS",
+      "verify_permalink": "https://8374.stegverse.org/verify?url=https%3A%2F%2Fagent402.tools%2Fapi%2Fmeta",
+      "evidence_class": "CHECKER_OBSERVATION_NOT_INDEPENDENT_INDEX_REPLAY"
+    }
+  ],
+  "batch": {
+    "attempts": 12,
+    "remaining_selected_inputs": 0,
+    "next_not_before_epoch": 1795144760.691359,
+    "rate_policy": "MAX20CHECKER_CALLS_PER60SECOND_BATCH_NO_SLEEP_NO_RETRIES"
+  },
+  "verdict_distribution": {
+    "ABSENT_IN_CHECKED_LOCATIONS": 12,
+    "REFUSED_OR_ERROR": 2
+  },
+  "publication_state": "FILED_REPORT_ORIGIN_PUBLICATION_NOT_PERFORMED",
+  "authority": "NONE",
+  "native_goal_task_id": null,
+  "collection_revision_note": "Original live batch preceding final defensive non-JSON429/lock/concurrent-discovery controls; no second liveedition claim. Agent402zero extraction explicitly not accepted as empty.",
+  "agent402_repair": {
+    "http_status": 200,
+    "received_at": "2026-11-20T03:25:00.746369+00:00",
+    "url": "https://agent402.tools/api/index",
+    "body_sha256": "32bc1bd65e59cf8e1e0dfa8cb5ed3b2178aa1af1e0a2eea3831ded015cd73a79",
+    "body_bytes": 529185,
+    "retry_after": null,
+    "rows_extracted": 621,
+    "coverage": "ONE_ROUTE_BEARING_PAGE_NOT_COMPLETE",
+    "explanation": "perPage=5 returned seller metadata without tools; existing plain/api/index returns route-bearing sellers. Original zero extraction was not empty; now corrected and two actual routes checked."
+  }
+}

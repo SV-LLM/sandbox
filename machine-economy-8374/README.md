@@ -138,3 +138,12 @@ Coordination/build record only — distinct from authenticated admission,
 runtime execution, sovereign KV writes, and independently verified
 completion. Queue anchors: BUILD-Q-24…Q-27, Q-32/Q-35, Q-49, Q-50
 (StegVerse-Labs/.github #3443; pairing #3472).
+
+
+## Q58 bounded Replayability Index
+
+`machine-economy-8374/replayability-index/` (repository-root-relative) contains
+the stdlib public discovery/checker batch runner and first-edition JSON/HTML.
+Coverage and source failures are explicit; catalog claims stay distinct from
+checker observations. No payments, origin deployment or resident task is added.
+Continuation: `docs/MACHINE_ECONOMY_REPLAYABILITY_INDEX_MIRROR_HANDOFF.md`.
