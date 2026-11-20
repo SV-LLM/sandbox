@@ -65,3 +65,14 @@ Current native Q55/Q56 binding remains UNBOUND; registered parent PROPOSED is
 context only and its prior20/20 decomposition is not reset. Original host,
 custody, billing/revocation and publication requirements still stand. This new
 delta needs exact-head CI and renewed non-CODEX review on the existing task.
+
+
+## 2026-11-20 PR53 branch currency and conflict cure
+
+Original owner task: StegVerse-Labs/.github #3443/7042856139; CODEX worker claim #3443/7042945656 (paired #3472/7042945990). Native Q56 Goal/COSV remain UNBOUND; G326 parent context remains PROPOSED and grants no runtime authority.
+
+Fresh native reads identify PR52's actual merge as 7258af13d882a0b9e1f03912527c64b000140084 on machine-economy-8374, with common ancestor f99d69e21937cb5db20bc1ba31f07985c7c6f089. The task's c1f3db5d71b8ec8a4daf0e59f8b1ee53d3bda1bc citation returned invalid-object 422; the corrected actual native pin was filed at #3443/7042967816. PR53's predecessor is 4aec930c03af7ead7c499024437d22dab2ed20cd. This merge retains both actual parents rather than rewriting their history.
+
+The only overlapping paths are root README.md and machine-economy-8374/README.md. Both parents append independently to the exact common-ancestor bytes; the resolution preserves the complete ancestor, PR52's Action suffix and PR53's receiver suffix. PR52's suite-action tree and PR53's App/receiver/listing/workflow/test source blobs remain unchanged. The canonical Marketplace handoff records this source-only cure.
+
+Validation: 22 component tests pass under ordinary Python and 22 under optimized Python on the combined tree. All 16 SOURCE_PROVENANCE.json vendored byte-size/SHA256 pins match. GitHub must independently report the pushed PR53 head mergeable=true/clean; API state and exact-head CI are retained in the original task's close. PR53 remains draft/open; no merge, ready-for-review change, GitHub App setting, listener, deployment, installation, credential, purchase, check-run, paid crossing or other PR mutation is part of this cure. Source review and original admitted host/custody/Marketplace publication conditions retain their existing owners.

@@ -1,0 +1,89 @@
+{
+  "template": "SUITE__TEMPLATE",
+  "generation": "GEN 02",
+  "created": "2026-11-12",
+  "supersedes_generation": {
+    "generation": "GEN 01",
+    "folder_drive_id": "1S4__Mp_tqrLF6sSk1MLNqJFE9GRGfdZO",
+    "manifest_drive_id": "1Had2n4Pur76jlf3NT2Vy6nuoyQqkw6Ud",
+    "manifest_sha256": "f63d612c15e2ee364f3df651da8c11948846c61c897899aa45f8e9f6324bcc4e"
+  },
+  "implements_specs_and_returns": [
+    "Spec 01 (2026-11-11): PRICING__AND__ACCESS__01.md.tmpl + E6_pricing_schedule",
+    "Spec 02 (16FqoAHbR0iuajWFdkNKNvUjlJWuwSHhr, 2026-11-12): COMPENSATION__BASIS__01.md.tmpl + E7_compensation_basis",
+    "KV__303 R-200-1 (1k4eEbDH9pVBBp5ftlxOino72rZxmKf2i) + KV__298 S194-F1 (1ijupnTXp6OuAyy7jc3XfUbx1nkcGLTZz): universal placeholder refusal across ALL templated members + SHA-256 hash-chained LEDGER__01.json.tmpl + E8_zero_placeholders_and_chained_ledger"
+  ],
+  "manifest_excludes": "TEMPLATE__MANIFEST__02.json (this file)",
+  "components": [
+    {
+      "file": "COMPENSATION__BASIS__01.md.tmpl",
+      "bytes": 1652,
+      "sha256": "8d922944ccfb9d37518fb050be42d7e541d88017f0fea4f063045eeab4e7e225"
+    },
+    {
+      "file": "FUNDING__STATEMENT__01.md.tmpl",
+      "bytes": 899,
+      "sha256": "049e981474471396f10f5f383ff42692a18edbd5a598de8b6c064a19ce2bf70d"
+    },
+    {
+      "file": "LEDGER__01.json.tmpl",
+      "bytes": 660,
+      "sha256": "9cefbf07982d158eac709de28e8091a52225c5a14278378b74b622d091e410a3"
+    },
+    {
+      "file": "PRICING__AND__ACCESS__01.md.tmpl",
+      "bytes": 2086,
+      "sha256": "6745fdaf2792215f5e1023e2df239dbc68435dd0a3a42da5c0973efc030712a5"
+    },
+    {
+      "file": "README.md",
+      "bytes": 2732,
+      "sha256": "32707327d99c53549eaca2e5e3d42e84bbffe3212bc3385fd779d0918ed454ee"
+    },
+    {
+      "file": "README.md.tmpl",
+      "bytes": 924,
+      "sha256": "d34770b25cf312bb4eb6034215f2d4acf3f281c2d43b3650a7e369d0025e878b"
+    },
+    {
+      "file": "REFERENCES__01.md.tmpl",
+      "bytes": 177,
+      "sha256": "204315dd7978b22a21906e6efc115ebf9134608481f0ef46f2986eb2d63353e0"
+    },
+    {
+      "file": "SPEC__MEMBER__01.md.tmpl",
+      "bytes": 85,
+      "sha256": "ae5490208a38f8148177b267cd69967f8798455b0af7ae2d13517cd3a87d2548"
+    },
+    {
+      "file": "SUITE__CHARTER__01.md.tmpl",
+      "bytes": 171,
+      "sha256": "85e5b7911d2d0a7cfe234418eb4d53f0fa3e3784b2c14a1872a868c86d7e14ae"
+    },
+    {
+      "file": "instantiate.py",
+      "bytes": 13896,
+      "sha256": "558a04ce1f38a84589ae45ae65f8d132dd92166a83a6a4340bf9ae1f9ef4859c"
+    },
+    {
+      "file": "price_schedule.json",
+      "bytes": 3117,
+      "sha256": "66f3a355e28d4453affbad010f9b73c922da694d5b7b131a8482f0f70ff21e30"
+    },
+    {
+      "file": "prove_conformance.py",
+      "bytes": 18724,
+      "sha256": "e0c8f3eccf1012c117d741440124e98e5d1435b2ae04d04528b99626f9de2859"
+    },
+    {
+      "file": "self_check.py.tmpl",
+      "bytes": 9387,
+      "sha256": "3bdf533c44cd17f28db8ac7522f130d05bb5b1c5f2aae9d12fa91d6191f934b1"
+    },
+    {
+      "file": "test_template_gen02.py",
+      "bytes": 6128,
+      "sha256": "77968554559bb897a447df340deb6fd2f7e05577246fb3921f3cd54f8d043aaf"
+    }
+  ]
+}

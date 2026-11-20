@@ -87,3 +87,25 @@ jobs:
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
         run: python -B tests/test_work_cycle_binding.py
+
+      - name: Q56 suite Action refusal and custody controls (offline, normal and optimized)
+        run: |
+          python3 -B machine-economy-8374/github-marketplace/suite-action/test_action.py -q
+          python3 -B -O machine-economy-8374/github-marketplace/suite-action/test_action.py -q
+      - name: Q56 actual composite Action instantiation (offline)
+        id: q56_instantiate
+        uses: ./machine-economy-8374/github-marketplace/suite-action
+        with:
+          mode: instantiate
+          spec-file: machine-economy-8374/github-marketplace/suite-action/examples/instantiate.json
+          spec-sha256: 783bb7efe03e4561fe698aa5a9c90affefead177e4b92b6f168cd77e3755907d
+      - name: Retain generated specimen in the workspace for read-only verification
+        env:
+          SUITE_RESULT: ${{ steps.q56_instantiate.outputs.result-directory }}
+        run: cp -R "$SUITE_RESULT/suite" .q56-suite-specimen
+      - name: Q56 actual composite Action verification (offline)
+        uses: ./machine-economy-8374/github-marketplace/suite-action
+        with:
+          mode: verify
+          suite-path: .q56-suite-specimen
+          manifest-sha256: ${{ steps.q56_instantiate.outputs.manifest-sha256 }}

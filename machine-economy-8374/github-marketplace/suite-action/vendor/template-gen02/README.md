@@ -1,0 +1,13 @@
+# SUITE__TEMPLATE — GEN 02 (Spec 01 + Spec 02 + R-200-1 Hardening)
+
+Canonical derivation machinery for StegVerse GEN 02 suites (`TEMPLATE-GEN02-BUILD-001`).
+
+## Governing Specifications & Discharged Returns
+
+1. **GEN 01 In-Suite Proof Baseline (`1Had2n4Pur76jlf3NT2Vy6nuoyQqkw6Ud`)**: Every suite is instantiated from hash-verified template components (`TEMPLATE__MANIFEST__02.json`) and carries an in-suite `CONFORMANCE__PROOF__01.json` bound by `PACKAGE__MANIFEST__01.json`.
+2. **Spec 01 — Commercial Face as Checked Variables (`PRICING__AND__ACCESS__01.md.tmpl`, `E6_pricing_schedule`)**: Every GEN 02 suite carries a populated, purchasable `PRICE SCHEDULE 01` schedule (`price_schedule.json` variables + active Stripe purchase links) whose `ProjectID` matches the funding statement. Unpopulated pricing variables abort derivation (`TEMPLATE INVALID`).
+3. **Spec 02 — The Compensation Basis (`16FqoAHbR0iuajWFdkNKNvUjlJWuwSHhr`, companion `141enh_G3eWgASCTt3gkOzic5WKx7F_-k`, `COMPENSATION__BASIS__01.md.tmpl`, `E7_compensation_basis`)**: Every GEN 02 suite declares `accounts_for_errors` (`true` | `false`), `subject`, `meter_instruments`, `error_classes`, and `suite_project_id`, plus a per-generation readings table. When `accounts_for_errors: true`, unpopulated variables, non-integer counts, missing current-generation readings row, or `ProjectID` mismatch abort derivation and fail `self_check.py` / `prove_conformance.py`.
+4. **Return `KV__303 R-200-1` (`1k4eEbDH9pVBBp5ftlxOino72rZxmKf2i`, superseding `S198-F1` / `S198-F2`) + `KV__298 S194-F1` (`1ijupnTXp6OuAyy7jc3XfUbx1nkcGLTZz`, `E8_zero_placeholders_and_chained_ledger`)**:
+   - **Universal Placeholder Refusal**: `instantiate.py`, `self_check.py.tmpl`, and `prove_conformance.py` enforce zero unpopulated `{{...}}` slot tokens and zero `TODO —` template placeholders across **every** templated member (`SUITE__CHARTER__01.md` Purpose & Level discipline, `SPEC__MEMBER__01.md`, `REFERENCES__01.md`, `FUNDING__STATEMENT__01.md`, `PRICING__AND__ACCESS__01.md`, `COMPENSATION__BASIS__01.md`, `README.md`, and `LEDGER__01.json`). A GEN 02 suite cannot derive or prove `CONFORMANT` with an empty charter, spec member, or references stub.
+   - **Explicitly Stated & Mechanically Verified Hash-Chained Ledger (`LEDGER__01.json.tmpl`)**: Carries the explicit `chaining_rule` (`sha256(entry["prev"] + json.dumps(entry_without_hash, sort_keys=True))`) identified in `KV__298`, and `self_check.py` walks and verifies every entry's `seq`, `prev`, and `hash` from `"GENESIS"`.
+5. **Non-Retroactivity**: `E6`, `E7`, and `E8` bind `SUITE__TEMPLATE GEN 02` derivations only; `GEN 01` suites continue grading against `GEN 01` (`E1..E5`), and no installed proof is re-graded.

@@ -1,0 +1,100 @@
+{
+  "schema": "stegverse.suite-action-source-provenance/v1",
+  "authority_effect": "NONE",
+  "profile": "explicit filed template snapshot; not a claim of latest template adoption",
+  "template_archive": {
+    "drive_id": "1xdqcQQqlZ07617jtrt1reK1sElzwjW8k",
+    "bytes": 25569,
+    "sha256": "fc13408781e98b07bd75a7e9256bc906cf8768413d8b0dc6c4c4a7829fdd83cd"
+  },
+  "template_manifest_sha256": "b733339c719c6dd7c884a0a3c5f24b7fa347a27a9a72049dfa6d90aa04276ffa",
+  "source_review": "ClaudeCode KV310 1fsKN1lTrpx4TQk2gXG9M4X6M11Y0vY77; raw bytes independently checked before vendoring",
+  "gen01_checker_source": {
+    "archive": "MACHINE__ECONOMY__ENTRY__SUITE__GEN__14",
+    "drive_id": "1vMM3Xh_hW9w52CTzboD-dMJBfz4_PLTw",
+    "archive_sha256": "19f9628575200fb30088edcb1ea9c832445cb0fc11d5297814dc2cd71d0fbd40",
+    "path": "self_check.py"
+  },
+  "vendored_files": [
+    {
+      "path": "self_check_gen01.py",
+      "bytes": 2913,
+      "sha256": "9f9207293b11f928fed46d5fe9a1a5ef41074825a90825588b97a1298bb32f7e"
+    },
+    {
+      "path": "template-gen02/COMPENSATION__BASIS__01.md.tmpl",
+      "bytes": 1652,
+      "sha256": "8d922944ccfb9d37518fb050be42d7e541d88017f0fea4f063045eeab4e7e225"
+    },
+    {
+      "path": "template-gen02/FUNDING__STATEMENT__01.md.tmpl",
+      "bytes": 899,
+      "sha256": "049e981474471396f10f5f383ff42692a18edbd5a598de8b6c064a19ce2bf70d"
+    },
+    {
+      "path": "template-gen02/LEDGER__01.json.tmpl",
+      "bytes": 660,
+      "sha256": "9cefbf07982d158eac709de28e8091a52225c5a14278378b74b622d091e410a3"
+    },
+    {
+      "path": "template-gen02/PRICING__AND__ACCESS__01.md.tmpl",
+      "bytes": 2086,
+      "sha256": "6745fdaf2792215f5e1023e2df239dbc68435dd0a3a42da5c0973efc030712a5"
+    },
+    {
+      "path": "template-gen02/README.md",
+      "bytes": 2732,
+      "sha256": "32707327d99c53549eaca2e5e3d42e84bbffe3212bc3385fd779d0918ed454ee"
+    },
+    {
+      "path": "template-gen02/README.md.tmpl",
+      "bytes": 924,
+      "sha256": "d34770b25cf312bb4eb6034215f2d4acf3f281c2d43b3650a7e369d0025e878b"
+    },
+    {
+      "path": "template-gen02/REFERENCES__01.md.tmpl",
+      "bytes": 177,
+      "sha256": "204315dd7978b22a21906e6efc115ebf9134608481f0ef46f2986eb2d63353e0"
+    },
+    {
+      "path": "template-gen02/SPEC__MEMBER__01.md.tmpl",
+      "bytes": 85,
+      "sha256": "ae5490208a38f8148177b267cd69967f8798455b0af7ae2d13517cd3a87d2548"
+    },
+    {
+      "path": "template-gen02/SUITE__CHARTER__01.md.tmpl",
+      "bytes": 171,
+      "sha256": "85e5b7911d2d0a7cfe234418eb4d53f0fa3e3784b2c14a1872a868c86d7e14ae"
+    },
+    {
+      "path": "template-gen02/TEMPLATE__MANIFEST__02.json",
+      "bytes": 3140,
+      "sha256": "b733339c719c6dd7c884a0a3c5f24b7fa347a27a9a72049dfa6d90aa04276ffa"
+    },
+    {
+      "path": "template-gen02/instantiate.py",
+      "bytes": 13896,
+      "sha256": "558a04ce1f38a84589ae45ae65f8d132dd92166a83a6a4340bf9ae1f9ef4859c"
+    },
+    {
+      "path": "template-gen02/price_schedule.json",
+      "bytes": 3117,
+      "sha256": "66f3a355e28d4453affbad010f9b73c922da694d5b7b131a8482f0f70ff21e30"
+    },
+    {
+      "path": "template-gen02/prove_conformance.py",
+      "bytes": 18724,
+      "sha256": "e0c8f3eccf1012c117d741440124e98e5d1435b2ae04d04528b99626f9de2859"
+    },
+    {
+      "path": "template-gen02/self_check.py.tmpl",
+      "bytes": 9387,
+      "sha256": "3bdf533c44cd17f28db8ac7522f130d05bb5b1c5f2aae9d12fa91d6191f934b1"
+    },
+    {
+      "path": "template-gen02/test_template_gen02.py",
+      "bytes": 6128,
+      "sha256": "77968554559bb897a447df340deb6fd2f7e05577246fb3921f3cd54f8d043aaf"
+    }
+  ]
+}
