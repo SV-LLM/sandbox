@@ -87,3 +87,8 @@ jobs:
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
         run: python -B tests/test_work_cycle_binding.py
+
+      - name: Q57 MCP stdio package controls (offline fixtures only; no production checker calls)
+        run: |
+          python -B -m unittest discover -s machine-economy-8374/mcp-verify -p test_verify_mcp.py
+          python -B -O -m unittest discover -s machine-economy-8374/mcp-verify -p test_verify_mcp.py

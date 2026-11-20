@@ -1,0 +1,28 @@
+test_battery_rejects_fixture_absence_without_locations (test_verify_mcp.Tests.test_battery_rejects_fixture_absence_without_locations) ... ok
+test_exact_arguments_refuse_override_and_controls (test_verify_mcp.Tests.test_exact_arguments_refuse_override_and_controls) ... ok
+test_forwards_asserted_without_reclassification (test_verify_mcp.Tests.test_forwards_asserted_without_reclassification) ... ok
+test_lifecycle_no_work_before_initialized_notification (test_verify_mcp.Tests.test_lifecycle_no_work_before_initialized_notification) ... ok
+test_malformed_scalar_duplicate_nonfinite_and_large_json (test_verify_mcp.Tests.test_malformed_scalar_duplicate_nonfinite_and_large_json) ... ok
+test_negotiation_and_reinitialize_refusal (test_verify_mcp.Tests.test_negotiation_and_reinitialize_refusal) ... ok
+test_no_redirect_handler (test_verify_mcp.Tests.test_no_redirect_handler) ... ok
+test_nonjson_and_redirect_are_errors (test_verify_mcp.Tests.test_nonjson_and_redirect_are_errors) ... ok
+test_package_build_is_byte_deterministic (test_verify_mcp.Tests.test_package_build_is_byte_deterministic) ... ok
+test_packaged_oversized_and_malformed_frame (test_verify_mcp.Tests.test_packaged_oversized_and_malformed_frame) ... ok
+test_packaged_stdio_three_targets_preserves_contract (test_verify_mcp.Tests.test_packaged_stdio_three_targets_preserves_contract) ... ok
+test_ping_and_unknown_method (test_verify_mcp.Tests.test_ping_and_unknown_method) ... ok
+test_refusal_and_rate_not_absence_or_retry (test_verify_mcp.Tests.test_refusal_and_rate_not_absence_or_retry) ... ok
+test_unknown_tool_notification_and_invalid_envelope (test_verify_mcp.Tests.test_unknown_tool_notification_and_invalid_envelope) ... ok
+test_unreachable_is_not_absent (test_verify_mcp.Tests.test_unreachable_is_not_absent) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.225s
+
+OK
+stegverse-verify-mcp.pyz 3405 71dfbb1f54ef645adc72f28bd155a1d49b1043eec8930b29ff9fe1a09a7f4006
+stegverse_verify_mcp-0.1.0-py3-none-any.whl 7001 0d2352479ed8f099ed9651a2c5cd2354bb82825b751af18a5a5db35b7ae0ec55
+stegverse-verify-mcp.pyz 3405 71dfbb1f54ef645adc72f28bd155a1d49b1043eec8930b29ff9fe1a09a7f4006
+stegverse_verify_mcp-0.1.0-py3-none-any.whl 7001 0d2352479ed8f099ed9651a2c5cd2354bb82825b751af18a5a5db35b7ae0ec55
+stegverse-verify-mcp.pyz 3405 71dfbb1f54ef645adc72f28bd155a1d49b1043eec8930b29ff9fe1a09a7f4006
+stegverse_verify_mcp-0.1.0-py3-none-any.whl 7001 0d2352479ed8f099ed9651a2c5cd2354bb82825b751af18a5a5db35b7ae0ec55
+stegverse-verify-mcp.pyz 3405 71dfbb1f54ef645adc72f28bd155a1d49b1043eec8930b29ff9fe1a09a7f4006
+stegverse_verify_mcp-0.1.0-py3-none-any.whl 7001 0d2352479ed8f099ed9651a2c5cd2354bb82825b751af18a5a5db35b7ae0ec55

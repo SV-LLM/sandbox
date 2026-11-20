@@ -1,0 +1,31 @@
+{
+  "artifact_kind": "PREPARED_LISTING_FORM_INPUTS_NOT_PROVIDER_CONFIG",
+  "state": "NOT_SUBMITTED",
+  "proposed_name": "stegverse/verify-x402-resource",
+  "title": "8374 Verify",
+  "description": "Ask the public 8374 checker what replayable record an x402 resource publishes; preserves asserted, recomputed, discovered and bounded-absence results.",
+  "repository_url": "https://github.com/SV-LLM/sandbox",
+  "source_branch": "codex/q57-mcp-verify-20261119",
+  "source_subfolder": "machine-economy-8374/mcp-verify",
+  "homepage": "https://8374.stegverse.org/verify",
+  "transport": "stdio",
+  "local_run": {
+    "command": "python3",
+    "args": [
+      "/absolute/reviewed/checkout/machine-economy-8374/mcp-verify/verify_mcp.py"
+    ]
+  },
+  "tools": [
+    "verify_x402_resource"
+  ],
+  "secrets_required": false,
+  "hosted_deployment_requested": false,
+  "remaining": [
+    "original publisher confirms namespace, source distribution and license/terms",
+    "original publisher confirms current directory submission and stdio-package eligibility; never use retired API/CLI or introduce hosting",
+    "accepted artifact publication and live packaged battery",
+    "non-author review"
+  ],
+  "provider_status_source": "https://www.smithery.ai/future",
+  "provider_status": "API/CLI/SDK and managed connections retired October31,2026; public directory remains"
+}

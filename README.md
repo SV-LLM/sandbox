@@ -83,3 +83,13 @@ The existing W07 continuation is `validating`, COSV `30000000021222` in the Org
 Registry; PR #47 task scope/assignment and authentic WorkerCoordinator claim/fence
 remain unresolved. This candidate does not activate Sandbox, publish the SDK
 route, modify Registry state, or authorize a merge.
+
+
+## Q57 MCP verify source candidate
+
+The dependency-free stdio MCP projection and local deterministic packaging live
+in `machine-economy-8374/mcp-verify/` (relative to repository root). It forwards
+one tool to the existing public checker and preserves its evidence bounds.
+Source handoff: `docs/MACHINE_ECONOMY_MCP_VERIFY_MIRROR_HANDOFF.md`.
+Native Q57 admission, live packaged acceptance and listing publication remain
+separate from this source candidate; no new resident runtime is introduced.
