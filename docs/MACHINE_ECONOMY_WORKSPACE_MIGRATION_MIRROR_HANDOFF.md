@@ -33,3 +33,28 @@ This is source carriage and independent byte comparison, not a production runtim
 Selection rule: only the six public host/source records (endpoint specification, router discovery and carry records, install script, service unit and configuration template) are copied here; the remaining 23 unmatched suite members stay in the original GEN14 suite under its manifest, because this bounded source carriage does not duplicate suite generation documents, offer/proof records or checker tooling.
 
 Original ClaudeCode KV559 statically validated ed24691b and noted the missing selection rule; that exact-head grade remains historical. This prose clarification changes neither the six copied members nor the 61-row census, and does not establish complete workspace parity. Source claim3472/7028205315; exact original review carried3451/7028204659. Native Goal/COSV remain UNBOUND and original owner census/integration requirements stand.
+
+## Current Cycle15 source-census pickup — before implementation
+
+Original source producer has now FILED the exact census, discharging the historical
+EXACT_WORKSPACE_SOURCE_CENSUS_NOT_FILED condition above: WORKSPACE__SOURCE__CENSUS__Q55__01.json,
+Drive119FIGJAcSPigPP3lLTSdfTvLF78t7rkN,273511B/SHA256
+e7fe1f6369142d6097d14ffd5c7dc972ea59058df9c1d6bafcf241b9913c55b7;
+original owner return .github3443/7028202429. It lists1369 source paths/size/hash
+across5trees and excludes70files; it contains no source payloads.
+
+CODEX-Cycle15 bounded source-consuming claim3472/7028219993 until22:30CST orFILED;
+parent source005bd843121535f6c7263fe6e69f46978455653b, isolated branch
+codex/q55-census-delta-20261119. This section is published BEFORE implementation.
+Do not modify the parent branch or relabel Muse's bounded verdict as a full
+byte-recomputed migration. CODEX authored the parent candidate and cannot perform
+its independent review. Native Q55 Goal/COSV remain UNBOUND; context parent
+PROPOSED/nullclaimfence/projection_only is not execution authority.
+
+Implement an offline deterministic census/native-blob crosswalk with rejection
+controls, distinguish existing exact bytes from changed/missing source and
+unassigned target paths, and request only exact necessary public payloads from
+the original producer. Copy only proven available nonsecret bytes under explicit
+native path binding; do not invent target layout, duplicate archives, import live
+state/keys or invoke production code. No new dependency, service or authority.
+README, exact evidence, qualified review and original owner integration follow.
