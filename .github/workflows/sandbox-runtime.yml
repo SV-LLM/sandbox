@@ -87,3 +87,9 @@ jobs:
         env:
           SV_LLM_DOTGITHUB_ROOT: ${{ github.workspace }}/sv-llm-dotgithub
         run: python -B tests/test_work_cycle_binding.py
+
+      - name: Q60 retained public specimen kit controls (offline only)
+        run: |
+          python -B -m unittest discover -s machine-economy-8374/pilot-kit -p test_pilot_integration.py
+          python -B -O -m unittest discover -s machine-economy-8374/pilot-kit -p test_pilot_integration.py
+          python -B machine-economy-8374/pilot-kit/verify_kit.py

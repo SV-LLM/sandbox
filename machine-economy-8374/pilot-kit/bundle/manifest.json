@@ -1,0 +1,43 @@
+{
+ "document": "8374 receipt-chain export manifest",
+ "chain": "8374 endpoint receipt chain (production)",
+ "rules": "receipt-chain-rules/1",
+ "format": "NDJSON: one JSON object per line, the stored segment lines verbatim, in chain order",
+ "hash_rule": "entry.hash = SHA-256(entry.prev as UTF-8 || canonical(entry.content)); canonical = JSON with sorted keys and separators (\",\", \":\"); the first entry's prev is \"GENESIS\"",
+ "pair_rule": "a receipt pair is two consecutive entries sharing content.pair_id (index_in_pair 0 then 1); the second member's content.pair_anchor equals the first member's entry hash",
+ "segments": [
+  "segment-0001.jsonl"
+ ],
+ "segment_details": [
+  {
+   "name": "segment-0001.jsonl",
+   "entries": 124,
+   "bytes": 202668,
+   "sha256": "55274c8001e6152a110ef506af55448eabf7fa8f7c784eb022279baedf56bcbc",
+   "torn_tail_bytes": 0
+  }
+ ],
+ "export_bytes": 202668,
+ "generated_at": "2026-11-20T03:33:58.723985+00:00",
+ "entries": 124,
+ "pairs": 62,
+ "terminal_anchor": "5513a484b9709c531143b886d47dc7d5cc75beec526ac0ffeac35d4759d64080",
+ "torn_tail_bytes": 0,
+ "export_url": "https://8374.stegverse.org/chain/export.ndjson",
+ "paging": {
+  "parameters": "offset, limit (entry counts) on export_url",
+  "page_entries_recommended": 32,
+  "note": "the complete export is the concatenation of the windows in offset order; paging is a transport fetch strategy for legs that truncate large single responses -- the recompute over the assembled stream is the verification"
+ },
+ "manifest_url": "https://8374.stegverse.org/chain/manifest.json",
+ "verifier": {
+  "name": "verify_chain.py",
+  "url": "https://8374.stegverse.org/chain/verifier.py",
+  "sha256": "24669106d134b607dc7b707568c303e368ff99018d2c5ed7c45dab67a4dffe25",
+  "usage": "python3 verify_chain.py https://8374.stegverse.org/chain",
+  "requires": "Python 3, standard library only"
+ },
+ "origin": "https://8374.stegverse.org",
+ "served": "live read of the production receipts at request time (read-only); the export can never drift from the chain it exports",
+ "patent_pending": "U.S. Provisional Patent Application No. 64/198,910, filed November 14, 2026 \u2014 patent pending."
+}

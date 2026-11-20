@@ -83,3 +83,12 @@ The existing W07 continuation is `validating`, COSV `30000000021222` in the Org
 Registry; PR #47 task scope/assignment and authentic WorkerCoordinator claim/fence
 remain unresolved. This candidate does not activate Sandbox, publish the SDK
 route, modify Registry state, or authorize a merge.
+
+
+
+## Q60 public specimen pilot kit
+
+`machine-economy-8374/pilot-kit/` carries an offline-replayable public specimen
+bundle, caller-retention seam, claims boundaries and unpriced owner-review offer.
+No outreach/payment or customer-acceptance claim. Source continuation:
+`docs/MACHINE_ECONOMY_PILOT_KIT_MIRROR_HANDOFF.md`.

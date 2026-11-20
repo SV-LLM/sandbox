@@ -1,0 +1,88 @@
+{
+  "schema": "stegverse.evidence-pilot-kit/v1",
+  "task": "Q-60-PILOT-KIT",
+  "authority": "NONE",
+  "native_goal_task_id": null,
+  "material_class": "PUBLIC_INSIDER_SPECIMENS_NOT_EXTERNAL_CUSTOMERS",
+  "expected_terminal_anchor": "5513a484b9709c531143b886d47dc7d5cc75beec526ac0ffeac35d4759d64080",
+  "expected_entries": 124,
+  "expected_pairs": 62,
+  "published_verifier_sha256": "24669106d134b607dc7b707568c303e368ff99018d2c5ed7c45dab67a4dffe25",
+  "files": [
+    {
+      "path": "CLAIMS_BOUNDARY.md",
+      "bytes": 1414,
+      "sha256": "85fc97508a3a30f69f7303f6874a560ffa099d545a23fb0a9c7427903b3ac3db"
+    },
+    {
+      "path": "PILOT_OFFER.md",
+      "bytes": 1635,
+      "sha256": "7d388e2c06f60c076767dd2eb87fdfbe36947985069c8d07fb771f4f9985535a"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3010,
+      "sha256": "052bb30b764d1513799d3b345035d5cc7ba326913ec45afe7ea5d2811be9e604"
+    },
+    {
+      "path": "WALKTHROUGH.md",
+      "bytes": 3031,
+      "sha256": "2375b2e67567155fd89b18493eaad4174cf13b4b4ab27dc873e2e342e607d901"
+    },
+    {
+      "path": "bundle/examples.ndjson",
+      "bytes": 25108,
+      "sha256": "18c9e54748d413d8b3c1e28f1f166e24509821cc65675b2419655d83c3d5707a"
+    },
+    {
+      "path": "bundle/export.ndjson",
+      "bytes": 202668,
+      "sha256": "55274c8001e6152a110ef506af55448eabf7fa8f7c784eb022279baedf56bcbc"
+    },
+    {
+      "path": "bundle/manifest.json",
+      "bytes": 2165,
+      "sha256": "783148fbd05b532f3371b4569c1e7ab6e0b1808326b381779e9e36ff2bf89426"
+    },
+    {
+      "path": "bundle/verifier.py",
+      "bytes": 15515,
+      "sha256": "24669106d134b607dc7b707568c303e368ff99018d2c5ed7c45dab67a4dffe25"
+    },
+    {
+      "path": "evidence/q60-normal.log",
+      "bytes": 652,
+      "sha256": "a27d3a486ea8948c93a646e4c92c2d0b4045a1e09dc8ed5aff234844b5c84eb7"
+    },
+    {
+      "path": "evidence/q60-offline-replay.log",
+      "bytes": 318,
+      "sha256": "d2af89aa719a30aed7c784f5fa646c779d8a42e9c31fb370172f6bc3f215ad72"
+    },
+    {
+      "path": "evidence/q60-optimized.log",
+      "bytes": 652,
+      "sha256": "a27d3a486ea8948c93a646e4c92c2d0b4045a1e09dc8ed5aff234844b5c84eb7"
+    },
+    {
+      "path": "evidence/q60-tamper.log",
+      "bytes": 329,
+      "sha256": "6365d195c44ebd95833a975c21dfbe52b2479868230cdda5504a263fe04e912c"
+    },
+    {
+      "path": "pilot_integration.py",
+      "bytes": 2898,
+      "sha256": "b1bf38266478afa479037410d85179eaf636374bbe07524e56174f2ab4564ab0"
+    },
+    {
+      "path": "test_pilot_integration.py",
+      "bytes": 1981,
+      "sha256": "78b9ee18bdc4a6d7b1ed13bc327c61644c59cdb4325e54ef276b63f7c5912e4a"
+    },
+    {
+      "path": "verify_kit.py",
+      "bytes": 2015,
+      "sha256": "863952e217da33cd6d4d3068da8b1165e2404f58933f46a279a20b494ac679f0"
+    }
+  ]
+}
