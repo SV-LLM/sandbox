@@ -83,3 +83,12 @@ The existing W07 continuation is `validating`, COSV `30000000021222` in the Org
 Registry; PR #47 task scope/assignment and authentic WorkerCoordinator claim/fence
 remain unresolved. This candidate does not activate Sandbox, publish the SDK
 route, modify Registry state, or authorize a merge.
+
+## Q56 suite Action source candidate
+
+[StegVerse Suite Conformance](machine-economy-8374/github-marketplace/suite-action/README.md)
+packages the explicitly pinned filed suite instantiator and conformance prover
+as a dependency-free composite GitHub Action. The existing event-driven workflow
+checks custody/refusal controls and actual instantiation/verification. This is
+source validation only; the 8374 App and Marketplace publication remain separate.
+[Canonical Q56 Action handoff](machine-economy-8374/github-marketplace/SUITE_ACTION_MIRROR_HANDOFF.md).

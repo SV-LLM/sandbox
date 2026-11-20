@@ -1,0 +1,59 @@
+{
+  "classes": {
+    "document_run": {
+      "label": "Governed document run (a document carried to SEALED under the suite)",
+      "per_use_cents": 75000,
+      "purchase_url": "https://buy.stripe.com/14A4gB0CUb0840mgoodby03"
+    },
+    "eval_package": {
+      "additional_repo_cents": 50000,
+      "additional_repo_purchase_url": "https://buy.stripe.com/dRmdRbbhy2tCfJ46NOdby06",
+      "additional_repo_scope": "each additional repo in the same ecosystem, same engagement",
+      "first_repo_cents": 150000,
+      "first_repo_purchase_url": "https://buy.stripe.com/bJe28tbhyfgogN81tudby05",
+      "label": "Eval Package \u2014 functional governance establishment, per repo"
+    },
+    "governance_continuity": {
+      "covers": "change-triggered re-evaluation when the customer's framework changes in ways that affect the connected services; covering-layer updates; continued receipted operation",
+      "label": "Governance Continuity \u2014 the subscription an Eval Package requires to continue",
+      "lapse": "on lapse the service rests at the UNFUNDED-form projection: status and restore path served, nothing beyond it (the standing UNFUNDED reversion)",
+      "subscription": {
+        "additional_repo_monthly_cents": 10000,
+        "additional_repo_purchase_url": "https://buy.stripe.com/eVq4gB4Ta2tCcwSc88dby08",
+        "first_repo_monthly_cents": 25000,
+        "first_repo_purchase_url": "https://buy.stripe.com/dRm00l85m9W41Seeggdby07"
+      }
+    },
+    "participant_seat": {
+      "label": "Collab participant seat",
+      "subscription": {
+        "monthly_cents": 10000,
+        "purchase_url": "https://buy.stripe.com/5kQbJ3etK9W48gC0pqdby04",
+        "scope": "one participant in one running collab, per month; replaces per-use metering"
+      }
+    },
+    "scoped_run": {
+      "label": "Introductory Session \u2014 <Type>: one complete scoped run of a test/experiment",
+      "per_use_cents": 25000,
+      "per_use_purchase_url": "https://buy.stripe.com/28EbJ385mgksfJ42xydby01",
+      "subscription": {
+        "additional_run_cents": 25000,
+        "included_runs": 3,
+        "label": "Introductory Session Plan",
+        "monthly_cents": 50000,
+        "plan_purchase_url": "https://buy.stripe.com/6oU5kFbhy4BK2Wia00dby02"
+      },
+      "type_pricing": "one price for an Introductory Session of any type; type differentials, if data ever supports them, are a schedule adjustment",
+      "types": {
+        "Collaboration": "a governed collaboration run under the suite \u2014 submissions dispositioned, a document carried on the assent path (Record A/B-form)",
+        "Evaluation": "a framework or package evaluated unmodified against established rules, divergences located (Pantheon-form)",
+        "Verification": "independent non-author verification of an existing run or record \u2014 VERIFIED, or a located MISMATCH"
+      }
+    }
+  },
+  "currency": "usd",
+  "established": "2026-11-10",
+  "established_by": "the principal (price authorship is the principal's reserved act)",
+  "stripe_surface_spec": "STRIPE__PURCHASE__SURFACE__SPEC__01 (verified 2026-11-11)",
+  "version": "01"
+}

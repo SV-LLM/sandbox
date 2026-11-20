@@ -1,0 +1,47 @@
+name: StegVerse Suite Conformance
+author: StegVerse
+description: Instantiate or verify a hash-pinned StegVerse suite with its filed template tools.
+branding:
+  icon: check-square
+  color: blue
+inputs:
+  mode:
+    description: verify or instantiate
+    default: verify
+  suite-path:
+    description: Workspace-relative flat suite directory, required for verify
+    default: ''
+  manifest-sha256:
+    description: Independently reviewed SHA-256 of PACKAGE__MANIFEST__01.json, required for verify
+    default: ''
+  spec-file:
+    description: Workspace-relative instantiation JSON, required for instantiate
+    default: ''
+  spec-sha256:
+    description: Independently reviewed SHA-256 of the exact instantiation JSON, required for instantiate
+    default: ''
+outputs:
+  verdict:
+    description: CONFORMANT or FAIL_CLOSED; validation evidence only
+    value: ${{ steps.suite.outputs.verdict }}
+  report-path:
+    description: JSON result in RUNNER_TEMP; retain it as a workflow artifact if desired
+    value: ${{ steps.suite.outputs.report-path }}
+  result-directory:
+    description: Retained isolated suite copy, proof, report and tool log
+    value: ${{ steps.suite.outputs.result-directory }}
+  manifest-sha256:
+    description: SHA-256 of the verified or newly instantiated suite manifest
+    value: ${{ steps.suite.outputs.manifest-sha256 }}
+runs:
+  using: composite
+  steps:
+    - id: suite
+      shell: bash
+      env:
+        SUITE_ACTION_MODE: ${{ inputs.mode }}
+        SUITE_ACTION_SOURCE: ${{ inputs.suite-path }}
+        SUITE_ACTION_MANIFEST_SHA256: ${{ inputs.manifest-sha256 }}
+        SUITE_ACTION_SPEC: ${{ inputs.spec-file }}
+        SUITE_ACTION_SPEC_SHA256: ${{ inputs.spec-sha256 }}
+      run: python3 -I "$GITHUB_ACTION_PATH/run_action.py"

@@ -1,0 +1,16 @@
+{
+  "name": "Q56 Action Integration Specimen",
+  "generation": "GEN 01",
+  "project-id": "Q56-ACTION-TEST-SPECIMEN",
+  "funding-line": "UNFUNDED - offline source validation specimen; no customer engagement",
+  "funder": "StegVerse internal source work",
+  "arrangement": "No purchase, payment, license grant or revenue claim from this specimen",
+  "source": "BUILD-Q-56 suite Action regression fixture",
+  "purpose": "Exercise the unchanged filed suite instantiator and prover through the Action",
+  "levels": "Source validation only; not native execution or independent acceptance",
+  "member-title": "Action source acceptance contract",
+  "body": "Pinned inputs instantiate and prove locally; malformed inputs refuse without altering the source",
+  "pointers": "StegVerse-Labs/.github Q56 original comment7027241125",
+  "accounts-for-errors": "false",
+  "reading-date": "2026-11-19"
+}
